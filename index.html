@@ -390,7 +390,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
       <a href="#" style="color:var(--blue);text-decoration:none;font-size:0.85rem;" id="lt-forgot">نسيت كلمة المرور؟</a>
     </div>
     <button class="btn-primary" style="width:100%;padding:12px;" onclick="doLogin()" id="lt-btn">دخول</button>
-    <p style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--muted);" id="lt-hint">للتجربة: student1 / 1234</p>
+
   </div>
 </div>
 
@@ -796,7 +796,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
       <input type="password" id="teacherPass" placeholder="كلمة المرور">
     </div>
     <div id="teacherErr" style="display:none;background:#FFEBEE;color:#C62828;padding:8px 12px;border-radius:8px;font-size:0.85rem;margin-bottom:0.75rem;">كلمة المرور غير صحيحة</div>
-    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;">للتجربة: teacher / admin123</p>
+
     <div class="modal-footer">
       <button class="icon-btn" onclick="document.getElementById('teacherLoginModal').classList.remove('open')">إلغاء</button>
       <button class="admin-btn" onclick="doTeacherLogin()">دخول ←</button>
@@ -1369,7 +1369,7 @@ async function uploadToStorage(file, path, onProgress){
 // ══════════════════════════════════════════════
 
 // ======= DATA =======
-const USERS={student1:'1234',student2:'abcd',math2026:'pass123'};
+const USERS={}; // يتم ملؤه من Firebase عند التحميل
 let currentLang='ar';
 let loggedIn=false;
 let currentUser='';
@@ -1488,7 +1488,7 @@ const T={
     'nav-contact':'اتصل بنا','nav-dash':'لوحتي',
     'lt-title':'Mr. Anas Fayad','lt-sub':'منصة الرياضيات التعليمية',
     'lt-user':'اسم المستخدم','lt-pass':'كلمة المرور','lt-rem':'تذكرني',
-    'lt-forgot':'نسيت كلمة المرور؟','lt-btn':'دخول','lt-hint':'للتجربة: student1 / 1234',
+    'lt-forgot':'نسيت كلمة المرور؟','lt-btn':'دخول','lt-hint':'',
     'lt-err':'اسم المستخدم أو كلمة المرور غير صحيحة',
     'h-title':'<span>حوّل</span> رحلتك التعليمية',
     'h-sub':'منصة رياضيات احترافية مع <strong>Mr. Anas Fayad</strong>',
@@ -1557,7 +1557,7 @@ const T={
     'nav-contact':'Contact Us','nav-dash':'Dashboard',
     'lt-title':'Mr. Anas Fayad','lt-sub':'Math Learning Platform',
     'lt-user':'Username','lt-pass':'Password','lt-rem':'Remember me',
-    'lt-forgot':'Forgot password?','lt-btn':'Login','lt-hint':'Demo: student1 / 1234',
+    'lt-forgot':'Forgot password?','lt-btn':'Login','lt-hint':'',
     'lt-err':'Invalid username or password',
     'h-title':'<span>Transform</span> Your Learning Journey',
     'h-sub':'Professional Math Platform with <strong>Mr. Anas Fayad</strong>',
@@ -1640,34 +1640,65 @@ function toggleLang(){
 }
 
 // ======= AUTH =======
-function doLogin(){
-  const u=document.getElementById('loginUser').value.trim();
-  const p=document.getElementById('loginPass').value.trim();
-  const err=document.getElementById('loginErr');
-  if(USERS[u]&&USERS[u]===p){
-    loggedIn=true;
-    currentUser=u;
-    document.getElementById('loginOverlay').style.display='none';
-    // Find student name from admin list or fallback to username
-    const found=adminStudents.find(s=>s.user===u);
-    // Check subscription expiry
-    if(found && found.subEnd){
-      const daysLeft=Math.ceil((new Date(found.subEnd)-new Date())/(1000*60*60*24));
-      if(daysLeft<0){ showToast('⚠️ انتهى اشتراكك — تواصل مع المدرس'); }
-      else if(daysLeft<=7){ setTimeout(()=>showToast('⚠️ ينتهي اشتراكك خلال '+daysLeft+' أيام!'),1500); }
+async function doLogin(){
+  const u   = document.getElementById('loginUser').value.trim();
+  const p   = document.getElementById('loginPass').value.trim();
+  const err = document.getElementById('loginErr');
+  const btn = document.querySelector('#loginOverlay .btn-primary');
+  if(!u||!p){ err.style.display='block'; setTimeout(()=>err.style.display='none',3000); return; }
+  if(btn){ btn.textContent='⏳...'; btn.disabled=true; }
+
+  // Try Firebase Auth first (email login)
+  if(fbReady){
+    // Check if username matches a student in our DB
+    await loadStudentsFromDB(); // ensure fresh data
+    const found = adminStudents.find(s=>s.user===u);
+
+    if(found){
+      // Student found — verify password locally (stored in Firestore)
+      if(found.pass !== p){
+        if(btn){ btn.textContent=currentLang==='ar'?'دخول':'Login'; btn.disabled=false; }
+        err.style.display='block'; setTimeout(()=>err.style.display='none',3000); return;
+      }
+      // Check if active
+      if(!found.active){
+        if(btn){ btn.textContent=currentLang==='ar'?'دخول':'Login'; btn.disabled=false; }
+        err.textContent='⛔ حسابك موقوف — تواصل مع المدرس';
+        err.style.display='block'; setTimeout(()=>{err.style.display='none';err.textContent='اسم المستخدم أو كلمة المرور غير صحيحة';},3000);
+        return;
+      }
+      // Login success
+      loginSuccess(found);
+    } else {
+      if(btn){ btn.textContent=currentLang==='ar'?'دخول':'Login'; btn.disabled=false; }
+      err.style.display='block'; setTimeout(()=>err.style.display='none',3000);
     }
-    const displayName=found?found.name:u;
-    document.getElementById('navUser').textContent='👤 '+displayName+' ▾';
-    // Update dashboard title
-    const dt=document.getElementById('dash-title');
-    if(dt)dt.textContent='لوحة الطالب - '+displayName;
-    showToast((currentLang==='ar'?'مرحباً ':'Welcome ')+displayName+'!');
-    loadWatchedLessons();
-    renderStudentHW();
   } else {
-    err.style.display='block';
-    setTimeout(()=>err.style.display='none',3000);
+    // Fallback local check
+    const found = adminStudents.find(s=>s.user===u && s.pass===p);
+    if(found){ loginSuccess(found); }
+    else { err.style.display='block'; setTimeout(()=>err.style.display='none',3000); }
   }
+  if(btn){ btn.textContent=currentLang==='ar'?'دخول':'Login'; btn.disabled=false; }
+}
+
+function loginSuccess(found){
+  loggedIn   = true;
+  currentUser= found.user;
+  document.getElementById('loginOverlay').style.display='none';
+  // Subscription check
+  if(found.subEnd){
+    const daysLeft=Math.ceil((new Date(found.subEnd)-new Date())/(1000*60*60*24));
+    if(daysLeft<0){ showToast('⚠️ انتهى اشتراكك — تواصل مع المدرس'); }
+    else if(daysLeft<=7){ setTimeout(()=>showToast('⚠️ ينتهي اشتراكك خلال '+daysLeft+' أيام!'),1500); }
+  }
+  const displayName = found.name||found.user;
+  document.getElementById('navUser').textContent='👤 '+displayName+' ▾';
+  const dt=document.getElementById('dash-title');
+  if(dt) dt.textContent=(currentLang==='ar'?'لوحة الطالب - ':'Student Dashboard - ')+displayName;
+  showToast((currentLang==='ar'?'🎉 مرحباً ':'🎉 Welcome ')+displayName+'!');
+  loadWatchedLessons();
+  renderStudentHW();
 }
 document.getElementById('loginPass').addEventListener('keypress',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('loginUser').addEventListener('keypress',e=>{if(e.key==='Enter')doLogin();});
@@ -1790,28 +1821,11 @@ function showToast(msg){
 
 // ======= ADMIN DATA =======
 let TEACHER_PASS='admin123';
-let adminStudents=[
-  {id:1,name:'سهر فيصل',user:'student1',pass:'1234',grade:'الصف الثاني عشر متقدم',phone:'+971501234567',active:true,subEnd:'2026-08-30'},
-  {id:2,name:'أحمد محمد',user:'student2',pass:'abcd',grade:'الصف الحادي عشر',phone:'+971507654321',active:true,subEnd:'2026-07-15'},
-  {id:3,name:'فاطمة علي',user:'math2026',pass:'pass123',grade:'الصف الثاني عشر متقدم',phone:'',active:true,subEnd:'2026-06-28'}
-];
-let adminLessons=[
-  {id:1,title:'الحصة 1 - مقدمة في المثلثات',course:'G12 متقدم',unit:'الوحدة الأولى',url:'https://www.youtube.com/watch?v=dQw4w9WgXcQ',vtype:'youtube',vsrc:'url',status:'active'},
-  {id:2,title:'الحصة 2 - قانون الجيب',course:'G12 متقدم',unit:'الوحدة الأولى',url:'https://www.youtube.com/watch?v=dQw4w9WgXcQ',vtype:'youtube',vsrc:'url',status:'active'},
-  {id:3,title:'الحصة 3 - قانون جيب التمام',course:'G12 متقدم',unit:'الوحدة الأولى',url:'',vtype:'youtube',vsrc:'url',status:'draft'},
-  {id:4,title:'الحصة 1 - مقدمة في الاحتمالات',course:'G11 احتمالات',unit:'الوحدة الأولى',url:'https://www.youtube.com/watch?v=dQw4w9WgXcQ',vtype:'youtube',vsrc:'url',status:'active'}
-];
-let adminCourses=[
-  {id:'G12-adv', name:'G12 متقدم - جبر ومثلثات', grade:'الصف الثاني عشر متقدم', sem:'الفصل الدراسي الأول', color:'blue'},
-  {id:'G11-math', name:'G11 - احتمالات وإحصاء', grade:'الصف الحادي عشر', sem:'الفصل الدراسي الثاني', color:'purple'},
-  {id:'G12-calc', name:'G12 - تفاضل وتكامل', grade:'الصف الثاني عشر', sem:'الفصل الدراسي الثالث', color:'green'}
-];
+let adminStudents=[]; // يتم تحميلهم من Firebase
+let adminLessons=[]; // يتم تحميلها من Firebase
+let adminCourses=[]; // يتم تحميلها من Firebase
 
-let adminHW=[
-  {id:1,title:'واجب الوحدة الأولى - المثلثات',course:'G12 متقدم',due:'2026-06-30',type:'واجب منزلي'},
-  {id:2,title:'واجب الوحدة الثانية - الجبر',course:'G12 متقدم',due:'2026-07-15',type:'ورقة تمارين'},
-  {id:3,title:'مراجعة شاملة - الفصل الأول',course:'جميع الكورسات',due:'2026-06-01',type:'مراجعة شاملة'}
-];
+let adminHW=[]; // يتم تحميلها من Firebase
 let deleteAction=null;
 let editingStudentId=null;
 let editingLessonId=null;
@@ -1820,21 +1834,43 @@ function openTeacherLogin(){
   document.getElementById('teacherLoginModal').classList.add('open');
   setTimeout(()=>document.getElementById('teacherUser').focus(),100);
 }
-function doTeacherLogin(){
-  const u=document.getElementById('teacherUser').value.trim();
-  const p=document.getElementById('teacherPass').value.trim();
-  const err=document.getElementById('teacherErr');
-  if(u==='teacher'&&p===TEACHER_PASS){
-    document.getElementById('teacherLoginModal').classList.remove('open');
-    document.getElementById('teacherUser').value='';
-    document.getElementById('teacherPass').value='';
-    showPage('admin');
-    renderLessonsTable();renderStudentsTable();renderHWTable();renderAdminCourses();
-    checkSupabaseConfig();
-    showToast('مرحباً يا أستاذ Anas!');
+async function doTeacherLogin(){
+  const email = document.getElementById('teacherUser').value.trim();
+  const pass  = document.getElementById('teacherPass').value.trim();
+  const err   = document.getElementById('teacherErr');
+  const btn   = document.getElementById('teacher-login-btn');
+  if(!email||!pass){ err.style.display='block'; setTimeout(()=>err.style.display='none',3000); return; }
+
+  if(btn){ btn.textContent='⏳ جاري الدخول...'; btn.disabled=true; }
+
+  // Firebase Auth login
+  if(fbReady){
+    try{
+      const cred = await auth.signInWithEmailAndPassword(email, pass);
+      // Success
+      document.getElementById('teacherLoginModal').classList.remove('open');
+      document.getElementById('teacherUser').value='';
+      document.getElementById('teacherPass').value='';
+      if(btn){ btn.textContent='دخول ←'; btn.disabled=false; }
+      showPage('admin');
+      renderLessonsTable();renderStudentsTable();renderHWTable();renderAdminCourses();
+      checkSupabaseConfig();
+      showToast('🎉 مرحباً يا أستاذ Anas!');
+    } catch(e){
+      if(btn){ btn.textContent='دخول ←'; btn.disabled=false; }
+      err.textContent = e.code==='auth/wrong-password'?'❌ كلمة المرور غير صحيحة':
+                        e.code==='auth/user-not-found'?'❌ البريد غير مسجل':
+                        e.code==='auth/invalid-email'?'❌ البريد غير صحيح':
+                        '❌ '+e.message;
+      err.style.display='block';
+      setTimeout(()=>err.style.display='none',4000);
+    }
   } else {
+    // Fallback if Firebase not ready
+    if(btn){ btn.textContent='دخول ←'; btn.disabled=false; }
+    err.textContent='❌ Firebase غير متصل — تحقق من الإنترنت';
     err.style.display='block';
-    setTimeout(()=>err.style.display='none',3000);
+    setTimeout(()=>err.style.display='none',4000);
   }
 }
 function adminLogout(){showPage('home');showToast('تم الخروج من لوحة التحكم');}
@@ -1915,7 +1951,7 @@ function openEditStudent(id){
   document.getElementById('studentModal').classList.add('open');
 }
 function closeStudentModal(){document.getElementById('studentModal').classList.remove('open');}
-function saveStudent(){
+async function saveStudent(){
   const name=document.getElementById('sm-name').value.trim();
   const user=document.getElementById('sm-user').value.trim();
   const pass=document.getElementById('sm-pass').value.trim();
@@ -1924,19 +1960,44 @@ function saveStudent(){
   if(!name||!user||!pass){showToast('يرجى ملء الاسم واليوزرنايم والباسوورد');return;}
   if(editingStudentId){
     const s=adminStudents.find(x=>x.id===editingStudentId);
-    if(s){ Object.assign(s,{name,user,pass,grade,phone});
+    if(s){
+      Object.assign(s,{name,user,pass,grade,phone});
       fbSet('students', s.id, {name,user,pass,grade,phone,active:s.active,subEnd:s.subEnd||''});
     }
     showToast('✅ تم تحديث بيانات الطالب');
+    closeStudentModal(); renderStudentsTable();
   } else {
-    const newId=Date.now();
-    const newStudent={id:newId,name,user,pass,grade,phone,active:true,subEnd:''};
+    // Show saving indicator
+    const saveBtn = document.getElementById('studentModal').querySelector('.admin-btn');
+    if(saveBtn){ saveBtn.textContent='⏳ جاري الحفظ...'; saveBtn.disabled=true; }
+    const newId = Date.now();
+    const email = user+'@anasfayad.math'; // synthetic email for Firebase Auth
+    const newStudent={id:newId,name,user,pass,grade,phone,active:true,subEnd:'',email};
+    
+    // 1. Save to Firestore
+    await fbSet('students', newId, newStudent);
     adminStudents.push(newStudent);
     USERS[user]=pass;
-    fbSet('students', newId, newStudent);
-    showToast('✅ تم تسجيل الطالب: '+name);
+    
+    // 2. Register in Firebase Auth (so student can login)
+    if(fbReady){
+      try{
+        await auth.createUserWithEmailAndPassword(email, pass);
+        showToast('✅ تم تسجيل الطالب في Firebase: '+name);
+      } catch(e){
+        if(e.code==='auth/email-already-in-use'){
+          showToast('✅ تم تحديث بيانات الطالب: '+name);
+        } else {
+          console.warn('Auth register error:', e.message);
+          showToast('✅ تم حفظ الطالب ('+name+') — '+e.message);
+        }
+      }
+    } else {
+      showToast('✅ تم تسجيل الطالب: '+name+' (سيتم مزامنته عند الاتصال)');
+    }
+    if(saveBtn){ saveBtn.textContent='حفظ'; saveBtn.disabled=false; }
+    closeStudentModal(); renderStudentsTable();
   }
-  closeStudentModal();renderStudentsTable();
 }
 function updateSub(id, date){
   const s=adminStudents.find(x=>x.id===id);
