@@ -1175,13 +1175,24 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     </div>
     <h2 style="font-size:1.3rem;font-weight:900;margin-bottom:1.5rem;">الإعدادات</h2>
     <div class="admin-card">
-      <h3>تغيير كلمة مرور المدرس</h3>
+      <h3>🔑 بيانات دخول المالك</h3>
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.25rem;">تغيير الإيميل وكلمة المرور الخاصة بالمالك — تُحفظ تلقائياً في المتصفح</p>
       <div class="form-row">
-        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">كلمة المرور الحالية</label><input type="password" id="old-pass" placeholder="كلمة المرور الحالية"></div>
-        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">كلمة المرور الجديدة</label><input type="password" id="new-pass" placeholder="كلمة مرور جديدة"></div>
+        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الإيميل الحالي (للتحقق)</label><input type="email" id="old-email" placeholder="الإيميل الحالي"></div>
+        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">كلمة المرور الحالية (للتحقق)</label><input type="password" id="old-pass" placeholder="كلمة المرور الحالية"></div>
+      </div>
+      <div class="form-row">
+        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الإيميل الجديد</label><input type="email" id="new-email" placeholder="إيميل جديد (اختياري)"></div>
+        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">كلمة المرور الجديدة</label><input type="password" id="new-pass" placeholder="كلمة مرور جديدة (اختياري)"></div>
         <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">تأكيد كلمة المرور</label><input type="password" id="conf-pass" placeholder="تأكيد"></div>
       </div>
-      <button class="admin-btn" onclick="changeTeacherPass()">تحديث كلمة المرور</button>
+      <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+        <button class="admin-btn gold" onclick="changeOwnerCredentials()">💾 حفظ التغييرات</button>
+        <span id="owner-cred-result" style="font-size:0.85rem;"></span>
+      </div>
+      <div style="margin-top:1rem;background:#F5F7FA;border-radius:8px;padding:0.75rem;font-size:0.82rem;color:var(--muted);">
+        💡 يمكن تغيير الإيميل فقط أو كلمة المرور فقط أو كليهما معاً — اتركها فارغة إذا لم تريد تغييرها
+      </div>
     </div>
     <div class="admin-card">
       <h3>إضافة إعلان</h3>
@@ -1641,27 +1652,24 @@ function toggleLang(){
 
 // ======= AUTH =======
 
-// انتظر حتى يصبح Firebase جاهزاً (بحد أقصى 8 ثوانٍ)
-function waitForFirebase(maxMs=8000){
-  return new Promise(resolve=>{
-    if(fbReady){ resolve(true); return; }
-    const t0 = Date.now();
-    const iv = setInterval(()=>{
-      if(fbReady){ clearInterval(iv); resolve(true); }
-      else if(Date.now()-t0 > maxMs){ clearInterval(iv); resolve(false); }
-    }, 150);
-  });
-}
+// بيانات المالك — تُحمَّل من localStorage إن وُجدت، وإلا تُستخدم الافتراضية
+const OWNER_DEFAULT = { email: 'anasfayad1980@gmail.com', pass: '01011980' };
+let OWNER_ACCOUNTS = (()=>{
+  try {
+    const saved = localStorage.getItem('ownerCredentials');
+    if(saved){ const p = JSON.parse(saved); if(p.email && p.pass) return [p]; }
+  } catch(e){}
+  return [{ ...OWNER_DEFAULT }];
+})();
 
 async function doLogin(){
   const u   = document.getElementById('loginUser').value.trim();
   const p   = document.getElementById('loginPass').value.trim();
   const err = document.getElementById('loginErr');
   const btn = document.querySelector('#loginOverlay .btn-primary');
-  const isEmail = u.includes('@');
 
   if(!u||!p){ err.style.display='block'; setTimeout(()=>err.style.display='none',3000); return; }
-  if(btn){ btn.textContent='⏳ جاري التحقق...'; btn.disabled=true; }
+  if(btn){ btn.textContent='⏳...'; btn.disabled=true; }
 
   const resetBtn = ()=>{ if(btn){ btn.textContent=currentLang==='ar'?'دخول':'Login'; btn.disabled=false; } };
   const showErr  = (msg)=>{
@@ -1670,45 +1678,36 @@ async function doLogin(){
     setTimeout(()=>{ err.style.display='none'; err.textContent=currentLang==='ar'?'اسم المستخدم أو كلمة المرور غير صحيحة':'Invalid username or password'; }, 3500);
   };
 
-  // انتظر Firebase أولاً
-  const ready = await waitForFirebase();
-  if(!ready){
+  // CASE 1: تحقق أولاً هل هو مالك (بدون Firebase)
+  const ownerMatch = OWNER_ACCOUNTS.find(o => o.email===u && o.pass===p);
+  if(ownerMatch){
+    document.getElementById('loginOverlay').style.display='none';
     resetBtn();
-    showErr('❌ تعذّر الاتصال بالخادم — تحقق من الإنترنت');
+    showPage('admin');
+    if(fbReady){ renderLessonsTable(); renderStudentsTable(); renderHWTable(); renderAdminCourses(); checkSupabaseConfig(); }
+    document.getElementById('navUser').textContent='🔧 المدرس ▾';
+    showToast('🎉 مرحباً يا أستاذ Anas!');
     return;
   }
 
-  // CASE 1: إيميل → دخول كمالك/مدرس عبر Firebase Auth
-  if(isEmail){
-    try{
-      await auth.signInWithEmailAndPassword(u, p);
-      document.getElementById('loginOverlay').style.display='none';
-      resetBtn();
-      showPage('admin');
-      renderLessonsTable(); renderStudentsTable(); renderHWTable(); renderAdminCourses();
-      checkSupabaseConfig();
-      document.getElementById('navUser').textContent='🔧 المدرس ▾';
-      showToast('🎉 مرحباً يا أستاذ Anas!');
-      return;
-    } catch(e){
-      resetBtn();
-      const msg = e.code==='auth/wrong-password'||e.code==='auth/invalid-credential' ? '❌ كلمة المرور غير صحيحة'
-                : e.code==='auth/user-not-found' ? '❌ البريد غير مسجل'
-                : e.code==='auth/invalid-email'  ? '❌ البريد غير صحيح'
-                : '❌ '+e.message;
-      showErr(msg);
-      return;
-    }
+  // CASE 2: طالب — ابحث في adminStudents (إذا Firebase جاهز) أو USERS
+  const studentLocal = adminStudents.find(s=>s.user===u && s.pass===p);
+  if(studentLocal){
+    if(!studentLocal.active){ resetBtn(); showErr('⛔ حسابك موقوف — تواصل مع المدرس'); return; }
+    resetBtn(); loginSuccess(studentLocal); return;
   }
 
-  // CASE 2: اسم مستخدم → دخول كطالب
-  await loadStudentsFromDB();
-  const found = adminStudents.find(s=>s.user===u);
-  if(!found){ resetBtn(); showErr(); return; }
-  if(found.pass !== p){ resetBtn(); showErr(); return; }
-  if(!found.active){ resetBtn(); showErr('⛔ حسابك موقوف — تواصل مع المدرس'); return; }
-  resetBtn();
-  loginSuccess(found);
+  // إذا Firebase متاح جرّب تحميل الطلاب من الخادم
+  if(fbReady){
+    await loadStudentsFromDB();
+    const found = adminStudents.find(s=>s.user===u);
+    if(!found){ resetBtn(); showErr(); return; }
+    if(found.pass !== p){ resetBtn(); showErr(); return; }
+    if(!found.active){ resetBtn(); showErr('⛔ حسابك موقوف — تواصل مع المدرس'); return; }
+    resetBtn(); loginSuccess(found); return;
+  }
+
+  resetBtn(); showErr();
 }
 
 function loginSuccess(found){
@@ -2168,16 +2167,59 @@ async function testSupabase(){
   }
 }
 
-function changeTeacherPass(){
-  const old=document.getElementById('old-pass').value;
-  const nw=document.getElementById('new-pass').value;
-  const cf=document.getElementById('conf-pass').value;
-  if(old!==TEACHER_PASS){showToast('كلمة المرور الحالية غير صحيحة');return;}
-  if(nw!==cf){showToast('كلمة المرور الجديدة غير متطابقة');return;}
-  if(nw.length<4){showToast('كلمة المرور يجب أن تكون 4 أحرف على الأقل');return;}
-  TEACHER_PASS=nw;
-  ['old-pass','new-pass','conf-pass'].forEach(id=>document.getElementById(id).value='');
-  showToast('تم تحديث كلمة مرور المدرس بنجاح');
+function changeTeacherPass(){ changeOwnerCredentials(); }
+function changeOwnerCredentials(){
+  const oldEmail = document.getElementById('old-email').value.trim();
+  const oldPass  = document.getElementById('old-pass').value;
+  const newEmail = document.getElementById('new-email').value.trim();
+  const newPass  = document.getElementById('new-pass').value;
+  const confPass = document.getElementById('conf-pass').value;
+  const res      = document.getElementById('owner-cred-result');
+
+  const setRes = (msg, ok)=>{
+    res.textContent = msg;
+    res.style.color = ok ? '#2E7D32' : '#C62828';
+    setTimeout(()=>{ res.textContent=''; }, 4000);
+  };
+
+  // التحقق من البيانات الحالية
+  const current = OWNER_ACCOUNTS[0];
+  if(oldEmail !== current.email){
+    setRes('❌ الإيميل الحالي غير صحيح', false); return;
+  }
+  if(oldPass !== current.pass){
+    setRes('❌ كلمة المرور الحالية غير صحيحة', false); return;
+  }
+
+  // لا تغييرات
+  if(!newEmail && !newPass){
+    setRes('⚠️ لم تُدخل أي بيانات جديدة', false); return;
+  }
+
+  // التحقق من كلمة المرور الجديدة
+  if(newPass){
+    if(newPass !== confPass){ setRes('❌ تأكيد كلمة المرور غير متطابق', false); return; }
+    if(newPass.length < 4){ setRes('❌ كلمة المرور يجب أن تكون 4 أحرف على الأقل', false); return; }
+  }
+
+  // تطبيق التغييرات
+  const updated = {
+    email: newEmail || current.email,
+    pass:  newPass  || current.pass
+  };
+  OWNER_ACCOUNTS[0] = updated;
+
+  // حفظ في localStorage
+  try { localStorage.setItem('ownerCredentials', JSON.stringify(updated)); } catch(e){}
+
+  // مسح الحقول
+  ['old-email','old-pass','new-email','new-pass','conf-pass'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+
+  setRes('✅ تم حفظ بيانات الدخول بنجاح', true);
+  showToast('✅ تم تحديث بيانات المالك');
 }
 function saveAnnouncement(){
   const t=document.getElementById('ann-title').value.trim();
