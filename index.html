@@ -1023,9 +1023,10 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
         <!-- Upload mode -->
         <div id="vsrc-upload-area" style="display:none;">
           <div class="lesson-upload-area" onclick="document.getElementById('videoUpload').click()" style="border-color:#90CAF9;background:#F0F4FF;">
-            <input type="file" id="videoUpload" accept="video/mp4,video/webm,video/ogg,video/avi,video/mov" onchange="handleVideoUpload(this)">
+            <input type="file" id="videoUpload" accept="video/mp4,video/webm,video/ogg,video/avi,video/mov,video/*" onchange="handleVideoUpload(this)">
             <div class="upload-icon">🎬</div>
             <div class="upload-text">انقر لرفع ملف فيديو<br><small>MP4, WebM, MOV — الحجم الأقصى 500MB</small></div>
+            <div style="font-size:0.75rem;color:#90CAF9;margin-top:6px;">📱 يعمل من الموبايل والكمبيوتر</div>
           </div>
           <div id="videoUploadInfo" style="font-size:0.85rem;color:var(--muted);margin-top:0.4rem;"></div>
           <div id="videoUploadProgress" style="display:none;margin-top:0.5rem;">
@@ -1045,9 +1046,10 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     <div style="margin-bottom:1rem;">
       <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;">رفع ملفات PDF (مذكرات / واجبات)</label>
       <div class="lesson-upload-area" onclick="document.getElementById('pdfUpload').click()">
-        <input type="file" id="pdfUpload" accept=".pdf,.doc,.docx" multiple onchange="handleFileSelect(this)">
+        <input type="file" id="pdfUpload" accept=".pdf,.doc,.docx,image/*" multiple onchange="handleFileSelect(this)">
         <div class="upload-icon">📎</div>
-        <div class="upload-text">انقر لرفع ملفات PDF<br><small>المذكرات، الواجبات، الملخصات</small></div>
+        <div class="upload-text">انقر لرفع ملفات PDF / صور<br><small>المذكرات، الواجبات، الملخصات</small></div>
+        <div style="font-size:0.75rem;color:#90CAF9;margin-top:6px;">📱 يعمل من الموبايل والكمبيوتر</div>
       </div>
       <div id="uploadedFiles" style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;"></div>
     </div>
@@ -1235,9 +1237,10 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
         <div style="margin-bottom:0.75rem;">
           <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;">رفع ملف PDF</label>
           <div class="lesson-upload-area" onclick="document.getElementById('hwUpload').click()">
-            <input type="file" id="hwUpload" accept=".pdf,.doc,.docx" onchange="handleHWUpload(this)">
+            <input type="file" id="hwUpload" accept=".pdf,.doc,.docx,image/*" capture="environment" onchange="handleHWUpload(this)">
             <div class="upload-icon">📄</div>
-            <div class="upload-text">انقر لرفع ملف الواجب (PDF)</div>
+            <div class="upload-text">انقر لرفع ملف الواجب (PDF / صورة)</div>
+            <div style="font-size:0.78rem;color:#90CAF9;margin-top:6px;">📱 يعمل من الموبايل والكمبيوتر</div>
           </div>
           <div id="hwFileName" style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;"></div>
         </div>
@@ -1582,11 +1585,29 @@ function renderStudentHW(){
 function downloadHW(id){
   const hw = adminHW.find(x=>x.id===id);
   if(!hw){ showToast('الواجب غير موجود'); return; }
-  // If real file URL exists (from Supabase), open it
-  if(hw.fileUrl){
-    window.open(hw.fileUrl,'_blank');
+
+  // محاولة الحصول على الـ fileUrl من الكائن أو من localStorage
+  let fileUrl = hw.fileUrl && hw.fileUrl !== 'local' ? hw.fileUrl : null;
+  if(!fileUrl){
+    try{
+      const stored = JSON.parse(localStorage.getItem('adminHW_files')||'{}');
+      fileUrl = stored[hw.id] || null;
+    }catch(e){}
+  }
+
+  if(fileUrl && fileUrl.startsWith('data:')){
+    // تحميل مباشر من base64
+    const a = document.createElement('a');
+    a.href = fileUrl;
+    a.download = hw.fileName || (hw.title + '.pdf');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('✅ جاري تحميل: ' + (hw.fileName || hw.title));
+  } else if(fileUrl && fileUrl.startsWith('http')){
+    window.open(fileUrl, '_blank');
   } else {
-    showToast((currentLang==='ar'?'جاري تحميل: ':'Downloading: ') + hw.title);
+    showToast('⚠️ الملف غير متاح — يرجى مراجعة المدرس');
   }
 }
 
@@ -1990,6 +2011,12 @@ function toggleNotifPanel(){
     if(badge) badge.style.display = 'none';
   }
 }
+function clearAllNotifications(){
+  notifList = [];
+  const badge = document.getElementById('notif-badge');
+  if(badge){ badge.style.display='none'; badge.textContent=''; }
+  renderNotifPanel();
+}
 function renderNotifPanel(){
   const panel = document.getElementById('notif-panel');
   if(!panel) return;
@@ -1997,12 +2024,24 @@ function renderNotifPanel(){
     panel.innerHTML = '<div style="text-align:center;color:var(--muted);padding:1rem;font-size:0.85rem;">لا توجد إشعارات</div>';
     return;
   }
-  panel.innerHTML = notifList.map(n =>
-    '<div style="padding:0.6rem 0.75rem;border-bottom:1px solid #f0f0f0;font-size:0.82rem;">' +
-    '<div style="font-weight:600;margin-bottom:2px;">' + n.msg + '</div>' +
-    '<div style="color:var(--muted);font-size:0.75rem;">' + n.time + '</div></div>'
-  ).join('');
+  panel.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.75rem 0.6rem;border-bottom:1px solid #eee;">' +
+    '<span style="font-size:0.78rem;font-weight:700;color:var(--blue);">الإشعارات ('+notifList.length+')</span>' +
+    '<button onclick="clearAllNotifications()" style="background:#FFEBEE;border:none;color:#C62828;font-size:0.72rem;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:Cairo,sans-serif;font-weight:700;">مسح الكل ✕</button></div>' +
+    notifList.map(n =>
+      '<div style="padding:0.55rem 0.75rem;border-bottom:1px solid #f0f0f0;font-size:0.82rem;">' +
+      '<div style="font-weight:600;margin-bottom:2px;">' + n.msg + '</div>' +
+      '<div style="color:var(--muted);font-size:0.75rem;">' + n.time + '</div></div>'
+    ).join('');
 }
+// إغلاق لوحة الإشعارات عند النقر خارجها
+document.addEventListener('click', function(e){
+  const panel = document.getElementById('notif-panel');
+  const btn = e.target.closest('[onclick="toggleNotifPanel()"]') || e.target.closest('[onclick*="toggleNotifPanel"]');
+  if(panel && panel.style.display==='block' && !panel.contains(e.target) && !btn){
+    panel.style.display='none';
+  }
+});
 
 function showToast(msg){
   const t=document.getElementById('toast');
@@ -2247,9 +2286,13 @@ function saveLesson(){
     adminLessons.push(newLesson);
     if(fbReady) fbSet('lessons',newLesson.id,newLesson).catch(()=>{});
     showToast('✅ تم نشر الدرس: '+title);
-    addNotification('درس جديد: '+title, 'lesson');
+    addNotification('📚 درس جديد أُضيف: '+title, 'lesson');
   }
-  closeLessonModal();renderLessonsTable();
+  closeLessonModal();
+  renderLessonsTable();
+  renderCourseCards();
+  renderDashboardCourses();
+  if(currentCourseId){ const c=adminCourses.find(x=>x.id===currentCourseId); if(c) renderCourseSidebar(c); }
 }
 function handleFileSelect(input){
   const names=Array.from(input.files).map(f=>f.name).join(', ');
@@ -2272,19 +2315,39 @@ function saveHW(){
   const due=document.getElementById('hw-due').value;
   const type=document.getElementById('hw-type').value;
   if(!title){showToast('يرجى إدخال عنوان الواجب');return;}
+  if(!hwUploadedFileData){showToast('⚠️ يرجى رفع ملف PDF أولاً');return;}
   const newHWId=Date.now();
-  const newHW={id:newHWId,title,course,due,type,fileUrl:''};
+  const newHW={id:newHWId,title,course,due,type,fileUrl:hwUploadedFileData.url,fileName:hwUploadedFileData.name,fileType:hwUploadedFileData.type};
   adminHW.push(newHW);
-  // Firebase في الخلفية بدون انتظار
-  if(fbReady) fbSet('assignments', newHWId, newHW).catch(()=>{});
+  // حفظ في localStorage كـ backup (بدون الـ base64 الكبير في Firebase)
+  try{ const stored=JSON.parse(localStorage.getItem('adminHW_files')||'{}'); stored[newHWId]=hwUploadedFileData.url; localStorage.setItem('adminHW_files',JSON.stringify(stored)); }catch(e){}
+  // Firebase في الخلفية — نحفظ بدون الـ base64 لتجنب حجم الـ document
+  if(fbReady){
+    const hwMeta={id:newHWId,title,course,due,type,fileName:hwUploadedFileData.name,fileType:hwUploadedFileData.type,fileUrl:'local'};
+    fbSet('assignments',newHWId,hwMeta).catch(()=>{});
+  }
   document.getElementById('hw-title').value='';
   document.getElementById('hw-due').value='';
   document.getElementById('hwFileName').textContent='';
+  hwUploadedFileData=null;
   renderHWTable(); renderStudentHW();
   showToast('✅ تم نشر الواجب: '+title);
-  addNotification('واجب جديد: '+title, 'hw');
+  addNotification('📝 واجب جديد: '+title, 'hw');
 }
-function handleHWUpload(input){if(input.files[0])document.getElementById('hwFileName').textContent='الملف: '+input.files[0].name;}
+let hwUploadedFileData = null;
+function handleHWUpload(input){
+  const file = input.files[0];
+  if(!file) return;
+  if(file.size > 20*1024*1024){ showToast('❌ حجم الملف كبير — الحد 20MB'); return; }
+  document.getElementById('hwFileName').textContent = '⏳ جاري تحميل الملف...';
+  const reader = new FileReader();
+  reader.onload = function(e){
+    hwUploadedFileData = { name: file.name, url: e.target.result, type: file.type };
+    document.getElementById('hwFileName').textContent = '✅ جاهز: ' + file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
+  };
+  reader.onerror = function(){ showToast('❌ فشل قراءة الملف'); };
+  reader.readAsDataURL(file);
+}
 
 function confirmDelete(action,id,name){
   deleteAction={action,id};
@@ -2615,16 +2678,32 @@ function loadUploadedVideo(blobUrl, title){
 // ════════════════════════════════════════════════════
 // COURSE CARDS — link to dynamic detail
 // ════════════════════════════════════════════════════
+function getVisibleCourses(){
+  // المعلم/المالك يرى كل الكورسات
+  const isTeacher = document.getElementById('navUser')?.textContent?.includes('المدرس');
+  if(isTeacher) return adminCourses;
+  // الطالب يرى فقط كورسات صفه
+  const student = adminStudents.find(s=>s.user===currentUser);
+  if(!student) return [];
+  const studentGrade = (student.grade||'').trim();
+  return adminCourses.filter(c=>{
+    const cGrade = (c.grade||'').trim();
+    return !cGrade || cGrade===studentGrade;
+  });
+}
+
 function renderCourseCards(){
   const grid = document.getElementById('courses-dynamic-grid');
   if(!grid) return;
-  if(adminCourses.length===0){
-    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);"><div style="font-size:3rem;">📭</div><p>لم يتم إضافة كورسات بعد</p></div>';
+  const visible = getVisibleCourses();
+  if(visible.length===0){
+    const isTeacher = document.getElementById('navUser')?.textContent?.includes('المدرس');
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);"><div style="font-size:3rem;">📭</div><p>'+(isTeacher?'لم يتم إضافة كورسات بعد':'لا توجد كورسات لصفك — تواصل مع المدرس')+'</p></div>';
     return;
   }
   const colors=['blue','purple','green','orange'];
   const emojis=['📐','🔢','📏','📊','🧮'];
-  grid.innerHTML = adminCourses.map((c,i)=>`
+  grid.innerHTML = visible.map((c,i)=>`
     <div class="course-card" onclick="showCourseDetail('${c.id}')">
       <div class="course-thumb ${colors[i%colors.length]}">${emojis[i%emojis.length]}</div>
       <div class="course-body">
@@ -2672,13 +2751,14 @@ function renderAdminCourses(){
 function renderDashboardCourses(){
   const grid = document.getElementById('dashboard-courses-grid');
   if(!grid) return;
-  if(adminCourses.length===0){
-    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--muted);"><div style="font-size:2.5rem;">📭</div><p>لا توجد كورسات بعد</p></div>';
+  const visible = getVisibleCourses();
+  if(visible.length===0){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--muted);"><div style="font-size:2.5rem;">📭</div><p>لا توجد كورسات لصفك بعد</p></div>';
     return;
   }
   const colors=['blue','purple','green','orange'];
   const emojis=['📐','🔢','📏','📊','🧮'];
-  grid.innerHTML = adminCourses.map((c,i)=>{
+  grid.innerHTML = visible.map((c,i)=>{
     const total   = adminLessons.filter(l=>l.course===c.name&&l.status==='active').length||1;
     const done    = adminLessons.filter(l=>l.course===c.name&&l.status==='active'&&watchedLessons[l.id]).length;
     const pct     = Math.round((done/total)*100);
