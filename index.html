@@ -306,7 +306,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
 .admin-card{background:white;border-radius:var(--radius);box-shadow:var(--card-shadow);padding:1.5rem;margin-bottom:1.5rem;}
 .admin-card h3{font-size:1rem;font-weight:700;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:2px solid var(--bg);}
 .admin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem;}
-.admin-stat{background:white;border-radius:var(--radius);padding:1.25rem;box-shadow:var(--card-shadow);text-align:center;border-top:3px solid var(--blue);}
+.admin-stat{background:white;border-radius:var(--radius);padding:1.25rem;box-shadow:var(--card-shadow);text-align:center;border-top:3px solid var(--blue);transition:transform 0.15s,box-shadow 0.15s;}.admin-stat[onclick]:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.12);}
 .admin-stat.gold{border-top-color:var(--gold);}
 .admin-stat.green{border-top-color:#4CAF50;}
 .admin-stat.red{border-top-color:#F44336;}
@@ -552,9 +552,9 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
       <button class="btn-outline" onclick="doLogout()" style="background:rgba(244,67,54,0.15);border-color:rgba(255,120,120,0.6);color:#FFCCCC;" id="h-logout">🚪 خروج</button>
     </div>
     <div class="hero-stats">
-      <div class="stat"><strong>+500</strong><span id="h-s1">طالب مسجل</span></div>
-      <div class="stat"><strong>+80</strong><span id="h-s2">درس متاح</span></div>
-      <div class="stat"><strong>+30</strong><span id="h-s3">واجب تدريبي</span></div>
+      <div class="stat"><strong id="h-n1">+500</strong><span id="h-s1">طالب مسجل</span></div>
+      <div class="stat"><strong id="h-n2">+80</strong><span id="h-s2">درس متاح</span></div>
+      <div class="stat"><strong id="h-n3">+30</strong><span id="h-s3">واجب تدريبي</span></div>
     </div>
   </div>
 
@@ -1092,9 +1092,9 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
 
   <div class="admin-section active" id="adm-overview">
     <div class="admin-stats">
-      <div class="admin-stat"><div class="num" id="stat-students">12</div><div class="lbl">طالب مسجل</div></div>
-      <div class="admin-stat gold"><div class="num" id="stat-lessons">24</div><div class="lbl">درس منشور</div></div>
-      <div class="admin-stat green"><div class="num" id="stat-hw">8</div><div class="lbl">واجب متاح</div></div>
+      <div class="admin-stat" onclick="adminTab('students',document.querySelector('.admin-tab:nth-child(5)'))" style="cursor:pointer;" title="إدارة الطلاب"><div class="num" id="stat-students">12</div><div class="lbl">طالب مسجل</div></div>
+      <div class="admin-stat gold" onclick="adminTab('lessons',document.querySelector('.admin-tab:nth-child(3)'))" style="cursor:pointer;" title="إدارة الدروس"><div class="num" id="stat-lessons">24</div><div class="lbl">درس منشور</div></div>
+      <div class="admin-stat green" onclick="adminTab('assignments',document.querySelector('.admin-tab:nth-child(4)'))" style="cursor:pointer;" title="إدارة الواجبات"><div class="num" id="stat-hw">8</div><div class="lbl">واجب متاح</div></div>
       <div class="admin-stat red"><div class="num" id="stat-pending">3</div><div class="lbl">طلبات معلقة</div></div>
     </div>
     <div class="admin-card">
@@ -1832,7 +1832,7 @@ async function doLogin(){
     document.getElementById('loginOverlay').style.display='none';
     resetBtn();
     showPage('admin');
-    if(fbReady){ renderLessonsTable(); renderStudentsTable(); renderHWTable(); renderAdminCourses(); checkSupabaseConfig(); }
+    if(fbReady){ renderLessonsTable(); renderStudentsTable(); renderHWTable(); renderAdminCourses(); checkSupabaseConfig(); updateAllStats(); }
     document.getElementById('navUser').textContent='🔧 المدرس ▾';
     showToast('🎉 مرحباً يا أستاذ Anas!');
     return;
@@ -2081,7 +2081,7 @@ async function doTeacherLogin(){
     document.getElementById('teacherPass').value='';
     if(btn){ btn.textContent='دخول ←'; btn.disabled=false; }
     showPage('admin');
-    if(fbReady){ renderLessonsTable();renderStudentsTable();renderHWTable();renderAdminCourses(); checkSupabaseConfig(); }
+    if(fbReady){ renderLessonsTable();renderStudentsTable();renderHWTable();renderAdminCourses(); checkSupabaseConfig(); updateAllStats(); }
     document.getElementById('navUser').textContent='🔧 المدرس ▾';
     showToast('🎉 مرحباً يا أستاذ Anas!');
     return;
@@ -2115,6 +2115,19 @@ function closeMobMenu(){
   if(btn)btn.textContent='☰';
 }
 
+function updateAllStats(){
+  const nStudents = adminStudents.length;
+  const nLessons  = adminLessons.length;
+  const nHW       = adminHW.length;
+  // Admin overview cards
+  ['stat-students','s-total'].forEach(id=>{ const el=document.getElementById(id); if(el)el.textContent=nStudents; });
+  ['stat-lessons','s-lessons'].forEach(id=>{ const el=document.getElementById(id); if(el)el.textContent=nLessons; });
+  ['stat-hw','s-hw'].forEach(id=>{ const el=document.getElementById(id); if(el)el.textContent=nHW; });
+  // Hero section — show real numbers (with + prefix)
+  const hn1=document.getElementById('h-n1'); if(hn1)hn1.textContent='+'+nStudents;
+  const hn2=document.getElementById('h-n2'); if(hn2)hn2.textContent='+'+nLessons;
+  const hn3=document.getElementById('h-n3'); if(hn3)hn3.textContent='+'+nHW;
+}
 function adminTab(name,btn){
   document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
@@ -2217,7 +2230,7 @@ function saveStudent(){
     adminStudents.push(newStudent);
     USERS[user]=pass;
     showToast('✅ تم إضافة الطالب: '+name);
-    closeStudentModal(); renderStudentsTable();
+    closeStudentModal(); renderStudentsTable(); updateAllStats();
     // Firebase في الخلفية بدون انتظار
     if(fbReady){
       fbSet('students', newId, newStudent).catch(e=>console.warn('fbSet error:',e));
@@ -2289,7 +2302,7 @@ function saveLesson(){
     addNotification('📚 درس جديد أُضيف: '+title, 'lesson');
   }
   closeLessonModal();
-  renderLessonsTable();
+  renderLessonsTable(); updateAllStats();
   renderCourseCards();
   renderDashboardCourses();
   if(currentCourseId){ const c=adminCourses.find(x=>x.id===currentCourseId); if(c) renderCourseSidebar(c); }
@@ -2330,7 +2343,7 @@ function saveHW(){
   document.getElementById('hw-due').value='';
   document.getElementById('hwFileName').textContent='';
   hwUploadedFileData=null;
-  renderHWTable(); renderStudentHW();
+  renderHWTable(); renderStudentHW(); updateAllStats();
   showToast('✅ تم نشر الواجب: '+title);
   addNotification('📝 واجب جديد: '+title, 'hw');
 }
@@ -2358,10 +2371,10 @@ function closeConfirm(){document.getElementById('confirmModal').classList.remove
 function execDelete(){
   if(!deleteAction)return;
   const{action,id}=deleteAction;
-  if(action==='deleteStudent'){fbDel('students',id);adminStudents=adminStudents.filter(x=>x.id!==id);renderStudentsTable();showToast('✅ تم حذف الطالب');}
-  if(action==='deleteLesson'){fbDel('lessons',id);adminLessons=adminLessons.filter(x=>x.id!==id);renderLessonsTable();renderCourseCards();showToast('✅ تم حذف الدرس');}
+  if(action==='deleteStudent'){fbDel('students',id);adminStudents=adminStudents.filter(x=>x.id!==id);renderStudentsTable();updateAllStats();showToast('✅ تم حذف الطالب');}
+  if(action==='deleteLesson'){fbDel('lessons',id);adminLessons=adminLessons.filter(x=>x.id!==id);renderLessonsTable();updateAllStats();renderCourseCards();showToast('✅ تم حذف الدرس');}
   if(action==='deleteCourse'){fbDel('courses',id);adminCourses=adminCourses.filter(x=>x.id!==id);renderAdminCourses();renderCourseCards();showToast('✅ تم حذف الكورس');}
-  if(action==='deleteHW'){fbDel('assignments',id);adminHW=adminHW.filter(x=>x.id!==id);renderHWTable();renderStudentHW();showToast('✅ تم حذف الواجب');}
+  if(action==='deleteHW'){fbDel('assignments',id);adminHW=adminHW.filter(x=>x.id!==id);renderHWTable();renderStudentHW();updateAllStats();showToast('✅ تم حذف الواجب');}
   closeConfirm();
 }
 function saveSupabaseConfig(){
@@ -2853,13 +2866,13 @@ function startRealtimeListeners(){
   // Listen for new lessons
   db.collection('lessons').onSnapshot(snap=>{
     adminLessons = snap.docs.map(d=>({...d.data(), id:isNaN(d.id)?d.id:Number(d.id)}));
-    renderLessonsTable(); renderCourseCards();
+    renderLessonsTable(); renderCourseCards(); updateAllStats();
     if(currentCourseId){ const c=adminCourses.find(x=>x.id===currentCourseId); if(c) renderCourseSidebar(c); }
   });
   // Listen for new assignments
   db.collection('assignments').onSnapshot(snap=>{
     adminHW = snap.docs.map(d=>({...d.data(), id:isNaN(d.id)?d.id:Number(d.id)}));
-    renderStudentHW(); renderHWTable();
+    renderStudentHW(); renderHWTable(); updateAllStats();
     addNotification('تم تحديث الواجبات');
   });
 }
