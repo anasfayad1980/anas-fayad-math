@@ -378,8 +378,8 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     </div>
     <div class="login-err" id="loginErr" id="lt-err">اسم المستخدم أو كلمة المرور غير صحيحة</div>
     <div class="form-group">
-      <label id="lt-user">اسم المستخدم</label>
-      <input type="text" id="loginUser" placeholder="أدخل اسم المستخدمر">
+      <label id="lt-user">اسم المستخدم أو البريد الإلكتروني</label>
+      <input type="text" id="loginUser" placeholder="اسم المستخدم أو الإيميل">
     </div>
     <div class="form-group">
       <label id="lt-pass">كلمة المرور</label>
@@ -1487,7 +1487,7 @@ const T={
     'nav-home':'الرئيسية','nav-courses':'الدروس','nav-about':'من نحن',
     'nav-contact':'اتصل بنا','nav-dash':'لوحتي',
     'lt-title':'Mr. Anas Fayad','lt-sub':'منصة الرياضيات التعليمية',
-    'lt-user':'اسم المستخدم','lt-pass':'كلمة المرور','lt-rem':'تذكرني',
+    'lt-user':'اسم المستخدم أو البريد الإلكتروني','lt-pass':'كلمة المرور','lt-rem':'تذكرني',
     'lt-forgot':'نسيت كلمة المرور؟','lt-btn':'دخول','lt-hint':'',
     'lt-err':'اسم المستخدم أو كلمة المرور غير صحيحة',
     'h-title':'<span>حوّل</span> رحلتك التعليمية',
@@ -1556,7 +1556,7 @@ const T={
     'nav-home':'Home','nav-courses':'Courses','nav-about':'About Us',
     'nav-contact':'Contact Us','nav-dash':'Dashboard',
     'lt-title':'Mr. Anas Fayad','lt-sub':'Math Learning Platform',
-    'lt-user':'Username','lt-pass':'Password','lt-rem':'Remember me',
+    'lt-user':'Username or Email','lt-pass':'Password','lt-rem':'Remember me',
     'lt-forgot':'Forgot password?','lt-btn':'Login','lt-hint':'',
     'lt-err':'Invalid username or password',
     'h-title':'<span>Transform</span> Your Learning Journey',
@@ -1645,41 +1645,56 @@ async function doLogin(){
   const p   = document.getElementById('loginPass').value.trim();
   const err = document.getElementById('loginErr');
   const btn = document.querySelector('#loginOverlay .btn-primary');
+  const isEmail = u.includes('@');
+
   if(!u||!p){ err.style.display='block'; setTimeout(()=>err.style.display='none',3000); return; }
   if(btn){ btn.textContent='⏳...'; btn.disabled=true; }
 
-  // Try Firebase Auth first (email login)
-  if(fbReady){
-    // Check if username matches a student in our DB
-    await loadStudentsFromDB(); // ensure fresh data
-    const found = adminStudents.find(s=>s.user===u);
+  const resetBtn = ()=>{ if(btn){ btn.textContent=currentLang==='ar'?'دخول':'Login'; btn.disabled=false; } };
+  const showErr  = (msg)=>{
+    err.textContent = msg || (currentLang==='ar'?'اسم المستخدم أو كلمة المرور غير صحيحة':'Invalid username or password');
+    err.style.display='block';
+    setTimeout(()=>{ err.style.display='none'; err.textContent=currentLang==='ar'?'اسم المستخدم أو كلمة المرور غير صحيحة':'Invalid username or password'; }, 3500);
+  };
 
-    if(found){
-      // Student found — verify password locally (stored in Firestore)
-      if(found.pass !== p){
-        if(btn){ btn.textContent=currentLang==='ar'?'دخول':'Login'; btn.disabled=false; }
-        err.style.display='block'; setTimeout(()=>err.style.display='none',3000); return;
-      }
-      // Check if active
-      if(!found.active){
-        if(btn){ btn.textContent=currentLang==='ar'?'دخول':'Login'; btn.disabled=false; }
-        err.textContent='⛔ حسابك موقوف — تواصل مع المدرس';
-        err.style.display='block'; setTimeout(()=>{err.style.display='none';err.textContent='اسم المستخدم أو كلمة المرور غير صحيحة';},3000);
-        return;
-      }
-      // Login success
-      loginSuccess(found);
-    } else {
-      if(btn){ btn.textContent=currentLang==='ar'?'دخول':'Login'; btn.disabled=false; }
-      err.style.display='block'; setTimeout(()=>err.style.display='none',3000);
+  // CASE 1: Email input → Firebase Auth (owner/admin login)
+  if(isEmail && fbReady){
+    try{
+      await auth.signInWithEmailAndPassword(u, p);
+      document.getElementById('loginOverlay').style.display='none';
+      resetBtn();
+      showPage('admin');
+      renderLessonsTable(); renderStudentsTable(); renderHWTable(); renderAdminCourses();
+      checkSupabaseConfig();
+      document.getElementById('navUser').textContent='🔧 المدرس ▾';
+      showToast('🎉 مرحباً يا أستاذ Anas!');
+      return;
+    } catch(e){
+      resetBtn();
+      const msg = e.code==='auth/wrong-password'||e.code==='auth/invalid-credential' ? '❌ كلمة المرور غير صحيحة'
+                : e.code==='auth/user-not-found' ? '❌ البريد غير مسجل'
+                : e.code==='auth/invalid-email'  ? '❌ البريد غير صحيح'
+                : '❌ '+e.message;
+      showErr(msg);
+      return;
     }
-  } else {
-    // Fallback local check
-    const found = adminStudents.find(s=>s.user===u && s.pass===p);
-    if(found){ loginSuccess(found); }
-    else { err.style.display='block'; setTimeout(()=>err.style.display='none',3000); }
   }
-  if(btn){ btn.textContent=currentLang==='ar'?'دخول':'Login'; btn.disabled=false; }
+
+  // CASE 2: username (no @) → student login
+  if(fbReady){
+    await loadStudentsFromDB();
+    const found = adminStudents.find(s=>s.user===u);
+    if(found){
+      if(found.pass !== p){ resetBtn(); showErr(); return; }
+      if(!found.active){ resetBtn(); showErr('⛔ حسابك موقوف — تواصل مع المدرس'); return; }
+      resetBtn(); loginSuccess(found); return;
+    }
+    resetBtn(); showErr();
+  } else {
+    const found = adminStudents.find(s=>s.user===u && s.pass===p);
+    if(found){ resetBtn(); loginSuccess(found); }
+    else { resetBtn(); showErr(); }
+  }
 }
 
 function loginSuccess(found){
