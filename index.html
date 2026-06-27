@@ -1868,38 +1868,25 @@ async function doTeacherLogin(){
   const err   = document.getElementById('teacherErr');
   const btn   = document.getElementById('teacher-login-btn');
   if(!email||!pass){ err.style.display='block'; setTimeout(()=>err.style.display='none',3000); return; }
+  if(btn){ btn.textContent='⏳...'; btn.disabled=true; }
 
-  if(btn){ btn.textContent='⏳ جاري الدخول...'; btn.disabled=true; }
-
-  // Firebase Auth login
-  if(fbReady){
-    try{
-      const cred = await auth.signInWithEmailAndPassword(email, pass);
-      // Success
-      document.getElementById('teacherLoginModal').classList.remove('open');
-      document.getElementById('teacherUser').value='';
-      document.getElementById('teacherPass').value='';
-      if(btn){ btn.textContent='دخول ←'; btn.disabled=false; }
-      showPage('admin');
-      renderLessonsTable();renderStudentsTable();renderHWTable();renderAdminCourses();
-      checkSupabaseConfig();
-      showToast('🎉 مرحباً يا أستاذ Anas!');
-    } catch(e){
-      if(btn){ btn.textContent='دخول ←'; btn.disabled=false; }
-      err.textContent = e.code==='auth/wrong-password'?'❌ كلمة المرور غير صحيحة':
-                        e.code==='auth/user-not-found'?'❌ البريد غير مسجل':
-                        e.code==='auth/invalid-email'?'❌ البريد غير صحيح':
-                        '❌ '+e.message;
-      err.style.display='block';
-      setTimeout(()=>err.style.display='none',4000);
-    }
-  } else {
-    // Fallback if Firebase not ready
+  const ownerMatch = OWNER_ACCOUNTS.find(o => o.email===email && o.pass===pass);
+  if(ownerMatch){
+    document.getElementById('teacherLoginModal').classList.remove('open');
+    document.getElementById('teacherUser').value='';
+    document.getElementById('teacherPass').value='';
     if(btn){ btn.textContent='دخول ←'; btn.disabled=false; }
-    err.textContent='❌ Firebase غير متصل — تحقق من الإنترنت';
-    err.style.display='block';
-    setTimeout(()=>err.style.display='none',4000);
+    showPage('admin');
+    if(fbReady){ renderLessonsTable();renderStudentsTable();renderHWTable();renderAdminCourses(); checkSupabaseConfig(); }
+    document.getElementById('navUser').textContent='🔧 المدرس ▾';
+    showToast('🎉 مرحباً يا أستاذ Anas!');
+    return;
   }
+
+  if(btn){ btn.textContent='دخول ←'; btn.disabled=false; }
+  err.textContent='❌ الإيميل أو كلمة المرور غير صحيحة';
+  err.style.display='block';
+  setTimeout(()=>err.style.display='none',3500);
 }
 function adminLogout(){showPage('home');showToast('تم الخروج من لوحة التحكم');}
 
