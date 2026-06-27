@@ -4,11 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mr. Anas Fayad - منصة الرياضيات</title>
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<!-- Firebase SDK moved to end of body -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -1966,52 +1962,40 @@ function openEditStudent(id){
   document.getElementById('studentModal').classList.add('open');
 }
 function closeStudentModal(){document.getElementById('studentModal').classList.remove('open');}
-async function saveStudent(){
+function saveStudent(){
   const name=document.getElementById('sm-name').value.trim();
   const user=document.getElementById('sm-user').value.trim();
   const pass=document.getElementById('sm-pass').value.trim();
   const grade=document.getElementById('sm-grade').value;
   const phone=document.getElementById('sm-phone').value.trim();
   if(!name||!user||!pass){showToast('يرجى ملء الاسم واليوزرنايم والباسوورد');return;}
+
   if(editingStudentId){
+    // تعديل طالب موجود — فوري محلياً
     const s=adminStudents.find(x=>x.id===editingStudentId);
     if(s){
       Object.assign(s,{name,user,pass,grade,phone});
-      fbSet('students', s.id, {name,user,pass,grade,phone,active:s.active,subEnd:s.subEnd||''});
+      // Firebase في الخلفية بدون انتظار
+      if(fbReady) fbSet('students', s.id, {name,user,pass,grade,phone,active:s.active,subEnd:s.subEnd||''});
     }
     showToast('✅ تم تحديث بيانات الطالب');
     closeStudentModal(); renderStudentsTable();
   } else {
-    // Show saving indicator
-    const saveBtn = document.getElementById('studentModal').querySelector('.admin-btn');
-    if(saveBtn){ saveBtn.textContent='⏳ جاري الحفظ...'; saveBtn.disabled=true; }
+    // إضافة طالب جديد — فوري محلياً
     const newId = Date.now();
-    const email = user+'@anasfayad.math'; // synthetic email for Firebase Auth
+    const email = user+'@anasfayad.math';
     const newStudent={id:newId,name,user,pass,grade,phone,active:true,subEnd:'',email};
-    
-    // 1. Save to Firestore
-    await fbSet('students', newId, newStudent);
     adminStudents.push(newStudent);
     USERS[user]=pass;
-    
-    // 2. Register in Firebase Auth (so student can login)
-    if(fbReady){
-      try{
-        await auth.createUserWithEmailAndPassword(email, pass);
-        showToast('✅ تم تسجيل الطالب في Firebase: '+name);
-      } catch(e){
-        if(e.code==='auth/email-already-in-use'){
-          showToast('✅ تم تحديث بيانات الطالب: '+name);
-        } else {
-          console.warn('Auth register error:', e.message);
-          showToast('✅ تم حفظ الطالب ('+name+') — '+e.message);
-        }
-      }
-    } else {
-      showToast('✅ تم تسجيل الطالب: '+name+' (سيتم مزامنته عند الاتصال)');
-    }
-    if(saveBtn){ saveBtn.textContent='حفظ'; saveBtn.disabled=false; }
+    showToast('✅ تم إضافة الطالب: '+name);
     closeStudentModal(); renderStudentsTable();
+    // Firebase في الخلفية بدون انتظار
+    if(fbReady){
+      fbSet('students', newId, newStudent).catch(e=>console.warn('fbSet error:',e));
+      auth.createUserWithEmailAndPassword(email, pass).catch(e=>{
+        if(e.code!=='auth/email-already-in-use') console.warn('Auth register:', e.message);
+      });
+    }
   }
 }
 function updateSub(id, date){
@@ -2054,7 +2038,7 @@ function editLesson(id){
   document.getElementById('lessonModal').classList.add('open');
 }
 function closeLessonModal(){document.getElementById('lessonModal').classList.remove('open');}
-async function saveLesson(){
+function saveLesson(){
   const title=document.getElementById('lm-title').value.trim();
   const course=document.getElementById('lm-course').value;
   const unit=document.getElementById('lm-unit').value.trim();
@@ -2064,11 +2048,15 @@ async function saveLesson(){
   if(!title||!unit){showToast('يرجى إدخال عنوان الحصة والوحدة');return;}
   if(editingLessonId){
     const l=adminLessons.find(x=>x.id===editingLessonId);
-    if(l)Object.assign(l,{title,course,unit,url,vtype,status});
-    showToast('تم تحديث الدرس');
+    if(l){ Object.assign(l,{title,course,unit,url,vtype,status});
+      if(fbReady) fbSet('lessons',l.id,l).catch(()=>{});
+    }
+    showToast('✅ تم تحديث الدرس');
   } else {
-    adminLessons.push({id:Date.now(),title,course,unit,url,vtype,status});
-    showToast('تم نشر الدرس: '+title);
+    const newLesson={id:Date.now(),title,course,unit,url,vtype,status};
+    adminLessons.push(newLesson);
+    if(fbReady) fbSet('lessons',newLesson.id,newLesson).catch(()=>{});
+    showToast('✅ تم نشر الدرس: '+title);
     addNotification('درس جديد: '+title, 'lesson');
   }
   closeLessonModal();renderLessonsTable();
@@ -2088,30 +2076,21 @@ function renderHWTable(){
   const el=document.getElementById('stat-hw');if(el)el.textContent=adminHW.length;
   const el2=document.getElementById('s-hw');if(el2)el2.textContent=adminHW.length;
 }
-async function saveHW(){
+function saveHW(){
   const title=document.getElementById('hw-title').value.trim();
   const course=document.getElementById('hw-course').value;
   const due=document.getElementById('hw-due').value;
   const type=document.getElementById('hw-type').value;
   if(!title){showToast('يرجى إدخال عنوان الواجب');return;}
   const newHWId=Date.now();
-  let hwFileUrl='';
-  const hwFile=document.getElementById('hwUpload')?.files[0];
-  if(hwFile && fbReady){
-    try{
-      showToast('⏳ جاري رفع الملف...');
-      hwFileUrl = await uploadToStorage(hwFile,'assignments/'+newHWId+'_'+hwFile.name,null);
-      showToast('✅ تم رفع الملف!');
-    }catch(e){ console.warn('HW upload error',e); }
-  }
-  const newHW={id:newHWId,title,course,due,type,fileUrl:hwFileUrl};
+  const newHW={id:newHWId,title,course,due,type,fileUrl:''};
   adminHW.push(newHW);
-  fbSet('assignments', newHWId, newHW);
+  // Firebase في الخلفية بدون انتظار
+  if(fbReady) fbSet('assignments', newHWId, newHW).catch(()=>{});
   document.getElementById('hw-title').value='';
   document.getElementById('hw-due').value='';
   document.getElementById('hwFileName').textContent='';
-  renderHWTable();
-  renderStudentHW();
+  renderHWTable(); renderStudentHW();
   showToast('✅ تم نشر الواجب: '+title);
   addNotification('واجب جديد: '+title, 'hw');
 }
@@ -2556,13 +2535,24 @@ function saveAdminCourse(){
 async function testFirebase(){
   const res = document.getElementById('supabase-test-result');
   if(!res) return;
+  if(!fbReady){
+    res.textContent='🔴 Firebase غير متصل — البيانات تُحفظ محلياً فقط';
+    res.style.color='#E65100'; return;
+  }
   res.textContent = '🔄 جاري الاختبار...'; res.style.color='var(--muted)';
-  if(!fbReady){ res.textContent='❌ Firebase غير متصل — تحقق من الاتصال بالإنترنت'; res.style.color='#C62828'; return; }
   try{
-    await db.collection('_test').doc('ping').set({t:Date.now()});
+    await Promise.race([
+      db.collection('_test').doc('ping').set({t:Date.now()}),
+      new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),5000))
+    ]);
     await db.collection('_test').doc('ping').delete();
-    res.textContent='✅ Firebase يعمل بشكل مثالي!'; res.style.color='#2E7D32';
-  }catch(e){ res.textContent='❌ خطأ: '+e.message; res.style.color='#C62828'; }
+    res.textContent='✅ Firebase متصل ويعمل!'; res.style.color='#2E7D32';
+  }catch(e){
+    res.textContent= e.message==='timeout'
+      ? '⚠️ انتهت مهلة الاتصال — تحقق من الإنترنت'
+      : '❌ خطأ: '+e.message;
+    res.style.color='#C62828';
+  }
 }
 
 async function syncAllToFirebase(){
@@ -2634,12 +2624,16 @@ function startRealtimeListeners(){
   init();draw();
 })();
 
-// تشغيل Firebase عند تحميل الصفحة
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded', initFirebase);
-} else {
-  initFirebase();
+// تشغيل Firebase بعد تحميل كل شيء
+function tryInitFirebase(){
+  if(typeof firebase !== 'undefined'){
+    initFirebase();
+  } else {
+    // Firebase SDK لم يتحمل بعد — انتظر أكثر
+    setTimeout(tryInitFirebase, 200);
+  }
 }
+window.addEventListener('load', tryInitFirebase);
 
 </script>
 <!-- 
@@ -2652,5 +2646,10 @@ if(document.readyState==='loading'){
   ║  5. npx cap open android                     ║
   ╚══════════════════════════════════════════════╝
 -->
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 </body>
 </html>
