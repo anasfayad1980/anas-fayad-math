@@ -1,0 +1,2530 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mr. Anas Fayad - منصة الرياضيات</title>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --blue:#1565C0;--blue-light:#1E88E5;--blue-dark:#0D47A1;
+  --gold:#F9A825;--gold-light:#FFC107;
+  --bg:#F5F7FA;--white:#fff;--text:#1a1a2e;--muted:#64748b;
+  --card-shadow:0 2px 12px rgba(0,0,0,0.08);
+  --radius:12px;
+}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);direction:rtl;}
+
+/* ══ MATH BACKGROUND ══ */
+#math-bg{
+  position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+}
+#math-bg canvas{position:absolute;inset:0;width:100%;height:100%;}
+nav,footer,.page,.modal-overlay,.login-overlay{position:relative;z-index:1;}
+
+body.ltr{direction:ltr;font-family:'Inter',sans-serif;}
+
+/* NAV */
+nav{background:var(--blue-dark);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;}
+.nav-logo{display:flex;align-items:center;gap:10px;color:white;font-size:1.2rem;font-weight:700;text-decoration:none;}
+.nav-logo .logo-icon{width:42px;height:42px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;}
+.nav-links{display:flex;gap:1.5rem;list-style:none;}
+.nav-links a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:0.95rem;transition:color 0.2s;}
+.nav-links a:hover,.nav-links a.active{color:var(--gold);}
+.nav-right{display:flex;align-items:center;gap:1rem;}
+.lang-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.35);color:white;padding:6px 14px;border-radius:50px;cursor:pointer;font-size:0.85rem;font-family:'Cairo',sans-serif;transition:all 0.2s;backdrop-filter:blur(4px);}
+.lang-btn:hover{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.7);}
+.user-badge{background:rgba(255,255,255,0.15);color:white;padding:5px 14px;border-radius:20px;font-size:0.9rem;}
+
+/* PAGES */
+.page{display:none;}
+.page.active{display:block;}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--blue-dark) 0%,var(--blue-light) 100%);padding:5rem 2rem;text-align:center;color:white;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+.hero-logo-box{width:90px;height:90px;background:var(--gold);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:2.5rem;position:relative;z-index:1;}
+.hero h1{font-size:2.8rem;font-weight:900;margin-bottom:0.5rem;position:relative;z-index:1;}
+.hero h1 span{color:var(--gold);}
+.hero p{font-size:1.15rem;opacity:0.9;margin-bottom:2rem;position:relative;z-index:1;}
+.hero-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;}
+.btn-primary{
+  background:linear-gradient(135deg,var(--gold) 0%,#ffb300 100%);
+  color:var(--blue-dark);padding:13px 30px;border-radius:50px;border:none;
+  font-weight:700;font-size:1rem;cursor:pointer;font-family:'Cairo',sans-serif;
+  box-shadow:0 4px 15px rgba(249,168,37,0.4);
+  transition:all 0.25s;letter-spacing:0.3px;
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(249,168,37,0.5);}
+.btn-primary:active{transform:translateY(0);}
+.btn-outline{
+  background:rgba(255,255,255,0.08);color:white;padding:13px 30px;border-radius:50px;
+  border:1.5px solid rgba(255,255,255,0.5);font-weight:600;font-size:1rem;
+  cursor:pointer;font-family:'Cairo',sans-serif;
+  backdrop-filter:blur(4px);transition:all 0.25s;
+}
+.btn-outline:hover{background:rgba(255,255,255,0.18);border-color:white;transform:translateY(-2px);}
+.hero-stats{display:flex;gap:3rem;justify-content:center;margin-top:3rem;position:relative;z-index:1;}
+.stat{text-align:center;}
+.stat strong{display:block;font-size:2rem;font-weight:900;color:var(--gold);}
+.stat span{font-size:0.9rem;opacity:0.8;}
+
+/* SECTIONS */
+.section{padding:4rem 2rem;max-width:1200px;margin:0 auto;}
+.section-tag{display:inline-block;background:rgba(21,101,192,0.1);color:var(--blue);padding:4px 14px;border-radius:20px;font-size:0.8rem;font-weight:600;margin-bottom:0.75rem;}
+.section-title{font-size:2rem;font-weight:900;margin-bottom:0.5rem;}
+.section-sub{color:var(--muted);font-size:1rem;margin-bottom:2.5rem;}
+
+/* FEATURES */
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;}
+.feature-card{
+  background:white;border-radius:var(--radius);padding:1.5rem;box-shadow:var(--card-shadow);
+  cursor:pointer!important;transition:all 0.25s;border:2px solid transparent;
+  position:relative;overflow:hidden;
+}
+.feature-card::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(21,101,192,0.04),rgba(249,168,37,0.04));
+  opacity:0;transition:opacity 0.25s;
+}
+.feature-card:hover{
+  transform:translateY(-5px);
+  box-shadow:0 12px 28px rgba(21,101,192,0.15);
+  border-color:var(--blue-light);
+}
+.feature-card:hover::after{opacity:1;}
+.feature-card:active{transform:translateY(-2px);}
+.feature-card-arrow{
+  position:absolute;top:1.25rem;left:1.25rem;
+  font-size:1.1rem;opacity:0;
+  transform:translateX(-6px);
+  transition:all 0.25s;
+  color:var(--blue);
+}
+body.ltr .feature-card-arrow{left:auto;right:1.25rem;}
+body.ltr .feature-card-arrow{transform:translateX(6px);}
+body.ltr .feature-card:hover .feature-card-arrow{transform:translateX(0);}
+.feature-card:hover .feature-card-arrow{opacity:1;transform:translateX(0);}
+.feature-go{
+  display:inline-flex;align-items:center;gap:6px;
+  margin-top:0.9rem;font-size:0.82rem;font-weight:700;
+  color:var(--blue);background:#E3F2FD;
+  padding:5px 14px;border-radius:50px;
+  transition:all 0.2s;
+}
+.feature-card:hover .feature-go{background:var(--blue);color:white;}
+.feature-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:1rem;}
+.feature-icon.blue{background:#E3F2FD;}
+.feature-icon.green{background:#E8F5E9;}
+.feature-icon.orange{background:#FFF3E0;}
+.feature-card h3{font-size:1rem;font-weight:700;margin-bottom:0.4rem;}
+.feature-card p{color:var(--muted);font-size:0.9rem;line-height:1.6;}
+
+/* COURSES */
+.courses-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;}
+.search-bar{display:flex;gap:0.75rem;flex-wrap:wrap;}
+.search-input{padding:9px 16px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;font-family:'Cairo',sans-serif;min-width:200px;}
+.filter-select{padding:9px 14px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;font-family:'Cairo',sans-serif;background:white;cursor:pointer;}
+.courses-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1.5rem;}
+.course-card{background:white;border-radius:var(--radius);overflow:hidden;box-shadow:var(--card-shadow);transition:transform 0.2s;}
+.course-card:hover{transform:translateY(-3px);}
+.course-thumb{height:160px;display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative;}
+.course-thumb.blue{background:linear-gradient(135deg,#1565C0,#42A5F5);}
+.course-thumb.purple{background:linear-gradient(135deg,#6A1B9A,#AB47BC);}
+.course-thumb.green{background:linear-gradient(135deg,#1B5E20,#66BB6A);}
+.course-thumb.orange{background:linear-gradient(135deg,#E65100,#FFA726);}
+.course-badge{position:absolute;top:10px;right:10px;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;}
+.badge-free{background:#4CAF50;color:white;}
+.badge-locked{background:rgba(0,0,0,0.6);color:white;}
+.badge-unlocked{background:#4CAF50;color:white;}
+.course-body{padding:1.25rem;}
+.course-body h3{font-size:1rem;font-weight:700;margin-bottom:0.3rem;line-height:1.4;}
+.course-level{font-size:0.8rem;color:var(--muted);margin-bottom:0.3rem;}
+.course-tag{font-size:0.8rem;color:var(--blue);font-weight:600;margin-bottom:1rem;}
+.course-btn{width:100%;padding:11px;border:none;border-radius:50px;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:'Cairo',sans-serif;transition:all 0.25s;letter-spacing:0.2px;}
+.course-btn.primary{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-light) 100%);color:white;box-shadow:0 4px 14px rgba(21,101,192,0.35);}
+.course-btn.primary:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(21,101,192,0.45);}
+.course-btn.primary:active{transform:translateY(0);}
+
+/* COURSE DETAIL */
+.back-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--blue),var(--blue-light));color:white;padding:10px 20px;border-radius:50px;border:none;cursor:pointer;font-size:0.9rem;font-weight:600;font-family:'Cairo',sans-serif;margin-bottom:1.5rem;box-shadow:0 4px 12px rgba(21,101,192,0.3);transition:all 0.2s;}
+.back-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(21,101,192,0.4);}
+.course-detail-layout{display:grid;grid-template-columns:300px 1fr;gap:2rem;align-items:start;}
+.sidebar{background:white;border-radius:var(--radius);box-shadow:var(--card-shadow);overflow:hidden;}
+.sidebar h3{padding:1rem 1.25rem;font-size:1rem;font-weight:700;border-bottom:1px solid #eee;}
+.unit-group{}
+.unit-title{padding:0.75rem 1.25rem;background:#F5F7FA;font-size:0.9rem;font-weight:700;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border-bottom:1px solid #eee;}
+.lesson-item{padding:0.6rem 1.5rem;font-size:0.85rem;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f5f5f5;cursor:pointer;transition:background 0.15s;}
+.lesson-item:hover{background:#F5F7FA;}
+.lesson-item.active{background:#E3F2FD;color:var(--blue);}
+.lesson-num{min-width:22px;height:22px;border-radius:50%;background:var(--blue);color:white;font-size:0.7rem;display:flex;align-items:center;justify-content:center;}
+.main-content{}
+.course-info-card{background:white;border-radius:var(--radius);box-shadow:var(--card-shadow);padding:1.75rem;margin-bottom:1.5rem;}
+.course-label{display:inline-block;padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:600;margin-bottom:0.75rem;}
+.label-paid{background:#E3F2FD;color:var(--blue);}
+.label-level{background:#F3E5F5;color:#7B1FA2;margin-right:8px;}
+.course-info-title{font-size:1.5rem;font-weight:900;margin-bottom:0.3rem;}
+.course-info-sem{color:var(--muted);font-size:0.9rem;margin-bottom:0.5rem;}
+.teacher-name{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:0.9rem;margin-bottom:1.5rem;}
+.course-stats{display:flex;gap:1.5rem;flex-wrap:wrap;}
+.cs{display:flex;align-items:center;gap:6px;font-size:0.9rem;}
+.cs-icon{color:var(--blue);}
+
+/* VIDEO PLAYER */
+.video-card{background:white;border-radius:var(--radius);box-shadow:var(--card-shadow);padding:1.75rem;margin-bottom:1.5rem;}
+.video-title{font-size:1.2rem;font-weight:700;margin-bottom:0.3rem;}
+.video-meta{color:var(--muted);font-size:0.85rem;margin-bottom:1rem;}
+.video-player{background:#1a1a2e;border-radius:10px;height:320px;display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:1rem;}
+.play-btn{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:3px solid white;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.5rem;color:white;transition:background 0.2s;}
+.play-btn:hover{background:rgba(255,255,255,0.35);}
+.video-watermark{position:absolute;top:12px;left:12px;color:rgba(255,255,255,0.5);font-size:0.8rem;}
+.video-controls{background:#111;border-radius:0 0 10px 10px;padding:10px 14px;display:flex;align-items:center;gap:12px;color:white;font-size:0.85rem;}
+.ctrl-btn{background:none;border:none;color:white;cursor:pointer;font-size:0.85rem;font-family:'Cairo',sans-serif;}
+.progress-bar{flex:1;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;cursor:pointer;}
+.materials-card{background:white;border-radius:var(--radius);box-shadow:var(--card-shadow);padding:1.75rem;}
+.mat-title{font-size:1rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
+.mat-item{display:flex;align-items:center;justify-content:space-between;padding:0.75rem;border:1px solid #eee;border-radius:8px;margin-bottom:0.75rem;cursor:pointer;transition:background 0.15s;}
+.mat-item:hover{background:#F5F7FA;}
+.mat-info{display:flex;align-items:center;gap:10px;}
+.mat-icon{font-size:1.2rem;}
+.mat-name{font-size:0.9rem;font-weight:600;}
+.mat-sub{font-size:0.8rem;color:var(--muted);}
+.download-btn{background:linear-gradient(135deg,var(--blue),var(--blue-light));color:white;border:none;padding:8px 16px;border-radius:50px;cursor:pointer;font-size:0.85rem;font-family:'Cairo',sans-serif;box-shadow:0 3px 10px rgba(21,101,192,0.3);transition:all 0.2s;}
+.download-btn:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(21,101,192,0.4);}
+
+/* DASHBOARD */
+.dashboard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem;}
+.dash-card{background:white;border-radius:var(--radius);padding:1.25rem;box-shadow:var(--card-shadow);}
+.dash-num{font-size:2rem;font-weight:900;color:var(--blue);}
+.dash-label{color:var(--muted);font-size:0.9rem;}
+.assignments-list{}
+.assign-item{background:white;border-radius:var(--radius);padding:1.25rem;box-shadow:var(--card-shadow);margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;}
+.assign-info h4{font-size:1rem;font-weight:700;margin-bottom:0.3rem;}
+.assign-info p{color:var(--muted);font-size:0.85rem;}
+.assign-status{padding:5px 14px;border-radius:20px;font-size:0.8rem;font-weight:600;}
+.status-new{background:#E3F2FD;color:var(--blue);}
+.status-done{background:#E8F5E9;color:#2E7D32;}
+.assign-dl-btn{background:linear-gradient(135deg,var(--blue),var(--blue-light));color:white;border:none;padding:10px 18px;border-radius:50px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:0.85rem;box-shadow:0 4px 12px rgba(21,101,192,0.3);transition:all 0.2s;}
+.assign-dl-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(21,101,192,0.4);}
+
+/* NEWS */
+.news-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;}
+.news-card{background:white;border-radius:var(--radius);padding:1.5rem;box-shadow:var(--card-shadow);}
+.news-icon-box{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:1rem;}
+.news-icon-box.b1{background:#EDE7F6;}
+.news-icon-box.b2{background:#E8F5E9;}
+.news-icon-box.b3{background:#FFF3E0;}
+.news-card h3{font-size:1rem;font-weight:700;margin-bottom:0.5rem;}
+.news-card p{color:var(--muted);font-size:0.9rem;line-height:1.6;margin-bottom:0.75rem;}
+.news-date{color:var(--muted);font-size:0.8rem;}
+
+/* ABOUT */
+.about-layout{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;}
+.about-img{background:linear-gradient(135deg,var(--blue-dark),var(--blue-light));border-radius:20px;height:320px;display:flex;align-items:center;justify-content:center;font-size:5rem;}
+.about-text h2{font-size:1.8rem;font-weight:900;margin-bottom:1rem;}
+.about-text p{color:var(--muted);line-height:1.8;margin-bottom:1rem;}
+
+/* CONTACT */
+.contact-card{background:white;border-radius:var(--radius);padding:2rem;box-shadow:var(--card-shadow);max-width:600px;margin:0 auto;}
+.contact-card h2{font-size:1.4rem;font-weight:700;margin-bottom:1.5rem;}
+.form-group{margin-bottom:1rem;}
+.form-group label{display:block;font-size:0.9rem;font-weight:600;margin-bottom:6px;}
+.form-group input,.form-group textarea{width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:0.95rem;font-family:'Cairo',sans-serif;outline:none;transition:border-color 0.2s;}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--blue);}
+.form-group textarea{min-height:120px;resize:vertical;}
+
+/* LOGIN */
+.login-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:200;}
+.login-box{background:white;border-radius:16px;padding:2.5rem;width:380px;max-width:95vw;}
+.login-logo{text-align:center;margin-bottom:1.5rem;}
+.login-logo .logo-icon{width:64px;height:64px;background:var(--gold);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 0.75rem;}
+.login-logo h2{font-size:1.3rem;font-weight:900;}
+.login-logo p{color:var(--muted);font-size:0.9rem;}
+.login-err{background:#FFEBEE;color:#C62828;padding:8px 12px;border-radius:8px;font-size:0.85rem;margin-bottom:1rem;display:none;}
+.remember-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;font-size:0.85rem;}
+
+/* FOOTER */
+footer{background:var(--blue-dark);color:rgba(255,255,255,0.85);padding:3rem 2rem 1.5rem;}
+.footer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:2rem;max-width:1200px;margin:0 auto 2rem;}
+.footer-brand h3{color:white;font-size:1.1rem;margin-bottom:0.5rem;}
+.footer-brand p{font-size:0.85rem;line-height:1.6;}
+.footer-col h4{color:white;font-size:0.95rem;font-weight:700;margin-bottom:0.75rem;}
+.footer-col ul{list-style:none;}
+.footer-col ul li{margin-bottom:0.4rem;}
+.footer-col ul li a{color:rgba(255,255,255,0.7);text-decoration:none;font-size:0.85rem;cursor:pointer;}
+.footer-col ul li a:hover{color:var(--gold);}
+.footer-contact p{font-size:0.85rem;margin-bottom:0.4rem;}
+.footer-bottom{border-top:1px solid rgba(255,255,255,0.15);padding-top:1.25rem;text-align:center;font-size:0.85rem;color:rgba(255,255,255,0.5);max-width:1200px;margin:0 auto;}
+
+/* WHATSAPP */
+.wa-btn{position:fixed;bottom:1.5rem;left:1.5rem;width:52px;height:52px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:1.4rem;box-shadow:0 4px 14px rgba(37,211,102,0.5);cursor:pointer;z-index:90;text-decoration:none;}
+
+/* FORCE ARROW CURSOR EVERYWHERE */
+*{cursor:default;}
+button,a,[onclick],.course-btn,.back-btn,.download-btn,.assign-dl-btn,.lesson-item,.unit-title,.mat-item,.lang-btn,.nav-links a,.wa-btn,.play-btn,.ctrl-btn{cursor:pointer!important;}
+input,textarea,select{cursor:text!important;}
+input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
+
+/* ADMIN PANEL */
+.admin-nav{background:#1a1a2e;padding:0 2rem;height:56px;display:flex;align-items:center;gap:1rem;border-bottom:3px solid var(--gold);}
+.admin-nav h2{color:var(--gold);font-size:1rem;font-weight:700;margin-left:auto;}
+.admin-tab{background:none;border:none;color:rgba(255,255,255,0.7);padding:8px 16px;border-radius:6px;font-family:'Cairo',sans-serif;font-size:0.9rem;cursor:pointer!important;transition:all 0.2s;}
+.admin-tab.active,.admin-tab:hover{background:rgba(249,168,37,0.15);color:var(--gold);}
+.admin-section{display:none;padding:2rem;max-width:1200px;margin:0 auto;}
+.admin-section.active{display:block;}
+.admin-card{background:white;border-radius:var(--radius);box-shadow:var(--card-shadow);padding:1.5rem;margin-bottom:1.5rem;}
+.admin-card h3{font-size:1rem;font-weight:700;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:2px solid var(--bg);}
+.admin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.admin-stat{background:white;border-radius:var(--radius);padding:1.25rem;box-shadow:var(--card-shadow);text-align:center;border-top:3px solid var(--blue);}
+.admin-stat.gold{border-top-color:var(--gold);}
+.admin-stat.green{border-top-color:#4CAF50;}
+.admin-stat.red{border-top-color:#F44336;}
+.admin-stat .num{font-size:2rem;font-weight:900;color:var(--blue);}
+.admin-stat.gold .num{color:#E65100;}
+.admin-stat.green .num{color:#2E7D32;}
+.admin-stat.red .num{color:#C62828;}
+.admin-stat .lbl{font-size:0.85rem;color:var(--muted);}
+.admin-table{width:100%;border-collapse:collapse;font-size:0.9rem;}
+.admin-table th{background:#F5F7FA;padding:10px 12px;text-align:right;font-weight:700;border-bottom:2px solid #eee;white-space:nowrap;}
+.admin-table td{padding:10px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}
+.admin-table tr:hover td{background:#FAFAFA;}
+.tbl-badge{padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;}
+.tbl-badge.active{background:#E8F5E9;color:#2E7D32;}
+.tbl-badge.locked{background:#FFEBEE;color:#C62828;}
+.tbl-badge.free{background:#E3F2FD;color:var(--blue);}
+.icon-btn{background:white;border:1px solid #e0e0e0;border-radius:20px;padding:5px 12px;cursor:pointer!important;font-size:0.8rem;margin:0 2px;transition:all 0.2s;font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+.icon-btn:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(0,0,0,0.1);background:#f8f8f8;}
+.icon-btn.del:hover{background:#FFEBEE;border-color:#F44336;color:#C62828;box-shadow:0 3px 8px rgba(198,40,40,0.15);}
+.icon-btn.edit:hover{background:#E3F2FD;border-color:var(--blue);color:var(--blue);box-shadow:0 3px 8px rgba(21,101,192,0.15);}
+.add-form{background:#F5F7FA;border-radius:10px;padding:1.25rem;margin-bottom:1rem;}
+.add-form h4{font-size:0.95rem;font-weight:700;margin-bottom:1rem;}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;margin-bottom:0.75rem;}
+.form-row input,.form-row select,.form-row textarea{padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;font-family:'Cairo',sans-serif;width:100%;outline:none;cursor:text!important;}
+.form-row select{cursor:pointer!important;}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--blue);}
+.form-row textarea{min-height:80px;resize:vertical;}
+.admin-btn{
+  background:linear-gradient(135deg,var(--blue),var(--blue-light));
+  color:white;border:none;padding:10px 22px;border-radius:50px;
+  font-family:'Cairo',sans-serif;font-size:0.9rem;font-weight:700;
+  cursor:pointer!important;transition:all 0.25s;
+  box-shadow:0 4px 14px rgba(21,101,192,0.3);letter-spacing:0.2px;
+}
+.admin-btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(21,101,192,0.4);}
+.admin-btn:active{transform:translateY(0);}
+.admin-btn.green{background:linear-gradient(135deg,#2E7D32,#43A047);box-shadow:0 4px 14px rgba(46,125,50,0.3);}
+.admin-btn.green:hover{box-shadow:0 6px 18px rgba(46,125,50,0.4);}
+.admin-btn.red{background:linear-gradient(135deg,#C62828,#E53935);box-shadow:0 4px 14px rgba(198,40,40,0.3);}
+.admin-btn.red:hover{box-shadow:0 6px 18px rgba(198,40,40,0.4);}
+.admin-btn.gold{background:linear-gradient(135deg,var(--gold),#ffb300);color:var(--blue-dark);box-shadow:0 4px 14px rgba(249,168,37,0.4);}
+.admin-btn.gold:hover{box-shadow:0 6px 18px rgba(249,168,37,0.5);}
+.pass-cell{font-family:monospace;letter-spacing:1px;font-size:0.85rem;}
+.toggle-pass{background:none;border:none;cursor:pointer!important;font-size:0.85rem;color:var(--blue);padding:0 4px;}
+.copy-badge{display:inline-block;background:var(--blue);color:white;font-size:0.7rem;padding:2px 7px;border-radius:4px;cursor:pointer!important;margin-right:6px;}
+.lesson-upload-area{border:2px dashed #ccc;border-radius:10px;padding:2rem;text-align:center;margin-bottom:1rem;transition:border-color 0.2s;cursor:pointer!important;}
+.lesson-upload-area:hover{border-color:var(--blue);}
+.lesson-upload-area input[type=file]{display:none;}
+.upload-icon{font-size:2.5rem;margin-bottom:0.5rem;}
+.upload-text{color:var(--muted);font-size:0.9rem;}
+.progress-pill{height:8px;background:#eee;border-radius:4px;overflow:hidden;margin-top:0.5rem;}
+.progress-fill{height:100%;background:var(--blue);border-radius:4px;transition:width 0.3s;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:300;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:white;border-radius:16px;padding:2rem;width:460px;max-width:95vw;max-height:90vh;overflow-y:auto;}
+.modal-box h3{font-size:1.1rem;font-weight:700;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:2px solid var(--bg);}
+.modal-footer{display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1.25rem;padding-top:1rem;border-top:1px solid #eee;}
+.search-admin{padding:9px 14px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.9rem;width:100%;max-width:320px;margin-bottom:1rem;outline:none;}
+.search-admin:focus{border-color:var(--blue);}
+.unit-expand{background:#F0F4FF;border-radius:8px;margin-bottom:0.75rem;overflow:hidden;}
+.unit-expand .unit-head{padding:0.75rem 1rem;font-weight:700;font-size:0.9rem;display:flex;justify-content:space-between;align-items:center;cursor:pointer!important;}
+.unit-expand .unit-body{padding:0 1rem 0.75rem;display:none;}
+.unit-expand.open .unit-body{display:block;}
+.lesson-row{display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid #eee;font-size:0.85rem;}
+.lesson-row:last-child{border-bottom:none;}
+.video-link-input{width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;font-size:0.85rem;font-family:'Cairo',sans-serif;outline:none;cursor:text!important;}
+.video-link-input:focus{border-color:var(--blue);}
+.video-type-btn{background:white;border:2px solid #e0e0e0;border-radius:50px;padding:7px 18px;font-family:'Cairo',sans-serif;font-size:0.85rem;font-weight:600;cursor:pointer!important;transition:all 0.2s;color:var(--muted);}
+.video-type-btn.active{background:linear-gradient(135deg,var(--blue),var(--blue-light));color:white;border-color:transparent;box-shadow:0 4px 12px rgba(21,101,192,0.3);}
+.video-type-btn:not(.active):hover{border-color:var(--blue);color:var(--blue);}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .course-detail-layout{grid-template-columns:1fr;}
+  .about-layout{grid-template-columns:1fr;}
+  .hero h1{font-size:1.8rem;}
+  .hero-stats{gap:1.5rem;}
+  nav{padding:0 1rem;}
+  .nav-links{gap:0.8rem;}
+}
+</style>
+</head>
+<body>
+
+<div id="math-bg"><canvas id="mathCanvas"></canvas></div>
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-icon">📐</div>
+      <h2 id="lt-title">Mr. Anas Fayad</h2>
+      <p id="lt-sub">منصة الرياضيات التعليمية</p>
+    </div>
+    <div class="login-err" id="loginErr" id="lt-err">اسم المستخدم أو كلمة المرور غير صحيحة</div>
+    <div class="form-group">
+      <label id="lt-user">اسم المستخدم</label>
+      <input type="text" id="loginUser" placeholder="أدخل اسم المستخدمر">
+    </div>
+    <div class="form-group">
+      <label id="lt-pass">كلمة المرور</label>
+      <input type="password" id="loginPass" placeholder="أدخل كلمة المرور">
+    </div>
+    <div class="remember-row">
+      <label><input type="checkbox"> <span id="lt-rem">تذكرني</span></label>
+      <a href="#" style="color:var(--blue);text-decoration:none;font-size:0.85rem;" id="lt-forgot">نسيت كلمة المرور؟</a>
+    </div>
+    <button class="btn-primary" style="width:100%;padding:12px;" onclick="doLogin()" id="lt-btn">دخول</button>
+    <p style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--muted);" id="lt-hint">للتجربة: student1 / 1234</p>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" onclick="showPage('home')" style="cursor:pointer;">
+    <div class="logo-icon">📐</div>
+    <span id="nav-name">Mr. Anas Fayad</span>
+  </a>
+  <ul class="nav-links">
+    <li><a onclick="showPage('home')" id="nav-home" class="active">الرئيسية</a></li>
+    <li><a onclick="showPage('courses')" id="nav-courses">الدروس</a></li>
+    <li><a onclick="showPage('about')" id="nav-about">من نحن</a></li>
+    <li><a onclick="showPage('contact')" id="nav-contact">اتصل بنا</a></li>
+    <li><a onclick="showPage('dashboard')" id="nav-dash">لوحتي</a></li>
+  </ul>
+  <div class="nav-right">
+    <button class="lang-btn" onclick="toggleLang()">🌐 English</button>
+    <div style="position:relative;display:inline-block;">
+    <button onclick="toggleNotifPanel()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.35);color:white;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;" title="الإشعارات">🔔</button>
+    <span id="notif-badge" style="position:absolute;top:-4px;right:-4px;background:#F44336;color:white;border-radius:50%;width:18px;height:18px;font-size:0.65rem;display:none;align-items:center;justify-content:center;font-weight:700;"></span>
+    <div id="notif-panel" style="display:none;position:absolute;top:44px;left:0;background:white;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.15);width:280px;padding:1rem;z-index:200;max-height:320px;overflow-y:auto;"></div>
+  </div>
+  <button class="lang-btn" onclick="openTeacherLogin()" style="background:rgba(249,168,37,0.2);border-color:var(--gold);color:var(--gold);">🔧 المدرس</button>
+    <div class="user-badge" id="navUser">👤 الطالب ▾</div>
+  </div>
+</nav>
+
+<!-- HOME PAGE -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="hero-logo-box">📐</div>
+    <h1 id="h-title"><span>حوّل</span> رحلتك التعليمية</h1>
+    <p id="h-sub">منصة رياضيات احترافية مع <strong>Mr. Anas Fayad</strong></p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="showPage('courses')" id="h-btn1">استعرض الدروس</button>
+      <button class="btn-outline" onclick="showPage('dashboard')" id="h-btn2">لوحتي الدراسية</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><strong>+500</strong><span id="h-s1">طالب مسجل</span></div>
+      <div class="stat"><strong>+80</strong><span id="h-s2">درس متاح</span></div>
+      <div class="stat"><strong>+30</strong><span id="h-s3">واجب تدريبي</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div style="text-align:center;">
+      <div class="section-tag" id="f-tag">المميزات</div>
+      <h2 class="section-title" id="f-title">منصة متكاملة للرياضيات</h2>
+      <p class="section-sub" id="f-sub">كل ما تحتاجه لرحلة تعليمية ناجحة في مكان واحد</p>
+    </div>
+    <div class="features-grid">
+
+      <div class="feature-card" onclick="showPage('courses')" title="انتقل إلى الدروس">
+        <span class="feature-card-arrow">←</span>
+        <div class="feature-icon blue">🎬</div>
+        <h3 id="f1-t">تسجيلات الدروس</h3>
+        <p id="f1-p">شاهد تسجيلات جلسات Zoom و Teams في أي وقت ومن أي مكان</p>
+        <span class="feature-go" id="f1-go">شاهد الدروس ←</span>
+      </div>
+
+      <div class="feature-card" onclick="showPage('dashboard')" title="انتقل إلى الواجبات">
+        <span class="feature-card-arrow">←</span>
+        <div class="feature-icon green">📥</div>
+        <h3 id="f2-t">تحميل الواجبات</h3>
+        <p id="f2-p">حمّل الواجبات والمذكرات المصنفة حسب الوحدة بسهولة</p>
+        <span class="feature-go" id="f2-go">حمّل الواجبات ←</span>
+      </div>
+
+      <div class="feature-card" onclick="showPage('dashboard')" title="انتقل إلى لوحتك">
+        <span class="feature-card-arrow">←</span>
+        <div class="feature-icon orange">🔐</div>
+        <h3 id="f3-t">حساب خاص بك</h3>
+        <p id="f3-p">لكل طالب اسم مستخدم وكلمة مرور خاصة به للوصول الآمن</p>
+        <span class="feature-go" id="f3-go">لوحتي ←</span>
+      </div>
+
+      <div class="feature-card" onclick="showPage('dashboard')" title="تتبع تقدمك">
+        <span class="feature-card-arrow">←</span>
+        <div class="feature-icon blue">📊</div>
+        <h3 id="f4-t">تتبع التقدم</h3>
+        <p id="f4-p">تابع تقدمك في كل وحدة وحصة من لوحة التحكم الشخصية</p>
+        <span class="feature-go" id="f4-go">تقدمي ←</span>
+      </div>
+
+      <div class="feature-card" onclick="showPage('courses')" title="ابدأ التعلم">
+        <span class="feature-card-arrow">←</span>
+        <div class="feature-icon green">📝</div>
+        <h3 id="f5-t">اختبارات تفاعلية</h3>
+        <p id="f5-p">اختبر فهمك مع تمارين تفاعلية وتصحيح فوري</p>
+        <span class="feature-go" id="f5-go">ابدأ التمارين ←</span>
+      </div>
+
+      <div class="feature-card" onclick="showPage('about')" title="من نحن">
+        <span class="feature-card-arrow">←</span>
+        <div class="feature-icon orange">🌐</div>
+        <h3 id="f6-t">عربي وإنجليزي</h3>
+        <p id="f6-p">المنصة متاحة بالكامل باللغتين العربية والإنجليزية</p>
+        <span class="feature-go" id="f6-go">تعرف علينا ←</span>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="background:white;padding:1rem 0;">
+    <div class="section" style="padding-top:2rem;padding-bottom:2rem;">
+      <div style="text-align:center;">
+        <div class="section-tag" id="n-tag">آخر الأخبار</div>
+        <h2 class="section-title" id="n-title">أخبار المنصة</h2>
+        <p class="section-sub" id="n-sub">ابقَ على اطلاع بآخر التحديثات والإعلانات</p>
+      </div>
+      <div class="news-grid">
+        <div class="news-card">
+          <div class="news-icon-box b1">⚡</div>
+          <h3 id="n1-t">درس جديد</h3>
+          <p id="n1-p">تمت إضافة درس جديد في وحدة المثلثات مع تمارين شاملة</p>
+          <div class="news-date" id="n1-d">يونيو 2026</div>
+        </div>
+        <div class="news-card">
+          <div class="news-icon-box b2">✅</div>
+          <h3 id="n2-t">تحديث المنصة</h3>
+          <p id="n2-p">تم تحسين تجربة المستخدم وإضافة ميزات جديدة لتحميل الملفات</p>
+          <div class="news-date" id="n2-d">مايو 2026</div>
+        </div>
+        <div class="news-card">
+          <div class="news-icon-box b3">👥</div>
+          <h3 id="n3-t">نمو المجتمع</h3>
+          <p id="n3-p">انضم 50 طالباً جديداً! نرحب بكم جميعاً في مجتمع التعلم</p>
+          <div class="news-date" id="n3-d">أبريل 2026</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COURSES PAGE -->
+<div class="page" id="page-courses">
+  <div class="section">
+    <div class="courses-header">
+      <div>
+        <h2 class="section-title" id="c-title">الدروس المتاحة</h2>
+        <p class="section-sub" style="margin-bottom:0;" id="c-sub">جميع تسجيلات الحصص والمواد</p>
+      </div>
+      <div class="search-bar">
+        <input class="search-input" type="text" id="c-search" placeholder="بحث...">
+        <select class="filter-select" id="c-filter">
+          <option id="c-f0">جميع المراحل</option>
+          <option>الصف العاشر</option>
+          <option>الصف الحادي عشر</option>
+          <option>الصف الثاني عشر</option>
+        </select>
+        <button class="back-btn" onclick="showPage('dashboard')" style="margin:0;" id="c-back">← لوحتي</button>
+      </div>
+    </div>
+    <div class="courses-grid" id="courses-dynamic-grid">
+      <!-- يتم ملؤها ديناميكياً -->
+    </div>
+  </div>
+</div>
+
+<!-- COURSE DETAIL PAGE -->
+<div class="page" id="page-course-detail">
+  <div class="section">
+    <button class="back-btn" onclick="showPage('courses')" id="cd-back">← العودة للدروس</button>
+    <div class="course-detail-layout">
+      <div class="sidebar">
+        <h3 id="cd-content">محتوى الكورس</h3>
+        <div id="dynamic-sidebar">
+          <!-- يتم ملؤه ديناميكياً من adminLessons -->
+          <div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:0.9rem;">
+            <div style="font-size:2rem;margin-bottom:0.5rem;">📂</div>
+            <p>اختر كورساً لعرض الدروس</p>
+          </div>
+        </div>
+      </div>
+      <div class="main-content">
+        <div class="course-info-card">
+          <div>
+            <span class="course-label label-paid" id="cd-paid">كورس مدفوع</span>
+            <span class="course-label label-level">G12_Arabic</span>
+          </div>
+          <h2 class="course-info-title" id="cd-course-title">الصف الثاني عشر متقدم - الجبر وحساب المثلثات</h2>
+          <p class="course-info-sem" id="cd-sem">الفصل الدراسي الأول</p>
+          <p class="teacher-name">👤 <span id="cd-teacher">Anas Fayad</span></p>
+          <div class="course-stats">
+            <div class="cs"><span class="cs-icon">⏱</span> <span id="cd-dur">المدة: 60 ساعة</span></div>
+            <div class="cs"><span class="cs-icon">🎬</span> <span id="cd-les">الحصص: 58</span></div>
+            <div class="cs"><span class="cs-icon">📊</span> <span id="cd-lvl">المستوى: متقدم</span></div>
+          </div>
+        </div>
+        <div class="course-info-card" style="padding:1.25rem;">
+          <h3 style="margin-bottom:0.75rem;" id="cd-forum">منتدى النقاش</h3>
+          <p style="color:var(--muted);font-size:0.9rem;margin-bottom:0.75rem;" id="cd-qa">أسئلة وأجوبة</p>
+          <button class="course-btn primary" style="width:auto;padding:9px 20px;" onclick="showPage('contact')" id="cd-forum-btn" style="border-radius:50px;box-shadow:0 4px 14px rgba(21,101,192,0.3);">انضم للنقاش</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LESSON/VIDEO PAGE -->
+<div class="page" id="page-lesson">
+  <div class="section">
+    <button class="back-btn" onclick="showPage('course-detail')" id="lv-back">← العودة للكورس</button>
+    <h2 class="section-title" id="lv-title">الحصة الأولى - مقدمة في المثلثات (جلسة Zoom)</h2>
+    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.5rem;" id="lv-meta">الوحدة الأولى | الصف الثاني عشر متقدم - الجبر وحساب المثلثات</p>
+    <div class="video-card">
+      <!-- Video Type Switcher -->
+      <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+        <button class="video-type-btn active" id="vt-youtube" onclick="switchVideoType('youtube')">▶ YouTube</button>
+        <button class="video-type-btn" id="vt-zoom" onclick="switchVideoType('zoom')">🎥 Zoom / Teams</button>
+      </div>
+
+      <!-- YOUTUBE EMBED -->
+      <div id="youtube-player-wrap" style="position:relative;border-radius:12px;overflow:hidden;background:#000;">
+        <div id="youtube-watermark" style="position:absolute;top:12px;right:12px;z-index:10;background:rgba(0,0,0,0.45);color:rgba(255,255,255,0.55);padding:4px 10px;border-radius:6px;font-size:0.75rem;pointer-events:none;" id="vid-wm">ID: الطالب</div>
+        <div id="youtube-no-url" style="background:#1a1a2e;border-radius:12px;height:340px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:rgba(255,255,255,0.5);">
+          <div style="font-size:3rem;margin-bottom:0.75rem;">▶</div>
+          <p style="font-size:0.95rem;">أدخل رابط YouTube من لوحة التحكم</p>
+          <p style="font-size:0.8rem;margin-top:0.25rem;">مثال: https://youtube.com/watch?v=xxxxx</p>
+        </div>
+        <iframe id="youtube-iframe" width="100%" height="340" frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen style="display:none;border-radius:12px;"></iframe>
+        <!-- Anti right-click overlay -->
+        <div style="position:absolute;inset:0;z-index:5;" oncontextmenu="return false;"></div>
+      </div>
+
+      <!-- ZOOM / TEAMS LINK -->
+      <div id="zoom-player-wrap" style="display:none;background:#F0F4FF;border-radius:12px;padding:2rem;text-align:center;border:2px dashed #90CAF9;">
+        <div style="font-size:2.5rem;margin-bottom:0.75rem;">🎥</div>
+        <h3 style="margin-bottom:0.5rem;" id="zoom-title">تسجيل جلسة Zoom / Teams</h3>
+        <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.25rem;" id="zoom-desc">الضغط على الزر أدناه لمشاهدة التسجيل</p>
+        <a id="zoom-link-btn" href="#" target="_blank" class="btn-primary" style="text-decoration:none;display:inline-block;padding:12px 28px;">
+          🔗 فتح رابط التسجيل
+        </a>
+        <p style="font-size:0.8rem;color:var(--muted);margin-top:1rem;">سيُفتح الرابط في نافذة جديدة</p>
+      </div>
+
+      <!-- Video meta info -->
+      <div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap;">
+        <span style="background:#E3F2FD;color:var(--blue);padding:4px 12px;border-radius:20px;font-size:0.8rem;">⏱ مدة الحصة: 45 دقيقة</span>
+        <span id="current-vid-type" style="background:#E8F5E9;color:#2E7D32;padding:4px 12px;border-radius:20px;font-size:0.8rem;">▶ YouTube</span>
+        <span style="background:#FFF3E0;color:#E65100;padding:4px 12px;border-radius:20px;font-size:0.8rem;">🔒 محمي - لا يمكن التحميل</span>
+      </div>
+    </div>
+
+    <div class="materials-card">
+      <div class="mat-title">📎 <span id="mat-title">مواد الدرس</span></div>
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;" id="mat-unit">الوحدة الأولى - المثلثات</p>
+      <div class="mat-item">
+        <div class="mat-info">
+          <span class="mat-icon">📄</span>
+          <div>
+            <div class="mat-name" id="mat1-n">مذكرة_الوحدة_الأولى_المثلثات.pdf</div>
+            <div class="mat-sub" id="mat1-s">انقر للتحميل</div>
+          </div>
+        </div>
+        <button class="download-btn" onclick="simulateDownload('مذكرة_المثلثات')" id="mat1-btn">⬇ تحميل</button>
+      </div>
+      <div class="mat-item">
+        <div class="mat-info">
+          <span class="mat-icon">📘</span>
+          <div>
+            <div class="mat-name" id="mat2-n">ملخص_الحصة_الأولى_المثلثات.pdf</div>
+            <div class="mat-sub" id="mat2-s">انقر للتحميل</div>
+          </div>
+        </div>
+        <button class="download-btn" onclick="simulateDownload('ملخص_الحصة')" id="mat2-btn">⬇ تحميل</button>
+      </div>
+      <div class="mat-item">
+        <div class="mat-info">
+          <span class="mat-icon">📝</span>
+          <div>
+            <div class="mat-name" id="mat3-n">تمارين_الوحدة_الأولى.pdf</div>
+            <div class="mat-sub" id="mat3-s">انقر للتحميل</div>
+          </div>
+        </div>
+        <button class="download-btn" onclick="simulateDownload('تمارين_الوحدة')" id="mat3-btn">⬇ تحميل</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD PAGE -->
+<div class="page" id="page-dashboard">
+  <div class="section">
+    <h2 class="section-title" id="dash-title">لوحة الطالب - سهر فيصل</h2>
+    <p class="section-sub" id="dash-sub">متابعة التقدم والواجبات</p>
+    <div class="dashboard-grid">
+      <div class="dash-card"><div class="dash-num">4</div><div class="dash-label" id="d1">كورسات مفعّلة</div></div>
+      <div class="dash-card"><div class="dash-num" id="d2">0 درس شاهدته</div><div class="dash-label">الدروس المشاهدة</div></div>
+      <div class="dash-card"><div class="dash-num" id="d3-num">0</div><div class="dash-label" id="d3">واجبات متاحة</div></div>
+      <div class="dash-card">
+  <div class="dash-num" id="d4">0%</div>
+  <div class="dash-label">نسبة الإنجاز</div>
+  <div style="background:#eee;border-radius:4px;height:6px;margin-top:0.5rem;overflow:hidden;">
+    <div id="progress-bar-fill" style="height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--blue-light));border-radius:4px;transition:width 0.5s;"></div>
+  </div>
+</div>
+    </div>
+
+    <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem;" id="dash-hw">الواجبات المتاحة للتحميل</h3>
+    <div class="assignments-list" id="student-hw-list">
+      <!-- يتم ملؤها ديناميكياً من adminHW -->
+    </div>
+
+    <h3 style="font-size:1.1rem;font-weight:700;margin:1.5rem 0 1rem;" id="dash-my">كورساتي</h3>
+    <div class="courses-grid">
+      <div class="course-card">
+        <div class="course-thumb blue">📐</div>
+        <div class="course-body">
+          <h3 id="dc1-t">الصف الثاني عشر - الجبر والمثلثات</h3>
+          <div style="background:#E3F2FD;border-radius:6px;padding:6px 10px;margin:0.75rem 0;font-size:0.85rem;color:var(--blue);">▓▓▓▓▓▓▓░░░ 72%</div>
+          <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.5rem;" id="last-lesson-lbl">الدرس الأخير: لم تبدأ بعد</div>
+          <button class="course-btn primary" onclick="continueLastLesson()" id="dc1-btn">▶ كمّل من حيث توقفت</button>
+        </div>
+      </div>
+      <div class="course-card">
+        <div class="course-thumb purple">🔢</div>
+        <div class="course-body">
+          <h3 id="dc2-t">الصف الحادي عشر - الاحتمالات</h3>
+          <div style="background:#F3E5F5;border-radius:6px;padding:6px 10px;margin:0.75rem 0;font-size:0.85rem;color:#7B1FA2;">▓▓▓▓░░░░░░ 40%</div>
+          <button class="course-btn primary" onclick="showCourseDetail()" id="dc2-btn">متابعة</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ABOUT PAGE -->
+<div class="page" id="page-about">
+  <div class="section">
+    <div class="about-layout">
+      <div class="about-img">🧮</div>
+      <div class="about-text">
+        <div class="section-tag" id="ab-tag">من نحن</div>
+        <h2 id="ab-title">Mr. Anas Fayad</h2>
+        <p id="ab-p1">معلم رياضيات متخصص بخبرة تزيد عن 15 عاماً في تدريس الرياضيات للمرحلة الثانوية. متخصص في المنهج الإماراتي والبريطاني.</p>
+        <p id="ab-p2">تقدم المنصة تسجيلات حصص Zoom و Teams الحية، مذكرات PDF قابلة للتحميل، وواجبات تفاعلية لضمان أفضل تجربة تعليمية.</p>
+        <p id="ab-p3">الهدف هو جعل تعلم الرياضيات ممتعاً وسهلاً وفعالاً لكل طالب بغض النظر عن مستواه.</p>
+        <div style="display:flex;gap:1rem;margin-top:1.5rem;flex-wrap:wrap;">
+          <button class="btn-primary" onclick="showPage('courses')" id="ab-btn1">استعرض الدروس</button>
+          <button class="btn-outline" style="color:var(--blue);border-color:var(--blue);" onclick="showPage('contact')" id="ab-btn2">تواصل معنا</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT PAGE -->
+<div class="page" id="page-contact">
+  <div class="section">
+    <div style="text-align:center;margin-bottom:2rem;">
+      <div class="section-tag" id="ct-tag">تواصل معنا</div>
+      <h2 class="section-title" id="ct-title">ارسل لنا رسالة</h2>
+    </div>
+    <div class="contact-card">
+      <h2 id="ct-h">استفسارات ودعم</h2>
+      <div class="form-group">
+        <label id="ct-name">الاسم الكامل</label>
+        <input type="text" id="contactName" placeholder="اكتب اسمك...">
+      </div>
+      <div class="form-group">
+        <label id="ct-email">البريد الإلكتروني</label>
+        <input type="email" id="contactEmail" placeholder="email@example.com">
+      </div>
+      <div class="form-group">
+        <label id="ct-msg">الرسالة</label>
+        <textarea id="contactMsg" placeholder="اكتب رسالتك..."></textarea>
+      </div>
+      <button class="btn-primary" style="width:100%;padding:12px;" onclick="sendContact()" id="ct-btn">إرسال الرسالة</button>
+      <div id="ct-success" style="display:none;background:#E8F5E9;color:#2E7D32;padding:10px;border-radius:8px;margin-top:1rem;text-align:center;">✓ تم إرسال رسالتك بنجاح!</div>
+    </div>
+    <div style="display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap;margin-top:2rem;">
+      <div class="dash-card" style="text-align:center;min-width:180px;">
+        <div style="font-size:1.5rem;margin-bottom:0.5rem;">📧</div>
+        <div style="font-size:0.85rem;" id="ct-info1">anasfayad@math.edu</div>
+      </div>
+      <div class="dash-card" style="text-align:center;min-width:180px;">
+        <div style="font-size:1.5rem;margin-bottom:0.5rem;">📱</div>
+        <div style="font-size:0.85rem;" id="ct-info2">+971 50 XXX XXXX</div>
+      </div>
+      <div class="dash-card" style="text-align:center;min-width:180px;">
+        <div style="font-size:1.5rem;margin-bottom:0.5rem;">📍</div>
+        <div style="font-size:0.85rem;" id="ct-info3">الإمارات العربية المتحدة</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TEACHER LOGIN MODAL -->
+<div class="modal-overlay" id="teacherLoginModal">
+  <div class="modal-box">
+    <h3>🔐 دخول المدرس</h3>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.25rem;">هذه المنطقة مخصصة للمدرس فقط</p>
+    <div class="form-group">
+      <label>اسم المستخدم</label>
+      <input type="text" id="teacherUser" placeholder="teacher_admin">
+    </div>
+    <div class="form-group">
+      <label>كلمة المرور</label>
+      <input type="password" id="teacherPass" placeholder="كلمة المرور">
+    </div>
+    <div id="teacherErr" style="display:none;background:#FFEBEE;color:#C62828;padding:8px 12px;border-radius:8px;font-size:0.85rem;margin-bottom:0.75rem;">كلمة المرور غير صحيحة</div>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;">للتجربة: teacher / admin123</p>
+    <div class="modal-footer">
+      <button class="icon-btn" onclick="document.getElementById('teacherLoginModal').classList.remove('open')">إلغاء</button>
+      <button class="admin-btn" onclick="doTeacherLogin()">دخول ←</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box" style="max-width:360px;">
+    <h3>تأكيد الحذف</h3>
+    <p id="confirmMsg" style="color:var(--muted);margin-bottom:1.5rem;">هل أنت متأكد من حذف هذا العنصر؟</p>
+    <div class="modal-footer">
+      <button class="icon-btn" onclick="closeConfirm()">إلغاء</button>
+      <button class="admin-btn red" onclick="execDelete()">حذف</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="studentModal">
+  <div class="modal-box">
+    <h3 id="studentModalTitle">إضافة طالب جديد</h3>
+    <div class="form-row">
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الاسم الكامل</label>
+        <input type="text" id="sm-name" placeholder="محمد أحمد">
+      </div>
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">اسم المستخدم (يوزرنايم)</label>
+        <input type="text" id="sm-user" placeholder="student_m">
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">كلمة المرور</label>
+        <input type="text" id="sm-pass" placeholder="pass1234">
+      </div>
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الصف</label>
+        <select id="sm-grade">
+          <option>الصف العاشر</option>
+          <option>الصف الحادي عشر</option>
+          <option selected>الصف الثاني عشر متقدم</option>
+          <option>الصف الثاني عشر عام</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">رقم الهاتف (اختياري)</label>
+        <input type="text" id="sm-phone" placeholder="+971 50 XXX XXXX">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="icon-btn" onclick="closeStudentModal()">إلغاء</button>
+      <button class="admin-btn" onclick="saveStudent()">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="lessonModal">
+  <div class="modal-box">
+    <h3 id="lessonModalTitle">رفع درس جديد</h3>
+    <div class="form-row">
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">عنوان الحصة</label>
+        <input type="text" id="lm-title" placeholder="الحصة الأولى - مقدمة في المثلثات">
+      </div>
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الكورس</label>
+        <select id="lm-course">
+          <option>G12 متقدم - جبر ومثلثات</option>
+          <option>G11 - احتمالات وإحصاء</option>
+          <option>G12 - تفاضل وتكامل</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الوحدة</label>
+        <input type="text" id="lm-unit" placeholder="الوحدة الأولى - المثلثات">
+      </div>
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">مصدر الفيديو</label>
+        <div style="display:flex;gap:0.5rem;margin-bottom:0.6rem;">
+          <button type="button" class="video-type-btn active" id="vsrc-url" onclick="switchVideoSrc('url')">🔗 رابط</button>
+          <button type="button" class="video-type-btn" id="vsrc-upload" onclick="switchVideoSrc('upload')">📤 رفع فيديو</button>
+          <button type="button" class="video-type-btn" id="vsrc-zoom" onclick="switchVideoSrc('zoom')">🎥 Zoom</button>
+        </div>
+        <!-- URL mode -->
+        <div id="vsrc-url-area">
+          <div style="display:flex;gap:0.5rem;">
+            <select id="lm-vtype" style="min-width:120px;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.85rem;cursor:pointer;">
+              <option value="youtube">▶ YouTube</option>
+              <option value="direct">🎬 رابط مباشر</option>
+            </select>
+            <input type="url" id="lm-url" placeholder="https://youtube.com/watch?v=..." style="flex:1;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;font-family:'Cairo',sans-serif;outline:none;">
+          </div>
+        </div>
+        <!-- Upload mode -->
+        <div id="vsrc-upload-area" style="display:none;">
+          <div class="lesson-upload-area" onclick="document.getElementById('videoUpload').click()" style="border-color:#90CAF9;background:#F0F4FF;">
+            <input type="file" id="videoUpload" accept="video/mp4,video/webm,video/ogg,video/avi,video/mov" onchange="handleVideoUpload(this)">
+            <div class="upload-icon">🎬</div>
+            <div class="upload-text">انقر لرفع ملف فيديو<br><small>MP4, WebM, MOV — الحجم الأقصى 500MB</small></div>
+          </div>
+          <div id="videoUploadInfo" style="font-size:0.85rem;color:var(--muted);margin-top:0.4rem;"></div>
+          <div id="videoUploadProgress" style="display:none;margin-top:0.5rem;">
+            <div style="background:#eee;border-radius:4px;height:8px;overflow:hidden;">
+              <div id="videoProgressFill" style="height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--blue-light));border-radius:4px;transition:width 0.3s;"></div>
+            </div>
+            <p id="videoProgressTxt" style="font-size:0.8rem;color:var(--muted);margin-top:4px;">جاري المعالجة...</p>
+          </div>
+        </div>
+        <!-- Zoom mode -->
+        <div id="vsrc-zoom-area" style="display:none;">
+          <input type="url" id="lm-zoom-url" placeholder="https://zoom.us/rec/share/... أو رابط Teams" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;font-family:'Cairo',sans-serif;outline:none;">
+          <p style="font-size:0.78rem;color:var(--muted);margin-top:4px;">الصق رابط تسجيل Zoom أو Microsoft Teams</p>
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;">رفع ملفات PDF (مذكرات / واجبات)</label>
+      <div class="lesson-upload-area" onclick="document.getElementById('pdfUpload').click()">
+        <input type="file" id="pdfUpload" accept=".pdf,.doc,.docx" multiple onchange="handleFileSelect(this)">
+        <div class="upload-icon">📎</div>
+        <div class="upload-text">انقر لرفع ملفات PDF<br><small>المذكرات، الواجبات، الملخصات</small></div>
+      </div>
+      <div id="uploadedFiles" style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;"></div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الوصول</label>
+        <select id="lm-access">
+          <option value="all">جميع الطلاب</option>
+          <option value="paid">المدفوعون فقط</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الحالة</label>
+        <select id="lm-status">
+          <option value="active">منشور</option>
+          <option value="draft">مسودة</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="icon-btn" onclick="closeLessonModal()">إلغاء</button>
+      <button class="admin-btn" onclick="saveLesson()">نشر الدرس</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PAGE -->
+<div class="page" id="page-admin">
+  <div class="admin-nav">
+    <button class="admin-tab active" onclick="adminTab('overview',this)">📊 الرئيسية</button>
+    <button class="admin-tab" onclick="adminTab('courses-mgmt',this)">📚 الكورسات</button>
+    <button class="admin-tab" onclick="adminTab('lessons',this)">🎬 الدروس</button>
+    <button class="admin-tab" onclick="adminTab('assignments',this)">📝 الواجبات</button>
+    <button class="admin-tab" onclick="adminTab('students',this)">👥 الطلاب</button>
+    <button class="admin-tab" onclick="adminTab('settings',this)">⚙️ الإعدادات</button>
+    <h2>لوحة تحكم المدرس — Mr. Anas Fayad</h2>
+    <span id="supabase-status" style="font-size:0.75rem;padding:4px 12px;border-radius:20px;background:rgba(244,67,54,0.2);color:#C62828;margin-left:auto;">🔴 وضع تجريبي</span>
+    <button class="admin-tab" onclick="adminLogout()" style="color:#FF7043;">خروج ↩</button>
+  </div>
+
+  <div class="admin-section active" id="adm-overview">
+    <div class="admin-stats">
+      <div class="admin-stat"><div class="num" id="stat-students">12</div><div class="lbl">طالب مسجل</div></div>
+      <div class="admin-stat gold"><div class="num" id="stat-lessons">24</div><div class="lbl">درس منشور</div></div>
+      <div class="admin-stat green"><div class="num" id="stat-hw">8</div><div class="lbl">واجب متاح</div></div>
+      <div class="admin-stat red"><div class="num" id="stat-pending">3</div><div class="lbl">طلبات معلقة</div></div>
+    </div>
+    <div class="admin-card">
+      <h3>آخر النشاطات</h3>
+      <table class="admin-table">
+        <thead><tr><th>الحدث</th><th>التاريخ</th><th>التفاصيل</th></tr></thead>
+        <tbody id="activityLog">
+          <tr><td>تم رفع درس جديد</td><td>اليوم</td><td>الحصة 3 - قانون جيب التمام</td></tr>
+          <tr><td>طالب جديد</td><td>أمس</td><td>سهر فيصل — G12 متقدم</td></tr>
+          <tr><td>واجب جديد</td><td>27/06/2026</td><td>واجب الوحدة الثانية</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="admin-card">
+      <h3>إجراءات سريعة</h3>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <button class="admin-btn" onclick="openLessonModal()">🎬 رفع درس جديد</button>
+        <button class="admin-btn green" onclick="openStudentModal()">👤 إضافة طالب</button>
+        <button class="admin-btn gold" onclick="adminTab('assignments',null)">📝 إضافة واجب</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-section" id="adm-courses-mgmt">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
+      <div>
+        <h2 style="font-size:1.3rem;font-weight:900;">📚 إدارة الكورسات</h2>
+        <p style="color:var(--muted);font-size:0.9rem;">أضف الكورسات والمراحل الدراسية — الدروس تنتمي لكورس</p>
+      </div>
+    </div>
+    <div class="admin-card">
+      <h3>➕ إضافة كورس جديد</h3>
+      <div class="add-form">
+        <div class="form-row">
+          <div>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">اسم الكورس</label>
+            <input type="text" id="new-course-name" placeholder="مثال: الصف الثاني عشر متقدم — جبر ومثلثات">
+          </div>
+          <div>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">المرحلة الدراسية</label>
+            <select id="new-course-grade">
+              <option>الصف العاشر</option>
+              <option>الصف الحادي عشر</option>
+              <option selected>الصف الثاني عشر متقدم</option>
+              <option>الصف الثاني عشر عام</option>
+              <option>جميع المراحل</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الفصل الدراسي</label>
+            <input type="text" id="new-course-sem" placeholder="مثال: الفصل الدراسي الأول">
+          </div>
+        </div>
+        <button class="admin-btn green" onclick="saveAdminCourse()">✅ إضافة الكورس</button>
+      </div>
+      <h3 style="margin-top:1rem;">الكورسات الحالية</h3>
+      <div id="admin-courses-list"></div>
+    </div>
+  </div>
+
+  <div class="admin-section" id="adm-lessons">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
+      <div>
+        <h2 style="font-size:1.3rem;font-weight:900;">إدارة الدروس</h2>
+        <p style="color:var(--muted);font-size:0.9rem;">رفع وإدارة تسجيلات الحصص من Zoom وTeams</p>
+      </div>
+      <button class="admin-btn" onclick="openLessonModal()">+ رفع درس جديد</button>
+    </div>
+    <div class="admin-card">
+      <h3>هيكل الكورسات والوحدات</h3>
+      <div class="unit-expand open">
+        <div class="unit-head" onclick="toggleUnit(this)">
+          <span>الصف الثاني عشر متقدم — الجبر والمثلثات</span><span>▾ 3 حصص</span>
+        </div>
+        <div class="unit-body">
+          <div style="font-size:0.85rem;font-weight:700;color:var(--blue);margin-bottom:0.5rem;">الوحدة الأولى - المثلثات</div>
+          <div class="lesson-row"><span>الحصة 1 - مقدمة في المثلثات</span><div><span class="tbl-badge active">منشور</span><button class="icon-btn edit" onclick="editLesson(1)">✏️</button><button class="icon-btn del" onclick="confirmDelete('deleteLesson',1,'الحصة 1')">🗑️</button></div></div>
+          <div class="lesson-row"><span>الحصة 2 - قانون الجيب</span><div><span class="tbl-badge active">منشور</span><button class="icon-btn edit" onclick="editLesson(2)">✏️</button><button class="icon-btn del" onclick="confirmDelete('deleteLesson',2,'الحصة 2')">🗑️</button></div></div>
+          <div class="lesson-row"><span>الحصة 3 - قانون جيب التمام</span><div><span class="tbl-badge" style="background:#FFF3E0;color:#E65100;">مسودة</span><button class="icon-btn edit" onclick="editLesson(3)">✏️</button><button class="icon-btn del" onclick="confirmDelete('deleteLesson',3,'الحصة 3')">🗑️</button></div></div>
+          <button class="icon-btn" onclick="openLessonModal()" style="width:100%;text-align:center;padding:8px;margin-top:0.5rem;">+ إضافة حصة</button>
+        </div>
+      </div>
+      <div class="unit-expand">
+        <div class="unit-head" onclick="toggleUnit(this)">
+          <span>الصف الحادي عشر — الاحتمالات</span><span>▾ 1 حصة</span>
+        </div>
+        <div class="unit-body">
+          <div class="lesson-row"><span>الحصة 1 - مقدمة في الاحتمالات</span><div><span class="tbl-badge active">منشور</span><button class="icon-btn edit" onclick="editLesson(4)">✏️</button><button class="icon-btn del" onclick="confirmDelete('deleteLesson',4,'الحصة')">🗑️</button></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="admin-card">
+      <h3>كل الدروس</h3>
+      <input class="search-admin" id="lessonSearch" placeholder="بحث عن درس..." oninput="filterLessons(this.value)">
+      <div style="overflow-x:auto;"><table class="admin-table"><thead><tr><th>#</th><th>عنوان الحصة</th><th>الكورس</th><th>الوحدة</th><th>الرابط</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody id="lessonsTbody"></tbody></table></div>
+    </div>
+  </div>
+
+  <div class="admin-section" id="adm-assignments">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
+      <div>
+        <h2 style="font-size:1.3rem;font-weight:900;">إدارة الواجبات</h2>
+        <p style="color:var(--muted);font-size:0.9rem;">رفع وتوزيع الواجبات والمذكرات</p>
+      </div>
+    </div>
+    <div class="admin-card">
+      <h3>رفع واجب / مذكرة جديدة</h3>
+      <div class="add-form">
+        <div class="form-row">
+          <div>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">عنوان الواجب</label>
+            <input type="text" id="hw-title" placeholder="واجب الوحدة الأولى - المثلثات">
+          </div>
+          <div>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الكورس</label>
+            <select id="hw-course">
+              <option>G12 متقدم - جبر ومثلثات</option>
+              <option>G11 - احتمالات</option>
+              <option>جميع الكورسات</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">تاريخ التسليم</label>
+            <input type="date" id="hw-due">
+          </div>
+          <div>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">النوع</label>
+            <select id="hw-type">
+              <option>واجب منزلي</option>
+              <option>مذكرة دراسة</option>
+              <option>ورقة تمارين</option>
+              <option>مراجعة شاملة</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:0.75rem;">
+          <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;">رفع ملف PDF</label>
+          <div class="lesson-upload-area" onclick="document.getElementById('hwUpload').click()">
+            <input type="file" id="hwUpload" accept=".pdf,.doc,.docx" onchange="handleHWUpload(this)">
+            <div class="upload-icon">📄</div>
+            <div class="upload-text">انقر لرفع ملف الواجب (PDF)</div>
+          </div>
+          <div id="hwFileName" style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;"></div>
+        </div>
+        <button class="admin-btn green" onclick="saveHW()">نشر الواجب</button>
+      </div>
+      <div style="overflow-x:auto;"><table class="admin-table"><thead><tr><th>#</th><th>عنوان الواجب</th><th>الكورس</th><th>التسليم</th><th>النوع</th><th>إجراءات</th></tr></thead><tbody id="hwTbody"></tbody></table></div>
+    </div>
+  </div>
+
+  <div class="admin-section" id="adm-students">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
+      <div>
+        <h2 style="font-size:1.3rem;font-weight:900;">إدارة الطلاب</h2>
+        <p style="color:var(--muted);font-size:0.9rem;">تسجيل الطلاب ومنحهم بيانات الدخول</p>
+      </div>
+      <button class="admin-btn green" onclick="openStudentModal()">+ تسجيل طالب جديد</button>
+    </div>
+    <div class="admin-card">
+      <h3>قائمة الطلاب وبيانات الدخول</h3>
+      <input class="search-admin" id="studentSearch" placeholder="بحث باسم الطالب أو اليوزرنايم..." oninput="filterStudents(this.value)">
+      <div style="overflow-x:auto;"><table class="admin-table"><thead><tr><th>#</th><th>اسم الطالب</th><th>اليوزرنايم</th><th>الباسوورد</th><th>الصف</th><th>الاشتراك</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody id="studentsTbody"></tbody></table></div>
+    </div>
+    <div class="admin-card">
+      <h3>نسخ بيانات الدخول</h3>
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">انقر على زر النسخ لإرسال بيانات الدخول للطالب</p>
+      <div id="credentialsList"></div>
+    </div>
+  </div>
+
+  <div class="admin-section" id="adm-settings">
+    <div class="admin-card" style="border:2px solid var(--gold);">
+      <h3>🔥 Firebase — قاعدة البيانات السحابية</h3>
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">المنصة متصلة بـ Firebase — Project: <strong>anas-fayad-math</strong></p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1rem;">
+        <div style="background:#FFF8E1;border-radius:8px;padding:0.75rem;text-align:center;">
+          <div style="font-size:1.5rem;">🔐</div>
+          <div style="font-size:0.8rem;font-weight:700;margin-top:4px;">Authentication</div>
+          <div style="font-size:0.75rem;color:var(--muted);">تسجيل دخول الطلاب</div>
+        </div>
+        <div style="background:#E8F5E9;border-radius:8px;padding:0.75rem;text-align:center;">
+          <div style="font-size:1.5rem;">📦</div>
+          <div style="font-size:0.8rem;font-weight:700;margin-top:4px;">Firestore</div>
+          <div style="font-size:0.75rem;color:var(--muted);">الطلاب، الدروس، الواجبات</div>
+        </div>
+        <div style="background:#E3F2FD;border-radius:8px;padding:0.75rem;text-align:center;">
+          <div style="font-size:1.5rem;">☁️</div>
+          <div style="font-size:0.8rem;font-weight:700;margin-top:4px;">Storage</div>
+          <div style="font-size:0.75rem;color:var(--muted);">الفيديوهات والـ PDF</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+        <button class="admin-btn" onclick="testFirebase()">🔍 اختبار الاتصال</button>
+        <button class="admin-btn green" onclick="syncAllToFirebase()">🔄 مزامنة البيانات المحلية</button>
+        <span id="supabase-test-result" style="font-size:0.85rem;color:var(--muted);"></span>
+      </div>
+      <div style="margin-top:1rem;background:#FFF8E1;border-radius:8px;padding:1rem;font-size:0.83rem;color:#795548;line-height:2;">
+        <strong>🔥 Firebase Project: anas-fayad-math</strong><br>
+        Collections: <code>courses</code> | <code>lessons</code> | <code>assignments</code> | <code>students</code>
+      </div>
+    </div>
+    <h2 style="font-size:1.3rem;font-weight:900;margin-bottom:1.5rem;">الإعدادات</h2>
+    <div class="admin-card">
+      <h3>تغيير كلمة مرور المدرس</h3>
+      <div class="form-row">
+        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">كلمة المرور الحالية</label><input type="password" id="old-pass" placeholder="كلمة المرور الحالية"></div>
+        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">كلمة المرور الجديدة</label><input type="password" id="new-pass" placeholder="كلمة مرور جديدة"></div>
+        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">تأكيد كلمة المرور</label><input type="password" id="conf-pass" placeholder="تأكيد"></div>
+      </div>
+      <button class="admin-btn" onclick="changeTeacherPass()">تحديث كلمة المرور</button>
+    </div>
+    <div class="admin-card">
+      <h3>إضافة إعلان</h3>
+      <div class="form-row">
+        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">عنوان الإعلان</label><input type="text" id="ann-title" placeholder="عنوان..."></div>
+        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">النص</label><input type="text" id="ann-text" placeholder="تفاصيل الإعلان..."></div>
+      </div>
+      <button class="admin-btn gold" onclick="saveAnnouncement()">نشر الإعلان</button>
+    </div>
+    <div class="admin-card">
+      <h3>إحصائيات عامة</h3>
+      <div class="admin-stats">
+        <div class="admin-stat"><div class="num" id="s-total">12</div><div class="lbl">إجمالي الطلاب</div></div>
+        <div class="admin-stat gold"><div class="num" id="s-lessons">24</div><div class="lbl">إجمالي الدروس</div></div>
+        <div class="admin-stat green"><div class="num" id="s-hw">8</div><div class="lbl">إجمالي الواجبات</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer id="mainFooter">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <h3>📐 Mr. Anas Fayad</h3>
+      <p id="ft-desc">نقدم تعليم رياضيات عالي الجودة لطلاب المرحلة الثانوية في كل مكان</p>
+    </div>
+    <div class="footer-col">
+      <h4 id="ft-q">روابط سريعة</h4>
+      <ul>
+        <li><a onclick="showPage('home')" id="ft-home">الرئيسية</a></li>
+        <li><a onclick="showPage('courses')" id="ft-courses">الدروس</a></li>
+        <li><a onclick="showPage('about')" id="ft-about">من نحن</a></li>
+        <li><a onclick="showPage('contact')" id="ft-contact">اتصل بنا</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4 id="ft-support">دعم</h4>
+      <ul>
+        <li><a onclick="showPage('courses')" id="ft-free">الدروس المجانية</a></li>
+        <li><a onclick="showPage('login')" id="ft-login">تسجيل الدخول</a></li>
+        <li><a id="ft-help">مركز المساعدة</a></li>
+        <li><a id="ft-privacy">سياسة الخصوصية</a></li>
+      </ul>
+    </div>
+    <div class="footer-col footer-contact">
+      <h4 id="ft-cu">اتصل بنا</h4>
+      <p>📧 anasfayad@math.edu</p>
+      <p>📱 +971 50 XXX XXXX</p>
+      <p>📍 <span id="ft-loc">الإمارات العربية المتحدة</span></p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p id="ft-copy">© 2026 Mr. Anas Fayad. جميع الحقوق محفوظة</p>
+  </div>
+</footer>
+
+<a class="wa-btn" href="https://wa.me/971500000000" target="_blank" title="WhatsApp">💬</a>
+
+<!-- TOAST -->
+<div id="toast" style="position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);background:#1565C0;color:white;padding:10px 22px;border-radius:8px;font-size:0.9rem;display:none;z-index:300;box-shadow:0 4px 14px rgba(0,0,0,0.2);"></div>
+
+<script>
+
+// ╔══════════════════════════════════════════════╗
+// ║         FIREBASE CONFIG — Anas Fayad Math    ║
+// ╚══════════════════════════════════════════════╝
+const firebaseConfig = {
+  apiKey:            "AIzaSyC-COCeNb9tW5fZuYpJpreFAULqUALFBno",
+  authDomain:        "anas-fayad-math.firebaseapp.com",
+  projectId:         "anas-fayad-math",
+  storageBucket:     "anas-fayad-math.firebasestorage.app",
+  messagingSenderId: "540057426943",
+  appId:             "1:540057426943:web:3ec283211ae73b74ee65ca",
+  measurementId:     "G-NT4MBTD9CF"
+};
+
+// Firebase instances (set after SDK loads)
+let firebaseApp, db, auth, storage, fbReady = false;
+
+function initFirebase(){
+  try {
+    firebaseApp = firebase.initializeApp(firebaseConfig);
+    db          = firebase.firestore();
+    auth        = firebase.auth();
+    storage     = firebase.storage();
+    fbReady     = true;
+    updateFBBadge(true);
+    console.log('✅ Firebase متصل');
+    startRealtimeListeners();
+    // Load data from Firestore
+    loadCoursesFromDB();
+    loadLessonsFromDB();
+    loadHWFromDB();
+    loadStudentsFromDB();
+  } catch(e){
+    console.warn('Firebase init error:', e);
+    updateFBBadge(false);
+  }
+}
+
+function updateFBBadge(ok){
+  const badge = document.getElementById('supabase-status');
+  if(!badge) return;
+  badge.textContent    = ok ? '🟢 Firebase متصل' : '🔴 وضع تجريبي';
+  badge.style.background = ok ? 'rgba(76,175,80,0.2)' : 'rgba(244,67,54,0.2)';
+  badge.style.color      = ok ? '#2E7D32' : '#C62828';
+}
+function checkSupabaseConfig(){ updateFBBadge(fbReady); }
+
+// ══════════════════════════════════════════════
+// FIRESTORE HELPERS
+// ══════════════════════════════════════════════
+async function fbGet(col){
+  if(!fbReady) return null;
+  try{
+    const snap = await db.collection(col).get();
+    return snap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch(e){ console.warn('fbGet error',e); return null; }
+}
+async function fbSet(col, id, data){
+  if(!fbReady) return null;
+  try{ await db.collection(col).doc(String(id)).set(data,{merge:true}); return true; }
+  catch(e){ console.warn('fbSet error',e); return null; }
+}
+async function fbDel(col, id){
+  if(!fbReady) return null;
+  try{ await db.collection(col).doc(String(id)).delete(); return true; }
+  catch(e){ console.warn('fbDel error',e); return null; }
+}
+
+// ══════════════════════════════════════════════
+// LOAD FROM FIRESTORE (on login / admin open)
+// ══════════════════════════════════════════════
+async function loadCoursesFromDB(){
+  const data = await fbGet('courses');
+  if(data && data.length > 0){
+    adminCourses = data;
+    renderCourseCards();
+    renderAdminCourses();
+  }
+}
+async function loadLessonsFromDB(){
+  const data = await fbGet('lessons');
+  if(data && data.length > 0){
+    adminLessons = data.map(d=>({...d, id: isNaN(d.id)?d.id:Number(d.id)}));
+    renderLessonsTable();
+    renderCourseCards();
+  }
+}
+async function loadHWFromDB(){
+  const data = await fbGet('assignments');
+  if(data && data.length > 0){
+    adminHW = data.map(d=>({...d, id: isNaN(d.id)?d.id:Number(d.id)}));
+    renderStudentHW();
+    renderHWTable();
+  }
+}
+async function loadStudentsFromDB(){
+  const data = await fbGet('students');
+  if(data && data.length > 0){
+    adminStudents = data.map(d=>({...d, id: isNaN(d.id)?d.id:Number(d.id),
+      active: d.active !== false}));
+    // Rebuild USERS map for local login
+    adminStudents.forEach(s=>{ USERS[s.user]=s.pass; });
+    renderStudentsTable();
+  }
+}
+
+// ══════════════════════════════════════════════
+// STORAGE — Upload file to Firebase Storage
+// ══════════════════════════════════════════════
+async function uploadToStorage(file, path, onProgress){
+  if(!fbReady) return null;
+  return new Promise((resolve, reject)=>{
+    const ref  = storage.ref(path);
+    const task = ref.put(file);
+    task.on('state_changed',
+      snap=>{ const pct=Math.round(snap.bytesTransferred/snap.totalBytes*100); if(onProgress)onProgress(pct); },
+      err=>reject(err),
+      async ()=>{ const url=await task.snapshot.ref.getDownloadURL(); resolve(url); }
+    );
+  });
+}
+// ══════════════════════════════════════════════
+
+// ======= DATA =======
+const USERS={student1:'1234',student2:'abcd',math2026:'pass123'};
+let currentLang='ar';
+let loggedIn=false;
+let currentUser='';
+let watchedLessons = {}; // {lessonId: true}
+let lastWatchedLesson = null;
+
+function markLessonWatched(lessonId, lessonTitle){
+  if(!currentUser) return;
+  const key = currentUser+'_watched';
+  watchedLessons[lessonId] = true;
+  try{ localStorage.setItem(key, JSON.stringify(watchedLessons)); }catch(e){}
+  lastWatchedLesson = {id:lessonId, title:lessonTitle};
+  updateProgressDisplay();
+}
+function loadWatchedLessons(){
+  if(!currentUser) return;
+  try{
+    const saved = localStorage.getItem(currentUser+'_watched');
+    if(saved) watchedLessons = JSON.parse(saved);
+  }catch(e){}
+  updateProgressDisplay();
+}
+// ══════════════════════════════════════════
+// RENDER STUDENT ASSIGNMENTS FROM adminHW
+// ══════════════════════════════════════════
+function renderStudentHW(){
+  const list = document.getElementById('student-hw-list');
+  if(!list) return;
+  if(adminHW.length === 0){
+    list.innerHTML = '<div style="background:white;border-radius:12px;padding:2rem;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.08);">'
+      + '<div style="font-size:2.5rem;margin-bottom:0.75rem;">📭</div>'
+      + '<p style="color:var(--muted);" id="no-hw-txt">لا توجد واجبات متاحة حالياً</p>'
+      + '</div>';
+    const el=document.getElementById('d3-num'); if(el) el.textContent='0';
+    return;
+  }
+
+  const today = new Date();
+  list.innerHTML = adminHW.map((hw, i) => {
+    const due    = hw.due ? new Date(hw.due) : null;
+    const isNew  = !due || due >= today;
+    const isDone = due && due < today;
+    const dueLabel = hw.due
+      ? (isDone
+          ? (currentLang==='ar' ? 'انتهى التسليم: ' : 'Closed: ') + hw.due
+          : (currentLang==='ar' ? 'تاريخ التسليم: ' : 'Due: ') + hw.due)
+      : (currentLang==='ar' ? 'مفتوح' : 'Open');
+
+    const statusClass = isDone ? 'status-done' : 'status-new';
+    const statusLabel = isDone
+      ? (currentLang==='ar' ? 'انتهى ✓' : 'Closed ✓')
+      : (currentLang==='ar' ? 'جديد 🔔' : 'New 🔔');
+
+    const btnColor = isDone ? '#4CAF50' : 'linear-gradient(135deg,var(--blue),var(--blue-light))';
+
+    return `<div class="assign-item" style="${isDone?'opacity:0.75;':''}">
+      <div class="assign-info">
+        <h4>${hw.title}</h4>
+        <p style="color:var(--muted);font-size:0.85rem;">${dueLabel} &nbsp;|&nbsp; ${hw.course} &nbsp;|&nbsp; <span style="background:#E3F2FD;color:var(--blue);padding:2px 8px;border-radius:10px;font-size:0.78rem;">${hw.type}</span></p>
+      </div>
+      <span class="assign-status ${statusClass}">${statusLabel}</span>
+      <button class="assign-dl-btn" style="background:${btnColor};" onclick="downloadHW(${hw.id})">
+        ⬇ ${currentLang==='ar'?'تحميل الواجب':'Download'}
+      </button>
+    </div>`;
+  }).join('');
+
+  const el=document.getElementById('d3-num');
+  if(el) el.textContent = adminHW.filter(h=>{ const d=h.due?new Date(h.due):null; return !d||d>=today; }).length;
+}
+
+function downloadHW(id){
+  const hw = adminHW.find(x=>x.id===id);
+  if(!hw){ showToast('الواجب غير موجود'); return; }
+  // If real file URL exists (from Supabase), open it
+  if(hw.fileUrl){
+    window.open(hw.fileUrl,'_blank');
+  } else {
+    showToast((currentLang==='ar'?'جاري تحميل: ':'Downloading: ') + hw.title);
+  }
+}
+
+function continueLastLesson(){
+  if(lastWatchedLesson){
+    const lesson = adminLessons.find(l=>l.id===lastWatchedLesson.id);
+    if(lesson){ loadLesson({...lesson, videoUrl:lesson.url, videoType:lesson.vtype||'youtube'}); return; }
+  }
+  // Go to first lesson
+  if(adminLessons.length){
+    const l=adminLessons[0];
+    loadLesson({id:l.id,title:l.title,unit:l.unit,videoUrl:l.url,videoType:l.vtype||'youtube'});
+  } else { showPage('courses'); }
+}
+function updateProgressDisplay(){
+  const total = adminLessons.filter(l=>l.status==='active').length || 1;
+  const done  = Object.keys(watchedLessons).length;
+  const pct   = Math.round((done/total)*100);
+  const el = document.getElementById('progress-pct');
+  if(el) el.textContent = pct+'%';
+  const bar = document.getElementById('progress-bar-fill');
+  if(bar) bar.style.width = pct+'%';
+  const stat = document.getElementById('d2');
+  if(stat) stat.textContent = done+' درس شاهدته';
+  // Update completion stat
+  // Update last lesson label
+  const lbl = document.getElementById('last-lesson-lbl');
+  if(lbl && lastWatchedLesson) lbl.textContent = 'آخر درس: '+lastWatchedLesson.title;
+  const comp = document.getElementById('d4');
+  if(comp) comp.textContent = pct+'%';
+}
+
+// ======= TRANSLATIONS =======
+const T={
+  ar:{
+    'nav-home':'الرئيسية','nav-courses':'الدروس','nav-about':'من نحن',
+    'nav-contact':'اتصل بنا','nav-dash':'لوحتي',
+    'lt-title':'Mr. Anas Fayad','lt-sub':'منصة الرياضيات التعليمية',
+    'lt-user':'اسم المستخدم','lt-pass':'كلمة المرور','lt-rem':'تذكرني',
+    'lt-forgot':'نسيت كلمة المرور؟','lt-btn':'دخول','lt-hint':'للتجربة: student1 / 1234',
+    'lt-err':'اسم المستخدم أو كلمة المرور غير صحيحة',
+    'h-title':'<span>حوّل</span> رحلتك التعليمية',
+    'h-sub':'منصة رياضيات احترافية مع <strong>Mr. Anas Fayad</strong>',
+    'h-btn1':'استعرض الدروس','h-btn2':'لوحتي الدراسية',
+    'h-s1':'طالب مسجل','h-s2':'درس متاح','h-s3':'واجب تدريبي',
+    'f-tag':'المميزات','f-title':'منصة متكاملة للرياضيات',
+    'f-sub':'كل ما تحتاجه لرحلة تعليمية ناجحة في مكان واحد',
+    'f1-t':'تسجيلات الدروس','f1-p':'شاهد تسجيلات جلسات Zoom و Teams في أي وقت ومن أي مكان',
+    'f2-t':'تحميل الواجبات','f2-p':'حمّل الواجبات والمذكرات المصنفة حسب الوحدة بسهولة',
+    'f3-t':'حساب خاص بك','f3-p':'لكل طالب اسم مستخدم وكلمة مرور خاصة به للوصول الآمن',
+    'f4-t':'تتبع التقدم','f4-p':'تابع تقدمك في كل وحدة وحصة من لوحة التحكم الشخصية',
+    'f5-t':'اختبارات تفاعلية','f5-p':'اختبر فهمك مع تمارين تفاعلية وتصحيح فوري',
+    'f6-t':'عربي وإنجليزي','f6-p':'المنصة متاحة بالكامل باللغتين العربية والإنجليزية','f1-go':'شاهد الدروس ←','f2-go':'حمّل الواجبات ←','f3-go':'لوحتي ←','f4-go':'تقدمي ←','f5-go':'ابدأ التمارين ←','f6-go':'تعرف علينا ←',
+    'n-tag':'آخر الأخبار','n-title':'أخبار المنصة','n-sub':'ابقَ على اطلاع بآخر التحديثات والإعلانات',
+    'n1-t':'درس جديد','n1-p':'تمت إضافة درس جديد في وحدة المثلثات مع تمارين شاملة','n1-d':'يونيو 2026',
+    'n2-t':'تحديث المنصة','n2-p':'تم تحسين تجربة المستخدم وإضافة ميزات جديدة لتحميل الملفات','n2-d':'مايو 2026',
+    'n3-t':'نمو المجتمع','n3-p':'انضم 50 طالباً جديداً! نرحب بكم جميعاً في مجتمع التعلم','n3-d':'أبريل 2026',
+    'c-title':'الدروس المتاحة','c-sub':'جميع تسجيلات الحصص والمواد','c-back':'← لوحتي',
+    'cc-sem1':'الفصل الدراسي الأول','cc-t1':'الصف الثاني عشر متقدم - الجبر وحساب المثلثات','cc-btn1':'متابعة التعلم',
+    'cc-sem2':'الفصل الدراسي الثاني','cc-t2':'الصف الحادي عشر - الاحتمالات والإحصاء','cc-btn2':'متابعة التعلم',
+    'cc-sem3':'الفصل الدراسي الثالث','cc-t3':'الصف الثاني عشر - التفاضل والتكامل','cc-btn3':'عرض التفاصيل',
+    'cc-sem4':'جميع الفصول','cc-t4':'حصص تجريبية - مقدمة في الرياضيات المتقدمة','cc-btn4':'ابدأ مجاناً',
+    'cd-back':'← العودة للدروس','cd-content':'محتوى الكورس',
+    'cd-u1':'الوحدة الأولى - المثلثات','cd-l1':'الحصة 1 - مقدمة في المثلثات',
+    'cd-l2':'الحصة 2 - قانون الجيب','cd-l3':'الحصة 3 - قانون جيب التمام',
+    'cd-u2':'الوحدة الثانية - الجبر','cd-l4':'الحصة 4 - المعادلات التربيعية','cd-l5':'الحصة 5 - المتراجحات',
+    'cd-u3':'مجمع الواجبات','cd-hw1':'واجب الوحدة الأولى','cd-hw2':'واجب الوحدة الثانية',
+    'cd-paid':'كورس مدفوع','cd-course-title':'الصف الثاني عشر متقدم - الجبر وحساب المثلثات',
+    'cd-sem':'الفصل الدراسي الأول','cd-teacher':'Anas Fayad',
+    'cd-dur':'المدة: 60 ساعة','cd-les':'الحصص: 58','cd-lvl':'المستوى: متقدم',
+    'cd-forum':'منتدى النقاش','cd-qa':'أسئلة وأجوبة','cd-forum-btn':'انضم للنقاش',
+    'lv-back':'← العودة للكورس',
+    'lv-title':'الحصة الأولى - مقدمة في المثلثات (جلسة Zoom)',
+    'lv-meta':'الوحدة الأولى | الصف الثاني عشر متقدم',
+    'mat-title':'مواد الدرس','mat-unit':'الوحدة الأولى - المثلثات',
+    'mat1-n':'مذكرة_الوحدة_الأولى_المثلثات.pdf','mat1-s':'انقر للتحميل','mat1-btn':'⬇ تحميل',
+    'mat2-n':'ملخص_الحصة_الأولى_المثلثات.pdf','mat2-s':'انقر للتحميل','mat2-btn':'⬇ تحميل',
+    'mat3-n':'تمارين_الوحدة_الأولى.pdf','mat3-s':'انقر للتحميل','mat3-btn':'⬇ تحميل',
+    'dash-title':'لوحة الطالب','dash-sub':'متابعة التقدم والواجبات',
+    'd1':'كورسات مفعّلة','d2':'حصص شاهدتها','d3':'واجبات جديدة','d4':'نسبة الإنجاز',
+    'dash-hw':'الواجبات المتاحة للتحميل',
+    'hw1-t':'واجب الوحدة الأولى - المثلثات','hw1-p':'تاريخ التسليم: 30 يونيو 2026 | الصف الثاني عشر متقدم','hw1-s':'جديد','hw1-btn':'⬇ تحميل الواجب',
+    'hw2-t':'واجب الوحدة الثانية - الجبر','hw2-p':'تاريخ التسليم: 15 يوليو 2026','hw2-s':'جديد','hw2-btn':'⬇ تحميل الواجب',
+    'hw3-t':'مراجعة شاملة - الفصل الأول','hw3-p':'تم التسليم: 1 يونيو 2026','hw3-s':'مكتمل ✓','hw3-btn':'⬇ تحميل',
+    'dash-my':'كورساتي','dc1-t':'الصف الثاني عشر - الجبر والمثلثات','dc1-btn':'متابعة',
+    'dc2-t':'الصف الحادي عشر - الاحتمالات','dc2-btn':'متابعة',
+    'ab-tag':'من نحن','ab-title':'Mr. Anas Fayad',
+    'ab-p1':'معلم رياضيات متخصص بخبرة تزيد عن 15 عاماً في تدريس الرياضيات للمرحلة الثانوية.',
+    'ab-p2':'تقدم المنصة تسجيلات حصص Zoom و Teams الحية، مذكرات PDF قابلة للتحميل، وواجبات تفاعلية.',
+    'ab-p3':'الهدف هو جعل تعلم الرياضيات ممتعاً وسهلاً وفعالاً لكل طالب.',
+    'ab-btn1':'استعرض الدروس','ab-btn2':'تواصل معنا',
+    'ct-tag':'تواصل معنا','ct-title':'ارسل لنا رسالة','ct-h':'استفسارات ودعم',
+    'ct-name':'الاسم الكامل','ct-email':'البريد الإلكتروني','ct-msg':'الرسالة','ct-btn':'إرسال الرسالة',
+    'ct-info1':'anasfayad@math.edu','ct-info2':'+971 50 XXX XXXX','ct-info3':'الإمارات العربية المتحدة',
+    'ft-desc':'نقدم تعليم رياضيات عالي الجودة لطلاب المرحلة الثانوية','ft-q':'روابط سريعة',
+    'ft-home':'الرئيسية','ft-courses':'الدروس','ft-about':'من نحن','ft-contact':'اتصل بنا',
+    'ft-support':'دعم','ft-free':'الدروس المجانية','ft-login':'تسجيل الدخول',
+    'ft-help':'مركز المساعدة','ft-privacy':'سياسة الخصوصية',
+    'ft-cu':'اتصل بنا','ft-loc':'الإمارات العربية المتحدة',
+    'ft-copy':'© 2026 Mr. Anas Fayad. جميع الحقوق محفوظة',
+    'toast-dl':'جاري التحميل: ','toast-contact':'تم إرسال رسالتك بنجاح!',
+    'navUser':'👤 الطالب ▾','lang-btn':'🌐 English'
+  },
+  en:{
+    'nav-home':'Home','nav-courses':'Courses','nav-about':'About Us',
+    'nav-contact':'Contact Us','nav-dash':'Dashboard',
+    'lt-title':'Mr. Anas Fayad','lt-sub':'Math Learning Platform',
+    'lt-user':'Username','lt-pass':'Password','lt-rem':'Remember me',
+    'lt-forgot':'Forgot password?','lt-btn':'Login','lt-hint':'Demo: student1 / 1234',
+    'lt-err':'Invalid username or password',
+    'h-title':'<span>Transform</span> Your Learning Journey',
+    'h-sub':'Professional Math Platform with <strong>Mr. Anas Fayad</strong>',
+    'h-btn1':'Browse Courses','h-btn2':'My Dashboard',
+    'h-s1':'Enrolled Students','h-s2':'Lessons Available','h-s3':'Practice Assignments',
+    'f-tag':'Features','f-title':'Complete Math Platform',
+    'f-sub':'Everything you need for a successful learning journey in one place',
+    'f1-t':'Lesson Recordings','f1-p':'Watch Zoom & Teams session recordings anytime, anywhere',
+    'f2-t':'Download Assignments','f2-p':'Download assignments and notes organized by unit easily',
+    'f3-t':'Your Own Account','f3-p':'Every student has a unique username and password for secure access',
+    'f4-t':'Track Progress','f4-p':'Monitor your progress in every unit from your personal dashboard',
+    'f5-t':'Interactive Quizzes','f5-p':'Test your understanding with interactive exercises and instant feedback',
+    'f6-t':'Arabic & English','f6-p':'The platform is fully available in both Arabic and English','f1-go':'Watch Lessons →','f2-go':'Download HW →','f3-go':'My Dashboard →','f4-go':'My Progress →','f5-go':'Start Exercises →','f6-go':'About Us →',
+    'n-tag':'Latest Updates','n-title':'Our News','n-sub':'Stay updated with the latest news and announcements',
+    'n1-t':'New Lesson Added','n1-p':'A new trigonometry lesson has been added with comprehensive exercises','n1-d':'June 2026',
+    'n2-t':'Platform Update','n2-p':'Improved user experience and new file download features added','n2-d':'May 2026',
+    'n3-t':'Community Growth','n3-p':'50 new students joined! Welcome all to our learning community','n3-d':'April 2026',
+    'c-title':'Available Courses','c-sub':'All session recordings and materials','c-back':'← Dashboard',
+    'cc-sem1':'Semester 1','cc-t1':'Grade 12 Advanced - Algebra & Trigonometry','cc-btn1':'Continue Learning',
+    'cc-sem2':'Semester 2','cc-t2':'Grade 11 - Probability & Statistics','cc-btn2':'Continue Learning',
+    'cc-sem3':'Semester 3','cc-t3':'Grade 12 - Calculus','cc-btn3':'View Details',
+    'cc-sem4':'All Semesters','cc-t4':'Trial Lessons - Intro to Advanced Math','cc-btn4':'Start Free',
+    'cd-back':'← Back to Courses','cd-content':'Course Content',
+    'cd-u1':'Unit 1 - Trigonometry','cd-l1':'Lesson 1 - Introduction to Trigonometry',
+    'cd-l2':'Lesson 2 - Sine Rule','cd-l3':'Lesson 3 - Cosine Rule',
+    'cd-u2':'Unit 2 - Algebra','cd-l4':'Lesson 4 - Quadratic Equations','cd-l5':'Lesson 5 - Inequalities',
+    'cd-u3':'Assignments Bundle','cd-hw1':'Unit 1 Assignment','cd-hw2':'Unit 2 Assignment',
+    'cd-paid':'Paid Course','cd-course-title':'Grade 12 Advanced - Algebra & Trigonometry',
+    'cd-sem':'Semester 1','cd-teacher':'Anas Fayad',
+    'cd-dur':'Duration: 60 hours','cd-les':'Lessons: 58','cd-lvl':'Level: Advanced',
+    'cd-forum':'Discussion Forum','cd-qa':'Q&A','cd-forum-btn':'Join Forum',
+    'lv-back':'← Back to Course',
+    'lv-title':'Lesson 1 - Introduction to Trigonometry (Zoom Session)',
+    'lv-meta':'Unit 1 | Grade 12 Advanced - Algebra & Trigonometry',
+    'mat-title':'Lesson Materials','mat-unit':'Unit 1 - Trigonometry',
+    'mat1-n':'Unit1_Trigonometry_Notes.pdf','mat1-s':'Click to download','mat1-btn':'⬇ Download',
+    'mat2-n':'Lesson1_Trigonometry_Summary.pdf','mat2-s':'Click to download','mat2-btn':'⬇ Download',
+    'mat3-n':'Unit1_Exercises.pdf','mat3-s':'Click to download','mat3-btn':'⬇ Download',
+    'dash-title':'Student Dashboard','dash-sub':'Track your progress and assignments',
+    'd1':'Active Courses','d2':'Lessons Watched','d3':'New Assignments','d4':'Completion Rate',
+    'dash-hw':'Assignments Available for Download',
+    'hw1-t':'Unit 1 Assignment - Trigonometry','hw1-p':'Due: June 30, 2026 | Grade 12 Advanced','hw1-s':'New','hw1-btn':'⬇ Download',
+    'hw2-t':'Unit 2 Assignment - Algebra','hw2-p':'Due: July 15, 2026 | Grade 12 Advanced','hw2-s':'New','hw2-btn':'⬇ Download',
+    'hw3-t':'Comprehensive Review - Semester 1','hw3-p':'Submitted: June 1, 2026','hw3-s':'Done ✓','hw3-btn':'⬇ Download',
+    'dash-my':'My Courses','dc1-t':'Grade 12 - Algebra & Trigonometry','dc1-btn':'Continue',
+    'dc2-t':'Grade 11 - Probability','dc2-btn':'Continue',
+    'ab-tag':'About Us','ab-title':'Mr. Anas Fayad',
+    'ab-p1':'Specialized math teacher with over 15 years of experience teaching high school mathematics.',
+    'ab-p2':'The platform offers live Zoom & Teams session recordings, downloadable PDF notes, and interactive assignments.',
+    'ab-p3':'The goal is to make learning math enjoyable, easy, and effective for every student.',
+    'ab-btn1':'Browse Courses','ab-btn2':'Contact Us',
+    'ct-tag':'Contact Us','ct-title':'Send Us a Message','ct-h':'Inquiries & Support',
+    'ct-name':'Full Name','ct-email':'Email Address','ct-msg':'Message','ct-btn':'Send Message',
+    'ct-info1':'anasfayad@math.edu','ct-info2':'+971 50 XXX XXXX','ct-info3':'United Arab Emirates',
+    'ft-desc':'We provide high-quality math education to secondary school students everywhere',
+    'ft-q':'Quick Links','ft-home':'Home','ft-courses':'Courses','ft-about':'About Us','ft-contact':'Contact Us',
+    'ft-support':'Support','ft-free':'Free Courses','ft-login':'Login',
+    'ft-help':'Help Center','ft-privacy':'Privacy Policy',
+    'ft-cu':'Contact Us','ft-loc':'United Arab Emirates',
+    'ft-copy':'© 2026 Mr. Anas Fayad. All rights reserved',
+    'toast-dl':'Downloading: ','toast-contact':'Message sent successfully!',
+    'navUser':'👤 Student ▾','lang-btn':'🌐 العربية'
+  }
+};
+
+function applyLang(lang){
+  const t=T[lang];
+  Object.keys(t).forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML=t[id];
+  });
+  document.body.classList.toggle('ltr',lang==='en');
+  document.documentElement.dir=lang==='ar'?'rtl':'ltr';
+  document.documentElement.lang=lang;
+}
+
+function toggleLang(){
+  currentLang=currentLang==='ar'?'en':'ar';
+  applyLang(currentLang);
+}
+
+// ======= AUTH =======
+function doLogin(){
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value.trim();
+  const err=document.getElementById('loginErr');
+  if(USERS[u]&&USERS[u]===p){
+    loggedIn=true;
+    currentUser=u;
+    document.getElementById('loginOverlay').style.display='none';
+    // Find student name from admin list or fallback to username
+    const found=adminStudents.find(s=>s.user===u);
+    // Check subscription expiry
+    if(found && found.subEnd){
+      const daysLeft=Math.ceil((new Date(found.subEnd)-new Date())/(1000*60*60*24));
+      if(daysLeft<0){ showToast('⚠️ انتهى اشتراكك — تواصل مع المدرس'); }
+      else if(daysLeft<=7){ setTimeout(()=>showToast('⚠️ ينتهي اشتراكك خلال '+daysLeft+' أيام!'),1500); }
+    }
+    const displayName=found?found.name:u;
+    document.getElementById('navUser').textContent='👤 '+displayName+' ▾';
+    // Update dashboard title
+    const dt=document.getElementById('dash-title');
+    if(dt)dt.textContent='لوحة الطالب - '+displayName;
+    showToast((currentLang==='ar'?'مرحباً ':'Welcome ')+displayName+'!');
+    loadWatchedLessons();
+    renderStudentHW();
+  } else {
+    err.style.display='block';
+    setTimeout(()=>err.style.display='none',3000);
+  }
+}
+document.getElementById('loginPass').addEventListener('keypress',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('loginUser').addEventListener('keypress',e=>{if(e.key==='Enter')doLogin();});
+
+// ======= NAVIGATION =======
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
+  const page=document.getElementById('page-'+name);
+  if(page) page.classList.add('active');
+  const link=document.getElementById('nav-'+name);
+  if(link) link.classList.add('active');
+  window.scrollTo(0,0);
+  // Re-render dynamic content
+  if(name==='dashboard'){ renderStudentHW(); updateProgressDisplay(); renderDashboardCourses(); }
+  if(name==='courses'){ renderCourseCards(); }
+}
+
+function showCourseDetail(){showPage('course-detail');}
+function showLesson(){showPage('lesson');}
+
+// ======= VIDEO PLAYER =======
+let currentVideoType = 'youtube';
+let currentVideoURL  = '';
+
+function switchVideoType(type){
+  currentVideoType = type;
+  document.getElementById('youtube-player-wrap').style.display = type==='youtube' ? 'block' : 'none';
+  document.getElementById('zoom-player-wrap').style.display    = type==='zoom'    ? 'block' : 'none';
+  document.querySelectorAll('.video-type-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('vt-'+type).classList.add('active');
+  const label = document.getElementById('current-vid-type');
+  if(label) label.textContent = type==='youtube' ? '▶ YouTube' : '🎥 Zoom/Teams';
+}
+
+function loadYouTubeVideo(url){
+  if(!url) return;
+  // Extract video ID from various YouTube URL formats
+  let id = '';
+  const patterns = [
+    /youtube\.com\/watch\?v=([^&]+)/,
+    /youtu\.be\/([^?]+)/,
+    /youtube\.com\/embed\/([^?]+)/
+  ];
+  for(const p of patterns){ const m=url.match(p); if(m){id=m[1];break;} }
+  const iframe = document.getElementById('youtube-iframe');
+  const noUrl  = document.getElementById('youtube-no-url');
+  if(id && iframe){
+    iframe.src = `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&fs=1`;
+    iframe.style.display = 'block';
+    if(noUrl) noUrl.style.display = 'none';
+    // update watermark with student name
+    const wm = document.getElementById('vid-wm');
+    const found = adminStudents.find(s=>s.user===currentUser);
+    if(wm && found) wm.textContent = 'ID: ' + found.name;
+    switchVideoType('youtube');
+  }
+}
+
+function loadZoomVideo(url, title=''){
+  if(!url) return;
+  const btn = document.getElementById('zoom-link-btn');
+  const ttl = document.getElementById('zoom-title');
+  if(btn) btn.href = url;
+  if(ttl && title) ttl.textContent = title;
+  switchVideoType('zoom');
+}
+
+function clickLesson(id, title, url, type){
+  document.querySelectorAll('.lesson-item').forEach(el=>el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  loadLesson({id, title, videoUrl:url, videoType:type, unit:document.getElementById('cd-sem')?.textContent||''});
+  markLessonWatched(id, title);
+}
+
+function loadLesson(lesson){
+  // lesson = {title, unit, videoUrl, videoType}
+  const vtype = lesson.videoType || detectVideoType(lesson.videoUrl || '');
+  document.getElementById('lv-title').textContent = lesson.title || '';
+  document.getElementById('lv-meta').textContent  = lesson.unit  || '';
+  if(vtype === 'youtube'){
+    loadYouTubeVideo(lesson.videoUrl);
+  } else {
+    loadZoomVideo(lesson.videoUrl, lesson.title);
+  }
+  showPage('lesson');
+}
+
+function detectVideoType(url){
+  if(!url) return 'zoom';
+  return (url.includes('youtube') || url.includes('youtu.be')) ? 'youtube' : 'zoom';
+}
+
+// ======= DOWNLOADS =======
+function simulateDownload(name){
+  showToast((T[currentLang]['toast-dl']||'Downloading: ')+name+'.pdf');
+}
+
+// ======= CONTACT =======
+function sendContact(){
+  const n=document.getElementById('contactName').value;
+  const e=document.getElementById('contactEmail').value;
+  const m=document.getElementById('contactMsg').value;
+  if(!n||!e||!m){showToast(currentLang==='ar'?'يرجى ملء جميع الحقول':'Please fill all fields');return;}
+  document.getElementById('ct-success').style.display='block';
+  document.getElementById('contactName').value='';
+  document.getElementById('contactEmail').value='';
+  document.getElementById('contactMsg').value='';
+  setTimeout(()=>document.getElementById('ct-success').style.display='none',4000);
+}
+
+// ======= TOAST =======
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.display='block';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.style.display='none',2500);
+}
+
+
+// ======= ADMIN DATA =======
+let TEACHER_PASS='admin123';
+let adminStudents=[
+  {id:1,name:'سهر فيصل',user:'student1',pass:'1234',grade:'الصف الثاني عشر متقدم',phone:'+971501234567',active:true,subEnd:'2026-08-30'},
+  {id:2,name:'أحمد محمد',user:'student2',pass:'abcd',grade:'الصف الحادي عشر',phone:'+971507654321',active:true,subEnd:'2026-07-15'},
+  {id:3,name:'فاطمة علي',user:'math2026',pass:'pass123',grade:'الصف الثاني عشر متقدم',phone:'',active:true,subEnd:'2026-06-28'}
+];
+let adminLessons=[
+  {id:1,title:'الحصة 1 - مقدمة في المثلثات',course:'G12 متقدم',unit:'الوحدة الأولى',url:'https://www.youtube.com/watch?v=dQw4w9WgXcQ',vtype:'youtube',vsrc:'url',status:'active'},
+  {id:2,title:'الحصة 2 - قانون الجيب',course:'G12 متقدم',unit:'الوحدة الأولى',url:'https://www.youtube.com/watch?v=dQw4w9WgXcQ',vtype:'youtube',vsrc:'url',status:'active'},
+  {id:3,title:'الحصة 3 - قانون جيب التمام',course:'G12 متقدم',unit:'الوحدة الأولى',url:'',vtype:'youtube',vsrc:'url',status:'draft'},
+  {id:4,title:'الحصة 1 - مقدمة في الاحتمالات',course:'G11 احتمالات',unit:'الوحدة الأولى',url:'https://www.youtube.com/watch?v=dQw4w9WgXcQ',vtype:'youtube',vsrc:'url',status:'active'}
+];
+let adminCourses=[
+  {id:'G12-adv', name:'G12 متقدم - جبر ومثلثات', grade:'الصف الثاني عشر متقدم', sem:'الفصل الدراسي الأول', color:'blue'},
+  {id:'G11-math', name:'G11 - احتمالات وإحصاء', grade:'الصف الحادي عشر', sem:'الفصل الدراسي الثاني', color:'purple'},
+  {id:'G12-calc', name:'G12 - تفاضل وتكامل', grade:'الصف الثاني عشر', sem:'الفصل الدراسي الثالث', color:'green'}
+];
+
+let adminHW=[
+  {id:1,title:'واجب الوحدة الأولى - المثلثات',course:'G12 متقدم',due:'2026-06-30',type:'واجب منزلي'},
+  {id:2,title:'واجب الوحدة الثانية - الجبر',course:'G12 متقدم',due:'2026-07-15',type:'ورقة تمارين'},
+  {id:3,title:'مراجعة شاملة - الفصل الأول',course:'جميع الكورسات',due:'2026-06-01',type:'مراجعة شاملة'}
+];
+let deleteAction=null;
+let editingStudentId=null;
+let editingLessonId=null;
+
+function openTeacherLogin(){
+  document.getElementById('teacherLoginModal').classList.add('open');
+  setTimeout(()=>document.getElementById('teacherUser').focus(),100);
+}
+function doTeacherLogin(){
+  const u=document.getElementById('teacherUser').value.trim();
+  const p=document.getElementById('teacherPass').value.trim();
+  const err=document.getElementById('teacherErr');
+  if(u==='teacher'&&p===TEACHER_PASS){
+    document.getElementById('teacherLoginModal').classList.remove('open');
+    document.getElementById('teacherUser').value='';
+    document.getElementById('teacherPass').value='';
+    showPage('admin');
+    renderLessonsTable();renderStudentsTable();renderHWTable();renderAdminCourses();
+    checkSupabaseConfig();
+    showToast('مرحباً يا أستاذ Anas!');
+  } else {
+    err.style.display='block';
+    setTimeout(()=>err.style.display='none',3000);
+  }
+}
+function adminLogout(){showPage('home');showToast('تم الخروج من لوحة التحكم');}
+
+function adminTab(name,btn){
+  document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+  const sec=document.getElementById('adm-'+name);
+  if(sec)sec.classList.add('active');
+  if(btn)btn.classList.add('active');
+}
+function toggleUnit(el){el.closest('.unit-expand').classList.toggle('open');}
+
+function renderStudentsTable(filter=''){
+  const filtered=adminStudents.filter(s=>s.name.includes(filter)||s.user.includes(filter)||s.grade.includes(filter));
+  const tbody=document.getElementById('studentsTbody');
+  if(!tbody)return;
+  tbody.innerHTML=filtered.map((s,i)=>{
+    const today=new Date(); const end=s.subEnd?new Date(s.subEnd):null;
+    const daysLeft=end?Math.ceil((end-today)/(1000*60*60*24)):null;
+    const subColor=daysLeft===null?'var(--muted)':daysLeft<0?'#C62828':daysLeft<=7?'#E65100':'#2E7D32';
+    const subLabel=daysLeft===null?'—':daysLeft<0?'منتهي':daysLeft===0?'ينتهي اليوم!':daysLeft<=7?`ينتهي خلال ${daysLeft} أيام`:`${s.subEnd}`;
+    return `<tr style="${daysLeft!==null&&daysLeft<0?'background:#FFF5F5;':''}">
+    <td>${i+1}</td>
+    <td><strong>${s.name}</strong>${s.phone?'<br><small style="color:var(--muted)">'+s.phone+'</small>':''}</td>
+    <td><code style="background:#F5F7FA;padding:2px 8px;border-radius:4px;">${s.user}</code></td>
+    <td style="white-space:nowrap;"><span id="pass-${s.id}" data-hidden="true" style="filter:blur(4px);font-family:monospace;font-size:0.9rem;">${s.pass}</span>
+    <button id="eye-${s.id}" onclick="togglePass(${s.id})" title="إظهار/إخفاء" style="background:none;border:none;cursor:pointer;font-size:1rem;padding:0 4px;vertical-align:middle;color:var(--blue);">👁</button></td>
+    <td>${s.grade}</td>
+    <td style="white-space:nowrap;">
+      <span style="color:${subColor};font-size:0.82rem;font-weight:600;">${subLabel}</span><br>
+      <input type="date" value="${s.subEnd||''}" onchange="updateSub(${s.id},this.value)" style="font-size:0.75rem;border:1px solid #ddd;border-radius:4px;padding:2px 4px;margin-top:2px;cursor:pointer;">
+    </td>
+    <td><span class="tbl-badge ${s.active?'active':'locked'}">${s.active?'نشط':'موقوف'}</span></td>
+    <td style="white-space:nowrap;">
+      <button class="icon-btn edit" onclick="openEditStudent(${s.id})">✏️</button>
+      <button class="icon-btn" onclick="toggleStudentStatus(${s.id})">${s.active?'🚫':'✅'}</button>
+      <button class="icon-btn del" onclick="confirmDelete('deleteStudent',${s.id},'${s.name}')">🗑️</button>
+    </td>
+  </tr>`;}).join('');
+  const cred=document.getElementById('credentialsList');
+  if(cred)cred.innerHTML=adminStudents.map(s=>`<div style="background:#F5F7FA;border-radius:8px;padding:0.75rem;margin-bottom:0.6rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+    <div><strong>${s.name}</strong> — <code style="background:white;padding:2px 8px;border-radius:4px;">${s.user}</code> / <code style="background:white;padding:2px 8px;border-radius:4px;">${s.pass}</code> <span style="font-size:0.8rem;color:var(--muted);">${s.grade}</span></div>
+    <button class="icon-btn edit" onclick="copyCredential('${s.name}','${s.user}','${s.pass}')">📋 نسخ</button>
+  </div>`).join('');
+  const el=document.getElementById('stat-students');if(el)el.textContent=adminStudents.length;
+  const el2=document.getElementById('s-total');if(el2)el2.textContent=adminStudents.length;
+}
+function filterStudents(v){renderStudentsTable(v);}
+function togglePass(id){
+  const el=document.getElementById('pass-'+id);
+  const btn=document.getElementById('eye-'+id);
+  if(!el)return;
+  const hidden=el.dataset.hidden!=='false';
+  el.style.filter=hidden?'':'blur(4px)';
+  el.dataset.hidden=hidden?'false':'true';
+  if(btn)btn.textContent=hidden?'🙈':'👁';
+}
+function copyCredential(name,user,pass){
+  const txt=`بيانات دخول منصة Mr. Anas Fayad:\nالاسم: ${name}\nاليوزرنايم: ${user}\nكلمة المرور: ${pass}`;
+  navigator.clipboard.writeText(txt).then(()=>showToast('تم نسخ بيانات '+name)).catch(()=>showToast('تم تجهيز البيانات'));
+}
+function openStudentModal(){
+  editingStudentId=null;
+  document.getElementById('studentModalTitle').textContent='إضافة طالب جديد';
+  ['sm-name','sm-user','sm-pass','sm-phone'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('studentModal').classList.add('open');
+}
+function openEditStudent(id){
+  const s=adminStudents.find(x=>x.id===id);if(!s)return;
+  editingStudentId=id;
+  document.getElementById('studentModalTitle').textContent='تعديل بيانات الطالب';
+  document.getElementById('sm-name').value=s.name;
+  document.getElementById('sm-user').value=s.user;
+  document.getElementById('sm-pass').value=s.pass;
+  document.getElementById('sm-phone').value=s.phone||'';
+  document.getElementById('sm-grade').value=s.grade;
+  document.getElementById('studentModal').classList.add('open');
+}
+function closeStudentModal(){document.getElementById('studentModal').classList.remove('open');}
+function saveStudent(){
+  const name=document.getElementById('sm-name').value.trim();
+  const user=document.getElementById('sm-user').value.trim();
+  const pass=document.getElementById('sm-pass').value.trim();
+  const grade=document.getElementById('sm-grade').value;
+  const phone=document.getElementById('sm-phone').value.trim();
+  if(!name||!user||!pass){showToast('يرجى ملء الاسم واليوزرنايم والباسوورد');return;}
+  if(editingStudentId){
+    const s=adminStudents.find(x=>x.id===editingStudentId);
+    if(s){ Object.assign(s,{name,user,pass,grade,phone});
+      fbSet('students', s.id, {name,user,pass,grade,phone,active:s.active,subEnd:s.subEnd||''});
+    }
+    showToast('✅ تم تحديث بيانات الطالب');
+  } else {
+    const newId=Date.now();
+    const newStudent={id:newId,name,user,pass,grade,phone,active:true,subEnd:''};
+    adminStudents.push(newStudent);
+    USERS[user]=pass;
+    fbSet('students', newId, newStudent);
+    showToast('✅ تم تسجيل الطالب: '+name);
+  }
+  closeStudentModal();renderStudentsTable();
+}
+function updateSub(id, date){
+  const s=adminStudents.find(x=>x.id===id);
+  if(s){ s.subEnd=date; fbSet('students',s.id,{subEnd:date}); renderStudentsTable(); showToast('✅ تم تحديث تاريخ اشتراك: '+s.name); }
+}
+function toggleStudentStatus(id){
+  const s=adminStudents.find(x=>x.id===id);
+  if(s){s.active=!s.active;fbSet('students',s.id,{active:s.active});renderStudentsTable();showToast(s.active?'✅ تم تفعيل الطالب':'🚫 تم إيقاف الطالب');}
+}
+
+function renderLessonsTable(filter=''){
+  const filtered=adminLessons.filter(l=>l.title.includes(filter)||l.course.includes(filter));
+  const tbody=document.getElementById('lessonsTbody');if(!tbody)return;
+  tbody.innerHTML=filtered.map((l,i)=>`<tr>
+    <td>${i+1}</td><td><strong>${l.title}</strong></td><td>${l.course}</td><td>${l.unit}</td>
+    <td>${l.url?`<span style="font-size:0.75rem;background:#E3F2FD;color:var(--blue);padding:2px 8px;border-radius:10px;margin-left:4px;">${l.vtype==='zoom'?'🎥 Zoom':'▶ YT'}</span><a href="${l.url}" target="_blank" style="color:var(--blue);font-size:0.8rem;">🔗</a>`:'<span style="color:var(--muted);font-size:0.8rem;">لا يوجد</span>'}</td>
+    <td><span class="tbl-badge ${l.status==='active'?'active':''}" style="${l.status!=='active'?'background:#FFF3E0;color:#E65100;':''}">${l.status==='active'?'منشور':'مسودة'}</span></td>
+    <td><button class="icon-btn edit" onclick="editLesson(${l.id})">✏️</button><button class="icon-btn del" onclick="confirmDelete('deleteLesson',${l.id},'${l.title}')">🗑️</button></td>
+  </tr>`).join('');
+  const el=document.getElementById('stat-lessons');if(el)el.textContent=adminLessons.length;
+  const el2=document.getElementById('s-lessons');if(el2)el2.textContent=adminLessons.length;
+}
+function filterLessons(v){renderLessonsTable(v);}
+function openLessonModal(){
+  editingLessonId=null;
+  document.getElementById('lessonModalTitle').textContent='رفع درس جديد';
+  ['lm-title','lm-unit','lm-url'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('uploadedFiles').textContent='';
+  document.getElementById('lessonModal').classList.add('open');
+}
+function editLesson(id){
+  const l=adminLessons.find(x=>x.id===id);if(!l)return;
+  editingLessonId=id;
+  document.getElementById('lessonModalTitle').textContent='تعديل الدرس';
+  document.getElementById('lm-title').value=l.title;
+  document.getElementById('lm-unit').value=l.unit;
+  document.getElementById('lm-url').value=l.url||'';
+  document.getElementById('lm-status').value=l.status;
+  document.getElementById('lessonModal').classList.add('open');
+}
+function closeLessonModal(){document.getElementById('lessonModal').classList.remove('open');}
+async function saveLesson(){
+  const title=document.getElementById('lm-title').value.trim();
+  const course=document.getElementById('lm-course').value;
+  const unit=document.getElementById('lm-unit').value.trim();
+  const url=document.getElementById('lm-url').value.trim();
+  const vtype=document.getElementById('lm-vtype')?.value||'youtube';
+  const status=document.getElementById('lm-status').value;
+  if(!title||!unit){showToast('يرجى إدخال عنوان الحصة والوحدة');return;}
+  if(editingLessonId){
+    const l=adminLessons.find(x=>x.id===editingLessonId);
+    if(l)Object.assign(l,{title,course,unit,url,vtype,status});
+    showToast('تم تحديث الدرس');
+  } else {
+    adminLessons.push({id:Date.now(),title,course,unit,url,vtype,status});
+    showToast('تم نشر الدرس: '+title);
+    addNotification('درس جديد: '+title, 'lesson');
+  }
+  closeLessonModal();renderLessonsTable();
+}
+function handleFileSelect(input){
+  const names=Array.from(input.files).map(f=>f.name).join(', ');
+  document.getElementById('uploadedFiles').textContent='الملفات: '+names;
+}
+
+function renderHWTable(){
+  const tbody=document.getElementById('hwTbody');if(!tbody)return;
+  tbody.innerHTML=adminHW.map((h,i)=>`<tr>
+    <td>${i+1}</td><td><strong>${h.title}</strong></td><td>${h.course}</td>
+    <td>${h.due||'—'}</td><td><span class="tbl-badge free">${h.type}</span></td>
+    <td><button class="icon-btn del" onclick="confirmDelete('deleteHW',${h.id},'${h.title}')">🗑️</button></td>
+  </tr>`).join('');
+  const el=document.getElementById('stat-hw');if(el)el.textContent=adminHW.length;
+  const el2=document.getElementById('s-hw');if(el2)el2.textContent=adminHW.length;
+}
+async function saveHW(){
+  const title=document.getElementById('hw-title').value.trim();
+  const course=document.getElementById('hw-course').value;
+  const due=document.getElementById('hw-due').value;
+  const type=document.getElementById('hw-type').value;
+  if(!title){showToast('يرجى إدخال عنوان الواجب');return;}
+  const newHWId=Date.now();
+  let hwFileUrl='';
+  const hwFile=document.getElementById('hwUpload')?.files[0];
+  if(hwFile && fbReady){
+    try{
+      showToast('⏳ جاري رفع الملف...');
+      hwFileUrl = await uploadToStorage(hwFile,'assignments/'+newHWId+'_'+hwFile.name,null);
+      showToast('✅ تم رفع الملف!');
+    }catch(e){ console.warn('HW upload error',e); }
+  }
+  const newHW={id:newHWId,title,course,due,type,fileUrl:hwFileUrl};
+  adminHW.push(newHW);
+  fbSet('assignments', newHWId, newHW);
+  document.getElementById('hw-title').value='';
+  document.getElementById('hw-due').value='';
+  document.getElementById('hwFileName').textContent='';
+  renderHWTable();
+  renderStudentHW();
+  showToast('✅ تم نشر الواجب: '+title);
+  addNotification('واجب جديد: '+title, 'hw');
+}
+function handleHWUpload(input){if(input.files[0])document.getElementById('hwFileName').textContent='الملف: '+input.files[0].name;}
+
+function confirmDelete(action,id,name){
+  deleteAction={action,id};
+  document.getElementById('confirmMsg').textContent='هل تريد حذف: "'+name+'"؟';
+  document.getElementById('confirmModal').classList.add('open');
+}
+function closeConfirm(){document.getElementById('confirmModal').classList.remove('open');deleteAction=null;}
+function execDelete(){
+  if(!deleteAction)return;
+  const{action,id}=deleteAction;
+  if(action==='deleteStudent'){fbDel('students',id);adminStudents=adminStudents.filter(x=>x.id!==id);renderStudentsTable();showToast('✅ تم حذف الطالب');}
+  if(action==='deleteLesson'){fbDel('lessons',id);adminLessons=adminLessons.filter(x=>x.id!==id);renderLessonsTable();renderCourseCards();showToast('✅ تم حذف الدرس');}
+  if(action==='deleteCourse'){fbDel('courses',id);adminCourses=adminCourses.filter(x=>x.id!==id);renderAdminCourses();renderCourseCards();showToast('✅ تم حذف الكورس');}
+  if(action==='deleteHW'){fbDel('assignments',id);adminHW=adminHW.filter(x=>x.id!==id);renderHWTable();renderStudentHW();showToast('✅ تم حذف الواجب');}
+  closeConfirm();
+}
+function saveSupabaseConfig(){
+  const url = document.getElementById('sb-url').value.trim();
+  const key = document.getElementById('sb-key').value.trim();
+  if(!url || !key){ showToast('يرجى إدخال URL و API Key'); return; }
+  // في المشروع الحقيقي: احفظها في localStorage أو env
+  showToast('✅ تم حفظ إعدادات Supabase — أعد تشغيل الملف لتفعيل الربط');
+  document.getElementById('supabase-test-result').textContent = '⚠️ أعد تشغيل الملف بعد تحديث SUPABASE_URL و SUPABASE_ANON_KEY في الكود';
+  document.getElementById('supabase-test-result').style.color = '#E65100';
+}
+async function testSupabase(){
+  const res = document.getElementById('supabase-test-result');
+  res.textContent = '🔄 جاري الاختبار...'; res.style.color = 'var(--muted)';
+  const data = await supabaseFetch('students?limit=1');
+  if(data !== null){
+    res.textContent = '✅ الاتصال ناجح! Supabase يعمل بشكل صحيح';
+    res.style.color = '#2E7D32';
+  } else {
+    res.textContent = SUPABASE_CONNECTED ? '❌ فشل الاتصال — تحقق من URL و Key' : '⚠️ أدخل بيانات Supabase أولاً في الكود';
+    res.style.color = '#C62828';
+  }
+}
+
+function changeTeacherPass(){
+  const old=document.getElementById('old-pass').value;
+  const nw=document.getElementById('new-pass').value;
+  const cf=document.getElementById('conf-pass').value;
+  if(old!==TEACHER_PASS){showToast('كلمة المرور الحالية غير صحيحة');return;}
+  if(nw!==cf){showToast('كلمة المرور الجديدة غير متطابقة');return;}
+  if(nw.length<4){showToast('كلمة المرور يجب أن تكون 4 أحرف على الأقل');return;}
+  TEACHER_PASS=nw;
+  ['old-pass','new-pass','conf-pass'].forEach(id=>document.getElementById(id).value='');
+  showToast('تم تحديث كلمة مرور المدرس بنجاح');
+}
+function saveAnnouncement(){
+  const t=document.getElementById('ann-title').value.trim();
+  if(!t){showToast('يرجى إدخال عنوان الإعلان');return;}
+  document.getElementById('ann-title').value='';
+  document.getElementById('ann-text').value='';
+  showToast('تم نشر الإعلان: '+t);
+}
+
+// Init
+applyLang('ar');
+
+
+// ════════════════════════════════════════════════════
+// DYNAMIC COURSE SIDEBAR — built from adminLessons
+// ════════════════════════════════════════════════════
+let currentCourseId = null;
+
+function showCourseDetail(courseId){
+  currentCourseId = courseId || (adminCourses[0] && adminCourses[0].id);
+  const course = adminCourses.find(c=>c.id===currentCourseId) || adminCourses[0];
+  if(!course) return;
+
+  // Update course info card
+  const el = document.getElementById('cd-course-title');
+  if(el) el.textContent = course.name;
+  const sem = document.getElementById('cd-sem');
+  if(sem) sem.textContent = course.sem || '';
+
+  // Update stats
+  const courseLessons = adminLessons.filter(l=>l.course===course.name && l.status==='active');
+  const elLes = document.getElementById('cd-les');
+  if(elLes) elLes.textContent = (currentLang==='ar'?'الحصص: ':'Lessons: ') + courseLessons.length;
+
+  renderCourseSidebar(course);
+  showPage('course-detail');
+}
+
+function renderCourseSidebar(course){
+  const sidebar = document.getElementById('dynamic-sidebar');
+  if(!sidebar) return;
+
+  // Get lessons for this course
+  const courseLessons = adminLessons.filter(l=>l.course===course.name);
+  // Get HW for this course
+  const courseHW = adminHW.filter(h=>h.course===course.name || h.course==='جميع الكورسات');
+
+  if(courseLessons.length===0 && courseHW.length===0){
+    sidebar.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:0.9rem;"><div style="font-size:2rem;margin-bottom:0.5rem;">📭</div><p>لا توجد دروس بعد</p></div>';
+    return;
+  }
+
+  // Group lessons by unit
+  const units = {};
+  courseLessons.forEach(l=>{
+    const u = l.unit || 'عام';
+    if(!units[u]) units[u]=[];
+    units[u].push(l);
+  });
+
+  let html = '';
+  let globalIdx = 0;
+
+  Object.entries(units).forEach(([unitName, lessons])=>{
+    html += `<div class="unit-group">
+      <div class="unit-title" onclick="this.parentElement.classList.toggle('collapsed')">
+        <span>${unitName}</span>
+        <span style="font-size:0.75rem;background:rgba(21,101,192,0.1);color:var(--blue);padding:2px 8px;border-radius:10px;">${lessons.length} حصة</span>
+      </div>`;
+    lessons.forEach(l=>{
+      globalIdx++;
+      const watched = watchedLessons[l.id] ? '✓' : globalIdx;
+      const watchedStyle = watchedLessons[l.id] ? 'background:var(--blue);color:white;' : '';
+      const draftBadge = l.status==='draft' ? '<span style="font-size:0.7rem;background:#FFF3E0;color:#E65100;padding:1px 6px;border-radius:8px;margin-right:4px;">مسودة</span>' : '';
+      html += `<div class="lesson-item ${l.status==='draft'?'':'hover-lesson'}" 
+        onclick="${l.status!=='draft'?`clickLesson(${l.id},'${l.title.replace(/'/g,"\'")}','${(l.url||'').replace(/'/g,"\'")}','${l.vsrc||'url'}')`:''}"
+        style="${l.status==='draft'?'opacity:0.5;cursor:not-allowed!important;':''}">
+        <div class="lesson-num" style="min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;${watchedStyle}background:${watchedLessons[l.id]?'var(--blue)':'#E3F2FD'};color:${watchedLessons[l.id]?'white':'var(--blue)'};">${watched}</div>
+        <span style="flex:1;">${l.title}${draftBadge}</span>
+        ${l.url?'<span style="font-size:0.7rem;color:var(--muted);">${l.vsrc==="upload"?"📹":"🔗"}</span>':''}
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  // HW section
+  if(courseHW.length > 0){
+    html += `<div class="unit-group">
+      <div class="unit-title">
+        <span>${currentLang==='ar'?'الواجبات':'Assignments'}</span>
+        <span style="font-size:0.75rem;background:rgba(76,175,80,0.15);color:#2E7D32;padding:2px 8px;border-radius:10px;">${courseHW.length}</span>
+      </div>`;
+    courseHW.forEach(hw=>{
+      html += `<div class="lesson-item" onclick="downloadHW(${hw.id})">
+        <div class="lesson-num" style="min-width:22px;height:22px;border-radius:50%;background:#E8F5E9;color:#2E7D32;display:flex;align-items:center;justify-content:center;font-size:0.75rem;">📥</div>
+        <span style="flex:1;">${hw.title}</span>
+        <span style="font-size:0.7rem;color:#2E7D32;">⬇</span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  sidebar.innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════
+// VIDEO UPLOAD HANDLING
+// ════════════════════════════════════════════════════
+let uploadedVideoBlob = null;
+let uploadedVideoName = '';
+let uploadedVideoFile = null;
+
+function switchVideoSrc(type){
+  ['url','upload','zoom'].forEach(t=>{
+    document.getElementById('vsrc-'+t+'-area').style.display = t===type?'block':'none';
+    document.getElementById('vsrc-'+t).classList.toggle('active', t===type);
+  });
+  uploadedVideoBlob = null;
+  uploadedVideoName = '';
+}
+
+function handleVideoUpload(input){
+  const file = input.files[0];
+  if(!file) return;
+  const maxSize = 500*1024*1024; // 500MB
+  if(file.size > maxSize){
+    showToast('❌ حجم الفيديو كبير جداً — الحد الأقصى 500MB');
+    return;
+  }
+  const info = document.getElementById('videoUploadInfo');
+  const prog = document.getElementById('videoUploadProgress');
+  const fill = document.getElementById('videoProgressFill');
+  const txt  = document.getElementById('videoProgressTxt');
+  
+  info.textContent = '📹 ' + file.name + ' — ' + (file.size/1024/1024).toFixed(1) + 'MB';
+  prog.style.display = 'block';
+  
+  // Simulate processing progress
+  let pct = 0;
+  const interval = setInterval(()=>{
+    pct += Math.random()*15;
+    if(pct >= 100){ pct=100; clearInterval(interval);
+      txt.textContent = '✅ جاهز للرفع';
+      txt.style.color = '#2E7D32';
+    }
+    fill.style.width = pct+'%';
+    if(pct<100) txt.textContent = 'جاري المعالجة... ' + Math.round(pct) + '%';
+  }, 150);
+
+  // Store blob URL for local playback (will be replaced by Firebase URL)
+  uploadedVideoBlob = URL.createObjectURL(file);
+  uploadedVideoName = file.name;
+  uploadedVideoFile = file; // keep reference for Firebase upload
+}
+
+// ════════════════════════════════════════════════════
+// UPDATED saveLesson — handles all 3 video sources
+// ════════════════════════════════════════════════════
+function getVideoSrcData(){
+  const urlArea    = document.getElementById('vsrc-url-area');
+  const uploadArea = document.getElementById('vsrc-upload-area');
+  const zoomArea   = document.getElementById('vsrc-zoom-area');
+  
+  if(uploadArea && uploadArea.style.display!=='none'){
+    return { vsrc:'upload', url: uploadedVideoBlob||'', vtype:'upload', fileName: uploadedVideoName };
+  } else if(zoomArea && zoomArea.style.display!=='none'){
+    const url = document.getElementById('lm-zoom-url')?.value.trim()||'';
+    return { vsrc:'zoom', url, vtype:'zoom', fileName:'' };
+  } else {
+    const url   = document.getElementById('lm-url')?.value.trim()||'';
+    const vtype = document.getElementById('lm-vtype')?.value||'youtube';
+    return { vsrc:'url', url, vtype, fileName:'' };
+  }
+}
+
+// ════════════════════════════════════════════════════
+// UPDATE clickLesson to handle upload videos too
+// ════════════════════════════════════════════════════
+function clickLesson(id, title, url, vsrc){
+  document.querySelectorAll('#dynamic-sidebar .lesson-item').forEach(el=>el.classList.remove('active'));
+  if(event && event.currentTarget) event.currentTarget.classList.add('active');
+  
+  const lesson = adminLessons.find(l=>l.id===id);
+  if(!lesson) return;
+  
+  const videoUrl  = lesson.url || url || '';
+  const videoSrc  = lesson.vsrc || vsrc || 'url';
+  const videoType = lesson.vtype || 'youtube';
+
+  // Update lesson page header
+  const titleEl = document.getElementById('lv-title');
+  const metaEl  = document.getElementById('lv-meta');
+  if(titleEl) titleEl.textContent = lesson.title;
+  if(metaEl)  metaEl.textContent  = lesson.unit + ' | ' + lesson.course;
+
+  // Load video based on source type
+  if(videoSrc==='upload'){
+    loadUploadedVideo(videoUrl, lesson.title);
+  } else if(videoSrc==='zoom' || videoType==='zoom'){
+    loadZoomVideo(videoUrl, lesson.title);
+  } else {
+    loadYouTubeVideo(videoUrl);
+  }
+
+  markLessonWatched(id, title);
+  showPage('lesson');
+}
+
+function loadUploadedVideo(blobUrl, title){
+  switchVideoType('youtube'); // reuse youtube area for direct video
+  const wrap   = document.getElementById('youtube-player-wrap');
+  const iframe = document.getElementById('youtube-iframe');
+  const noUrl  = document.getElementById('youtube-no-url');
+  
+  // Replace iframe with HTML5 video
+  let vid = document.getElementById('html5-video');
+  if(!vid){
+    vid = document.createElement('video');
+    vid.id = 'html5-video';
+    vid.controls = true;
+    vid.style.cssText = 'width:100%;border-radius:12px;max-height:340px;background:#000;display:block;';
+    vid.controlsList = 'nodownload';
+    vid.oncontextmenu = ()=>false;
+  }
+  vid.src = blobUrl;
+  if(iframe) iframe.style.display='none';
+  if(noUrl)  noUrl.style.display='none';
+  if(wrap && !document.getElementById('html5-video')) wrap.appendChild(vid);
+  vid.style.display='block';
+  
+  // Watermark
+  const wm = document.getElementById('vid-wm');
+  const found = adminStudents.find(s=>s.user===currentUser);
+  if(wm && found) wm.textContent = 'ID: '+found.name;
+}
+
+// ════════════════════════════════════════════════════
+// COURSE CARDS — link to dynamic detail
+// ════════════════════════════════════════════════════
+function renderCourseCards(){
+  const grid = document.getElementById('courses-dynamic-grid');
+  if(!grid) return;
+  if(adminCourses.length===0){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);"><div style="font-size:3rem;">📭</div><p>لم يتم إضافة كورسات بعد</p></div>';
+    return;
+  }
+  const colors=['blue','purple','green','orange'];
+  const emojis=['📐','🔢','📏','📊','🧮'];
+  grid.innerHTML = adminCourses.map((c,i)=>`
+    <div class="course-card" onclick="showCourseDetail('${c.id}')">
+      <div class="course-thumb ${colors[i%colors.length]}">${emojis[i%emojis.length]}</div>
+      <div class="course-body">
+        <div class="course-level">${c.sem||''}</div>
+        <h3>${c.name}</h3>
+        <div class="course-tag">${c.grade||''}</div>
+        <button class="course-btn primary">${currentLang==='ar'?'ابدأ التعلم':'Start Learning'}</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════════
+// COURSE MANAGEMENT IN ADMIN
+// ════════════════════════════════════════════════════
+function renderAdminCourses(){
+  const el = document.getElementById('admin-courses-list');
+  if(!el) return;
+  if(adminCourses.length===0){
+    el.innerHTML='<p style="color:var(--muted);font-size:0.9rem;">لا توجد كورسات — أضف كورساً أولاً</p>';
+    // Update selects
+    ['lm-course','hw-course'].forEach(id=>{
+      const sel=document.getElementById(id);
+      if(sel) sel.innerHTML='<option value="">-- اختر كورساً --</option>';
+    });
+    return;
+  }
+  el.innerHTML = adminCourses.map(c=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;background:#F5F7FA;border-radius:8px;padding:0.75rem 1rem;margin-bottom:0.5rem;">
+      <div>
+        <strong style="font-size:0.9rem;">${c.name}</strong>
+        <span style="font-size:0.8rem;color:var(--muted);margin-right:8px;">${c.grade} — ${c.sem}</span>
+      </div>
+      <button class="icon-btn del" onclick="confirmDelete('deleteCourse','${c.id}','${c.name}')">🗑️</button>
+    </div>
+  `).join('');
+  // Update lesson/hw course selects
+  const opts = adminCourses.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
+  ['lm-course','hw-course'].forEach(id=>{
+    const sel=document.getElementById(id);
+    if(sel) sel.innerHTML = opts;
+  });
+}
+
+function renderDashboardCourses(){
+  const grid = document.getElementById('dashboard-courses-grid');
+  if(!grid) return;
+  if(adminCourses.length===0){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--muted);"><div style="font-size:2.5rem;">📭</div><p>لا توجد كورسات بعد</p></div>';
+    return;
+  }
+  const colors=['blue','purple','green','orange'];
+  const emojis=['📐','🔢','📏','📊','🧮'];
+  grid.innerHTML = adminCourses.map((c,i)=>{
+    const total   = adminLessons.filter(l=>l.course===c.name&&l.status==='active').length||1;
+    const done    = adminLessons.filter(l=>l.course===c.name&&l.status==='active'&&watchedLessons[l.id]).length;
+    const pct     = Math.round((done/total)*100);
+    const barColor= colors[i%colors.length]==='purple'?'#AB47BC':colors[i%colors.length]==='green'?'#4CAF50':colors[i%colors.length]==='orange'?'#FFA726':'var(--blue)';
+    const bgColor = colors[i%colors.length]==='purple'?'#F3E5F5':colors[i%colors.length]==='green'?'#E8F5E9':colors[i%colors.length]==='orange'?'#FFF3E0':'#E3F2FD';
+    return `<div class="course-card" onclick="showCourseDetail('${c.id}')">
+      <div class="course-thumb ${colors[i%colors.length]}">${emojis[i%emojis.length]}</div>
+      <div class="course-body">
+        <div class="course-level">${c.sem||''}</div>
+        <h3>${c.name}</h3>
+        <div style="background:${bgColor};border-radius:6px;padding:6px 10px;margin:0.75rem 0;font-size:0.82rem;color:${barColor};">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>${done}/${total} حصة</span><span>${pct}%</span></div>
+          <div style="background:rgba(0,0,0,0.08);border-radius:4px;height:5px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px;transition:width 0.5s;"></div>
+          </div>
+        </div>
+        <button class="course-btn primary">${currentLang==='ar'?'▶ كمّل من حيث توقفت':'▶ Continue'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function saveAdminCourse(){
+  const name  = document.getElementById('new-course-name')?.value.trim();
+  const grade = document.getElementById('new-course-grade')?.value||'';
+  const sem   = document.getElementById('new-course-sem')?.value.trim()||'';
+  if(!name){ showToast('يرجى إدخال اسم الكورس'); return; }
+  const id = 'course-'+Date.now();
+  const newCourse={id, name, grade, sem, color:'blue'};
+  adminCourses.push(newCourse);
+  fbSet('courses', id, newCourse);
+  document.getElementById('new-course-name').value='';
+  document.getElementById('new-course-sem').value='';
+  renderAdminCourses();
+  renderCourseCards();
+  showToast('✅ تم إضافة الكورس: '+name);
+  addNotification('كورس جديد: '+name);
+}
+
+
+// ════════════════════════════════════════════════════
+// FIREBASE TEST & SYNC
+// ════════════════════════════════════════════════════
+async function testFirebase(){
+  const res = document.getElementById('supabase-test-result');
+  if(!res) return;
+  res.textContent = '🔄 جاري الاختبار...'; res.style.color='var(--muted)';
+  if(!fbReady){ res.textContent='❌ Firebase غير متصل — تحقق من الاتصال بالإنترنت'; res.style.color='#C62828'; return; }
+  try{
+    await db.collection('_test').doc('ping').set({t:Date.now()});
+    await db.collection('_test').doc('ping').delete();
+    res.textContent='✅ Firebase يعمل بشكل مثالي!'; res.style.color='#2E7D32';
+  }catch(e){ res.textContent='❌ خطأ: '+e.message; res.style.color='#C62828'; }
+}
+
+async function syncAllToFirebase(){
+  if(!fbReady){ showToast('❌ Firebase غير متصل'); return; }
+  showToast('⏳ جاري المزامنة...');
+  try{
+    const batch = db.batch();
+    adminCourses.forEach(c=>{
+      batch.set(db.collection('courses').doc(String(c.id)), c);
+    });
+    adminLessons.forEach(l=>{
+      batch.set(db.collection('lessons').doc(String(l.id)), l);
+    });
+    adminHW.forEach(h=>{
+      batch.set(db.collection('assignments').doc(String(h.id)), h);
+    });
+    adminStudents.forEach(s=>{
+      batch.set(db.collection('students').doc(String(s.id)), s);
+    });
+    await batch.commit();
+    showToast('✅ تمت المزامنة الكاملة مع Firebase!');
+  }catch(e){ showToast('❌ خطأ في المزامنة: '+e.message); }
+}
+
+// REAL-TIME LISTENER — auto-refresh when teacher adds lesson
+function startRealtimeListeners(){
+  if(!fbReady) return;
+  // Listen for new lessons
+  db.collection('lessons').onSnapshot(snap=>{
+    adminLessons = snap.docs.map(d=>({...d.data(), id:isNaN(d.id)?d.id:Number(d.id)}));
+    renderLessonsTable(); renderCourseCards();
+    if(currentCourseId){ const c=adminCourses.find(x=>x.id===currentCourseId); if(c) renderCourseSidebar(c); }
+  });
+  // Listen for new assignments
+  db.collection('assignments').onSnapshot(snap=>{
+    adminHW = snap.docs.map(d=>({...d.data(), id:isNaN(d.id)?d.id:Number(d.id)}));
+    renderStudentHW(); renderHWTable();
+    addNotification('تم تحديث الواجبات');
+  });
+}
+
+// ══════════════════════════════════════════
+// MATH BACKGROUND ANIMATION
+// ══════════════════════════════════════════
+(function(){
+  var canvas=document.getElementById('mathCanvas');
+  if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var SYM=['∫','∑','π','√','∞','≠','≈','≤','≥','∈','∩','∪','sin','cos','tan','log','lim','dx','dy','Δ','θ','α','β','γ','λ','σ','f(x)','x²','y=mx','∂','∇','±','÷','a²+b²','e^x','ln(x)','n!','P(A)','∀','∃','ℝ','ℕ','ℤ','∫dx','d/dx','∑n','C(n,r)'];
+  var syms=[];
+  var W,H;
+  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+  function mk(){return{t:SYM[Math.floor(Math.random()*SYM.length)],x:Math.random()*W,y:Math.random()*H,sz:16+Math.random()*26,a:0.08+Math.random()*0.10,sp:0.1+Math.random()*0.2,dr:(Math.random()-0.5)*0.15,rot:(Math.random()-0.5)*0.003,ang:Math.random()*6.28};}
+  function init(){resize();var n=Math.floor(W*H/7000);syms=[];for(var i=0;i<n;i++)syms.push(mk());}
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(var i=0;i<syms.length;i++){
+      var s=syms[i];
+      ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.ang);
+      ctx.globalAlpha=s.a;ctx.font=s.sz+'px Cairo,serif';
+      ctx.fillStyle=i%3===0?'#1565C0':i%3===1?'#F9A825':'#1E88E5';ctx.fillText(s.t,0,0);ctx.restore();
+      s.y-=s.sp;s.x+=s.dr;s.ang+=s.rot;
+      if(s.y<-40){s.y=H+20;s.x=Math.random()*W;s.t=SYM[Math.floor(Math.random()*SYM.length)];s.a=0.08+Math.random()*0.10;}
+      if(s.x<-40)s.x=W+20;if(s.x>W+40)s.x=-20;
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',function(){resize();});
+  init();draw();
+})();
+
+</script>
+<!-- 
+  ╔══════════════════════════════════════════════╗
+  ║  لتحويل هذا الملف لـ APK Android:           ║
+  ║  1. npm install @capacitor/core @capacitor/cli║
+  ║  2. npx cap init                             ║  
+  ║  3. npx cap add android                      ║
+  ║  4. npx cap sync                             ║
+  ║  5. npx cap open android                     ║
+  ╚══════════════════════════════════════════════╝
+-->
+</body>
+</html>
