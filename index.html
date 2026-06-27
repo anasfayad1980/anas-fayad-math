@@ -2605,6 +2605,13 @@ function startRealtimeListeners(){
   init();draw();
 })();
 
+// تشغيل Firebase عند تحميل الصفحة
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', initFirebase);
+} else {
+  initFirebase();
+}
+
 </script>
 <!-- 
   ╔══════════════════════════════════════════════╗
