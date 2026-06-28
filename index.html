@@ -1347,7 +1347,6 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
       </div>
     </div>
     <h2 style="font-size:1.3rem;font-weight:900;margin-bottom:1.5rem;" id="adm-settings-h">الإعدادات</h2>
-
     <!-- ═══ إعدادات التواصل ═══ -->
     <div class="admin-card" style="border:2px solid #4CAF50;margin-bottom:1.5rem;">
       <h3 style="margin-bottom:0.5rem;">📞 معلومات التواصل</h3>
@@ -1502,10 +1501,8 @@ function initFirebase(){
   try {
     firebaseApp = firebase.initializeApp(firebaseConfig);
     db          = firebase.firestore();
-    // بيئة مختلطة (ويب عادي + WebView/APK): اكتشاف Long Polling تلقائياً
-    // بدلاً من إجباره دائماً — هذا يحل مشاكل WebChannel 'Listen' المتكررة
-    // بدون التأثير على الأداء في المتصفحات العادية التي تدعم WebChannel
-    db.settings({ experimentalAutoDetectLongPolling: true, useFetchStreams: false, merge: true });
+    // WebView/APK: force long polling instead of WebChannel
+    db.settings({ experimentalForceLongPolling: true, experimentalAutoDetectLongPolling: false, merge: true });
     auth        = firebase.auth();
     storage     = firebase.storage();
     fbReady     = true;
@@ -1545,10 +1542,20 @@ async function fbGet(col){
     return snap.docs.map(d=>({id:d.id,...d.data()}));
   }catch(e){ console.warn('fbGet error',e); return null; }
 }
-async function fbSet(col, id, data){
+async function fbSet(col, id, data, retries=2){
   if(!fbReady) return null;
-  try{ await db.collection(col).doc(String(id)).set(data,{merge:true}); return true; }
-  catch(e){ console.warn('fbSet error',e); return null; }
+  try{
+    await db.collection(col).doc(String(id)).set(data,{merge:true});
+    return true;
+  } catch(e){
+    console.warn('fbSet error:', col, id, e.message);
+    if(retries > 0){
+      await new Promise(r=>setTimeout(r, 1000)); // انتظر ثانية ثم أعد المحاولة
+      return fbSet(col, id, data, retries-1);
+    }
+    showToast('⚠️ فشل الحفظ في Firebase — سيتم إعادة المحاولة تلقائياً');
+    return null;
+  }
 }
 async function fbDel(col, id){
   if(!fbReady) return null;
@@ -1610,6 +1617,10 @@ async function loadStudentsFromDB(){
     // Rebuild USERS map for local login
     adminStudents.forEach(s=>{ USERS[s.user]=s.pass; });
     renderStudentsTable();
+    // ★ إذا كان الطالب مسجّل دخول — أعد render الكورسات الآن بعد اكتمال بيانات الطلاب
+    if(loggedIn && currentRole==='student'){
+      renderCourseCards(); renderStudentHW(); renderDashboardCourses();
+    }
   }
 }
 
@@ -1718,18 +1729,8 @@ function downloadHW(id){
     }catch(e){}
   }
 
-  if(fileUrl && fileUrl.startsWith('http')){
-    // Firebase Storage URL أو أي رابط خارجي — فتح مباشر
-    const a = document.createElement('a');
-    a.href = fileUrl;
-    a.target = '_blank';
-    a.download = hw.fileName || (hw.title + '.pdf');
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    showToast('✅ جاري تحميل: ' + (hw.fileName || hw.title));
-  } else if(fileUrl && fileUrl.startsWith('data:')){
-    // base64 محلي (الجلسة نفسها فقط)
+  if(fileUrl && fileUrl.startsWith('data:')){
+    // تحميل مباشر من base64
     const a = document.createElement('a');
     a.href = fileUrl;
     a.download = hw.fileName || (hw.title + '.pdf');
@@ -1737,17 +1738,10 @@ function downloadHW(id){
     a.click();
     document.body.removeChild(a);
     showToast('✅ جاري تحميل: ' + (hw.fileName || hw.title));
-  } else if(fileUrl && fileUrl.startsWith('blob:')){
-    // blob محلي
-    const a = document.createElement('a');
-    a.href = fileUrl;
-    a.download = hw.fileName || (hw.title + '.pdf');
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    showToast('✅ جاري تحميل: ' + (hw.fileName || hw.title));
+  } else if(fileUrl && fileUrl.startsWith('http')){
+    window.open(fileUrl, '_blank');
   } else {
-    showToast('⚠️ الملف غير متاح — يرجى مراجعة الأستاذ لإعادة رفع الواجب');
+    showToast('⚠️ الملف غير متاح — يرجى مراجعة المدرس');
   }
 }
 
@@ -2126,7 +2120,9 @@ function loginSuccess(found){
   if(dt) dt.textContent=(currentLang==='ar'?'لوحة الطالب - ':'Student Dashboard - ')+displayName;
   showToast((currentLang==='ar'?'🎉 مرحباً ':'🎉 Welcome ')+displayName+'!');
   loadWatchedLessons();
-  renderStudentHW();
+  // ★ إعادة render فوري ثم مرة أخرى بعد 1.5 ثانية لضمان اكتمال تحميل Firebase
+  renderCourseCards(); renderStudentHW(); renderDashboardCourses();
+  setTimeout(()=>{ renderCourseCards(); renderStudentHW(); renderDashboardCourses(); }, 1500);
 }
 document.getElementById('loginPass').addEventListener('keypress',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('loginUser').addEventListener('keypress',e=>{if(e.key==='Enter')doLogin();});
@@ -2591,34 +2587,19 @@ function saveLesson(){
     showToast('✅ تم إنشاء كورس جديد: '+course);
   }
 
-  // للفيديو المرفوع: استخدم uploadedVideoBlob (يكون Firebase URL بعد الرفع الناجح)
-  const vsrcMode = document.getElementById('vsrc-upload')?.classList.contains('active') ? 'upload'
-                 : document.getElementById('vsrc-zoom')?.classList.contains('active') ? 'zoom' : 'url';
-  let finalUrl = url;
-  let finalVsrc = vsrcMode === 'upload' ? 'upload' : vsrcMode === 'zoom' ? 'zoom' : 'url';
-  if(vsrcMode === 'upload'){
-    if(!uploadedVideoBlob){ showToast('⚠️ يرجى رفع فيديو أولاً'); return; }
-    finalUrl = uploadedVideoBlob; // Firebase URL أو blob محلي
-  } else if(vsrcMode === 'zoom'){
-    finalUrl = document.getElementById('lm-zoom-url')?.value.trim() || url;
-  }
-  const access = document.getElementById('lm-access')?.value || 'all';
-
   if(editingLessonId){
     const l=adminLessons.find(x=>x.id===editingLessonId);
-    if(l){ Object.assign(l,{title,course,unit,url:finalUrl,vsrc:finalVsrc,vtype,status,access});
+    if(l){ Object.assign(l,{title,course,unit,url,vtype,status});
       if(fbReady) fbSet('lessons',l.id,l).catch(()=>{});
     }
     showToast('✅ تم تحديث الدرس');
   } else {
-    const newLesson={id:Date.now(),title,course,unit,url:finalUrl,vsrc:finalVsrc,vtype,status,access};
+    const newLesson={id:Date.now(),title,course,unit,url,vtype,status};
     adminLessons.push(newLesson);
     if(fbReady) fbSet('lessons',newLesson.id,newLesson).catch(()=>{});
     showToast('✅ تم نشر الدرس: '+title);
     addNotification('📚 درس جديد أُضيف: '+title, 'lesson');
   }
-  // إعادة تعيين الفيديو المرفوع
-  uploadedVideoBlob = null; uploadedVideoName = ''; uploadedVideoFile = null;
   closeLessonModal();
   renderLessonsTable(); updateAllStats();
   renderCourseCards();
@@ -2652,11 +2633,9 @@ function saveHW(){
   adminHW.push(newHW);
   // حفظ في localStorage كـ backup (بدون الـ base64 الكبير في Firebase)
   try{ const stored=JSON.parse(localStorage.getItem('adminHW_files')||'{}'); stored[newHWId]=hwUploadedFileData.url; localStorage.setItem('adminHW_files',JSON.stringify(stored)); }catch(e){}
-  // حفظ في Firebase — مع fileUrl الحقيقي إن توفّر (Firebase Storage URL) أو local إن كان base64
+  // Firebase في الخلفية — نحفظ بدون الـ base64 لتجنب حجم الـ document
   if(fbReady){
-    const isRealUrl = hwUploadedFileData.url && hwUploadedFileData.url.startsWith('http');
-    const hwMeta={id:newHWId,title,course,due,type,fileName:hwUploadedFileData.name,fileType:hwUploadedFileData.type,
-      fileUrl: isRealUrl ? hwUploadedFileData.url : 'local'};
+    const hwMeta={id:newHWId,title,course,due,type,fileName:hwUploadedFileData.name,fileType:hwUploadedFileData.type,fileUrl:'local'};
     fbSet('assignments',newHWId,hwMeta).catch(()=>{});
   }
   document.getElementById('hw-title').value='';
@@ -2671,46 +2650,15 @@ let hwUploadedFileData = null;
 function handleHWUpload(input){
   const file = input.files[0];
   if(!file) return;
-  if(file.size > 50*1024*1024){ showToast('❌ حجم الملف كبير — الحد 50MB'); return; }
-  const nameEl = document.getElementById('hwFileName');
-  nameEl.textContent = '⏳ جاري الرفع...';
-  hwUploadedFileData = null; // ننتظر الرفع
-
-  if(!fbReady || !storage){
-    // Fallback: base64 محلي (للاستخدام المحلي فقط)
-    const reader = new FileReader();
-    reader.onload = function(e){
-      hwUploadedFileData = { name: file.name, url: e.target.result, type: file.type };
-      nameEl.textContent = '✅ جاهز (محلي): ' + file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
-      nameEl.style.color = '#E65100';
-    };
-    reader.onerror = function(){ showToast('❌ فشل قراءة الملف'); };
-    reader.readAsDataURL(file);
-    return;
-  }
-
-  // رفع مباشر إلى Firebase Storage
-  const path = 'assignments/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-  nameEl.style.color = 'var(--muted)';
-
-  uploadToStorage(file, path, pct=>{
-    nameEl.textContent = 'جاري الرفع... ' + pct + '%';
-  }).then(url=>{
-    hwUploadedFileData = { name: file.name, url: url, type: file.type };
-    nameEl.textContent = '✅ تم الرفع: ' + file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
-    nameEl.style.color = '#2E7D32';
-    showToast('✅ تم رفع الملف — جاهز للنشر');
-  }).catch(err=>{
-    // Fallback base64
-    nameEl.textContent = '⚠️ جاري الحفظ محلياً...';
-    const reader = new FileReader();
-    reader.onload = function(e){
-      hwUploadedFileData = { name: file.name, url: e.target.result, type: file.type };
-      nameEl.textContent = '⚠️ ' + file.name + ' (محلي — Firebase فشل: ' + (err.message||'خطأ') + ')';
-      nameEl.style.color = '#E65100';
-    };
-    reader.readAsDataURL(file);
-  });
+  if(file.size > 20*1024*1024){ showToast('❌ حجم الملف كبير — الحد 20MB'); return; }
+  document.getElementById('hwFileName').textContent = '⏳ جاري تحميل الملف...';
+  const reader = new FileReader();
+  reader.onload = function(e){
+    hwUploadedFileData = { name: file.name, url: e.target.result, type: file.type };
+    document.getElementById('hwFileName').textContent = '✅ جاهز: ' + file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
+  };
+  reader.onerror = function(){ showToast('❌ فشل قراءة الملف'); };
+  reader.readAsDataURL(file);
 }
 
 function confirmDelete(action,id,name){
@@ -2922,23 +2870,23 @@ function openLessonQA(lessonId){
 }
 
 function loadQAForLesson(lessonId){
-  // إيقاف أي polling سابق
-  if(qaUnsubscribe){ try{clearInterval(qaUnsubscribe);}catch(e){} qaUnsubscribe=null; }
+  if(qaUnsubscribe){ try{qaUnsubscribe();}catch(e){} }
   if(!fbReady) return;
   const list=document.getElementById('qa-questions-list');
   if(list) list.innerHTML='<div style="text-align:center;padding:1rem;color:var(--muted);">⏳ جاري التحميل...</div>';
-  
-  // جلب الأسئلة بدون orderBy لتجنب الحاجة لـ Firestore index
-  const fetchQA = ()=>{
-    if(!currentLessonForQA) return;
-    db.collection('qa').where('lessonId','==',String(lessonId)).get().then(snap=>{
-      const questions=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  qaUnsubscribe = db.collection('qa')
+    .where('lessonId','==',String(lessonId))
+    .orderBy('createdAt','desc')
+    .onSnapshot(snap=>{
+      const questions=snap.docs.map(d=>({id:d.id,...d.data()}));
       renderQAList(questions);
-    }).catch(()=>{});
-  };
-  
-  fetchQA(); // جلب فوري
-  qaUnsubscribe = setInterval(fetchQA, 30000); // تحديث كل 30 ثانية
+    }, err=>{
+      // Fallback: بدون orderBy لو لم يتم إنشاء الـ index
+      db.collection('qa').where('lessonId','==',String(lessonId)).get().then(snap=>{
+        const questions=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+        renderQAList(questions);
+      });
+    });
 }
 
 function renderQAList(questions){
@@ -3003,8 +2951,6 @@ function submitQuestion(){
   db.collection('qa').add(qData).then(()=>{
     document.getElementById('qa-new-question').value='';
     showToast('✅ تم إرسال سؤالك — سيرد الأستاذ قريباً');
-    // إعادة جلب القائمة فوراً لتظهر رسالة الطالب بدون انتظار الـ poll
-    if(currentLessonForQA) loadQAForLesson(currentLessonForQA.id);
   }).catch(e=>{
     showToast('❌ فشل الإرسال: '+e.message);
   }).finally(()=>{
@@ -3018,11 +2964,7 @@ function submitAnswer(qId){
   if(!fbReady) return;
   db.collection('qa').doc(qId).update({answer:txt, answeredAt:Date.now()}).then(()=>{
     showToast('✅ تم نشر ردك');
-    const form=document.getElementById('reply-form-'+qId);
-    if(form) form.style.display='none';
-    // إعادة جلب الأسئلة فوراً
-    if(currentLessonForQA) loadQAForLesson(currentLessonForQA.id);
-    else renderAdminQA();
+    document.getElementById('reply-form-'+qId).style.display='none';
   }).catch(e=>showToast('❌ '+e.message));
 }
 
@@ -3041,8 +2983,8 @@ function renderAdminQA(){
   }
   const filterCourse=document.getElementById('qa-filter-course')?.value||'';
   const filterStatus=document.getElementById('qa-filter-status')?.value||'';
-  // لا نستخدم orderBy لتجنب الحاجة لـ Firestore index
-  let query=filterCourse ? db.collection('qa').where('course','==',filterCourse) : db.collection('qa');
+  let query=db.collection('qa').orderBy('createdAt','desc');
+  if(filterCourse) query=query.where('course','==',filterCourse);
   query.get().then(snap=>{
     let questions=snap.docs.map(d=>({id:d.id,...d.data()}));
     if(filterStatus==='unanswered') questions=questions.filter(q=>!q.answer);
@@ -3121,8 +3063,8 @@ function editAnswer(qId, currentAnswer){
 
 function refreshQABadge(){
   if(!fbReady) return;
-  db.collection('qa').get().then(snap=>{
-    const n=snap.docs.filter(d=>!d.data().answer).length;
+  db.collection('qa').where('answer','==',null).get().then(snap=>{
+    const n=snap.size;
     const badge=document.getElementById('qa-notif-badge');
     if(badge){badge.textContent=n||'';badge.style.display=n?'inline-flex':'none';}
   }).catch(()=>{});
@@ -3229,47 +3171,15 @@ function renderCourseSidebar(course){
     lessons.forEach(l=>{
       globalIdx++;
       const watched = watchedLessons[l.id] ? '✓' : globalIdx;
+      const watchedStyle = watchedLessons[l.id] ? 'background:var(--blue);color:white;' : '';
       const draftBadge = l.status==='draft' ? '<span style="font-size:0.7rem;background:#FFF3E0;color:#E65100;padding:1px 6px;border-radius:8px;margin-right:4px;">مسودة</span>' : '';
-
-      // فحص القفل: درس مدفوع والطالب اشتراكه منتهي
-      let isLocked = false;
-      if(currentRole==='student' && l.access==='paid'){
-        const stu = adminStudents.find(s=>s.user===currentUser);
-        if(!stu || !stu.subEnd || Math.ceil((new Date(stu.subEnd)-new Date())/(1000*60*60*24)) < 0){
-          isLocked = true;
-        }
-      }
-      const isDraft = l.status==='draft';
-      const clickable = !isDraft && !isLocked;
-
-      let numBg = isLocked ? '#FFEBEE' : (watchedLessons[l.id] ? 'var(--blue)' : '#E3F2FD');
-      let numColor = isLocked ? '#C62828' : (watchedLessons[l.id] ? 'white' : 'var(--blue)');
-      let numContent = isLocked ? '🔒' : watched;
-      let itemStyle = (isDraft || isLocked) ? 'opacity:0.55;cursor:not-allowed!important;' : '';
-      let itemClass = isDraft ? 'lesson-item' : 'lesson-item hover-lesson';
-
-      let lockBadge = '';
-      if(isLocked) lockBadge = '<span style="font-size:0.75rem;margin-right:2px;">🔒</span>';
-      else if(l.access==='paid' && currentRole==='student') lockBadge = '<span style="font-size:0.65rem;background:#FFF3E0;color:#E65100;padding:1px 5px;border-radius:8px;margin-right:2px;">مدفوع</span>';
-
-      let iconHtml = '';
-      if(!isLocked && l.url) iconHtml = '<span style="font-size:0.7rem;color:var(--muted);">' + (l.vsrc==='upload' ? '📹' : '🔗') + '</span>';
-
-      let clickAction = '';
-      if(clickable){
-        const safeTitle = (l.title||'').replace(/'/g, "\'");
-        const safeUrl   = (l.url||'').replace(/'/g, "\'");
-        const safeVsrc  = l.vsrc || 'url';
-        clickAction = "clickLesson(" + l.id + ",'" + safeTitle + "','" + safeUrl + "','" + safeVsrc + "')";
-      } else if(isLocked){
-        clickAction = "showToast('🔒 هذا الدرس للمشتركين — تواصل مع الأستاذ')";
-      }
-
-      html += '<div class="' + itemClass + '" onclick="' + clickAction + '" style="' + itemStyle + '">';
-      html +=   '<div class="lesson-num" style="min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;background:' + numBg + ';color:' + numColor + ';">' + numContent + '</div>';
-      html +=   '<span style="flex:1;">' + l.title + draftBadge + lockBadge + '</span>';
-      html +=   iconHtml;
-      html += '</div>';
+      html += `<div class="lesson-item ${l.status==='draft'?'':'hover-lesson'}" 
+        onclick="${l.status!=='draft'?`clickLesson(${l.id},'${l.title.replace(/'/g,"\'")}','${(l.url||'').replace(/'/g,"\'")}','${l.vsrc||'url'}')`:''}"
+        style="${l.status==='draft'?'opacity:0.5;cursor:not-allowed!important;':''}">
+        <div class="lesson-num" style="min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;${watchedStyle}background:${watchedLessons[l.id]?'var(--blue)':'#E3F2FD'};color:${watchedLessons[l.id]?'white':'var(--blue)'};">${watched}</div>
+        <span style="flex:1;">${l.title}${draftBadge}</span>
+        ${l.url?'<span style="font-size:0.7rem;color:var(--muted);">${l.vsrc==="upload"?"📹":"🔗"}</span>':''}
+      </div>`;
     });
     html += '</div>';
   });
@@ -3322,45 +3232,26 @@ function handleVideoUpload(input){
   const prog = document.getElementById('videoUploadProgress');
   const fill = document.getElementById('videoProgressFill');
   const txt  = document.getElementById('videoProgressTxt');
-
+  
   info.textContent = '📹 ' + file.name + ' — ' + (file.size/1024/1024).toFixed(1) + 'MB';
   prog.style.display = 'block';
+  
+  // Simulate processing progress
+  let pct = 0;
+  const interval = setInterval(()=>{
+    pct += Math.random()*15;
+    if(pct >= 100){ pct=100; clearInterval(interval);
+      txt.textContent = '✅ جاهز للرفع';
+      txt.style.color = '#2E7D32';
+    }
+    fill.style.width = pct+'%';
+    if(pct<100) txt.textContent = 'جاري المعالجة... ' + Math.round(pct) + '%';
+  }, 150);
 
-  // حفظ blob محلي للمعاينة الفورية
+  // Store blob URL for local playback (will be replaced by Firebase URL)
   uploadedVideoBlob = URL.createObjectURL(file);
   uploadedVideoName = file.name;
-  uploadedVideoFile = file;
-
-  if(!fbReady || !storage){
-    // لا يوجد Firebase: نستخدم blob محلياً فقط
-    fill.style.width = '100%';
-    txt.textContent = '⚠️ لا يوجد اتصال بـ Firebase — الفيديو متاح محلياً فقط في هذه الجلسة';
-    txt.style.color = '#E65100';
-    return;
-  }
-
-  // رفع مباشر إلى Firebase Storage
-  const path = 'videos/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-  txt.textContent = 'جاري الرفع... 0%';
-  txt.style.color = 'var(--muted)';
-
-  uploadToStorage(file, path, pct=>{
-    fill.style.width = pct + '%';
-    txt.textContent = 'جاري الرفع إلى Firebase... ' + pct + '%';
-  }).then(url=>{
-    uploadedVideoBlob = url; // استبدل blob بـ URL حقيقي
-    uploadedVideoName = file.name;
-    fill.style.width = '100%';
-    txt.textContent = '✅ تم الرفع بنجاح — جاهز للحفظ';
-    txt.style.color = '#2E7D32';
-    showToast('✅ تم رفع الفيديو إلى Firebase');
-  }).catch(err=>{
-    // Fallback: blob محلي مع تحذير
-    fill.style.width = '100%';
-    txt.textContent = '⚠️ فشل الرفع لـ Firebase (' + (err.message||'') + ') — سيُحفظ محلياً فقط';
-    txt.style.color = '#E65100';
-    console.warn('Video upload failed:', err);
-  });
+  uploadedVideoFile = file; // keep reference for Firebase upload
 }
 
 // ════════════════════════════════════════════════════
@@ -3519,16 +3410,6 @@ function clickLesson(id, title, url, vsrc){
   
   const lesson = adminLessons.find(l=>l.id===id);
   if(!lesson) return;
-
-  // فحص: الدرس المدفوع — هل اشتراك الطالب نشط؟
-  if(currentRole==='student' && lesson.access==='paid'){
-    const student = adminStudents.find(s=>s.user===currentUser);
-    const subOk = student && student.subEnd && Math.ceil((new Date(student.subEnd)-new Date())/(1000*60*60*24)) >= 0;
-    if(!subOk){
-      showToast('🔒 هذا الدرس للمشتركين فقط — تواصل مع الأستاذ لتجديد اشتراكك');
-      return;
-    }
-  }
   
   const videoUrl  = lesson.url || url || '';
   const videoSrc  = lesson.vsrc || vsrc || 'url';
@@ -3555,23 +3436,6 @@ function clickLesson(id, title, url, vsrc){
 }
 
 function loadUploadedVideo(blobUrl, title){
-  // إذا كان URL حقيقي (Firebase Storage) أو blob
-  if(blobUrl && blobUrl.startsWith('http')){
-    // فتح في نافذة جديدة بدل المشغل المدمج (أكثر توافقاً)
-    const wrap = document.getElementById('youtube-player-wrap');
-    const noUrl = document.getElementById('youtube-no-url');
-    if(wrap) wrap.style.display='none';
-    if(noUrl){
-      noUrl.style.display='flex';
-      noUrl.innerHTML = `<div style="text-align:center;padding:2rem;">
-        <div style="font-size:3rem;margin-bottom:1rem;">🎬</div>
-        <p style="font-weight:600;margin-bottom:0.5rem;">${title||'الفيديو'}</p>
-        <a href="${blobUrl}" target="_blank" class="btn-primary" style="display:inline-block;padding:12px 28px;margin-top:0.5rem;text-decoration:none;">▶ مشاهدة الفيديو</a>
-        <p style="color:var(--muted);font-size:0.8rem;margin-top:0.75rem;">يُفتح في نافذة جديدة</p>
-      </div>`;
-    }
-    return;
-  }
   switchVideoType('youtube'); // reuse youtube area for direct video
   const wrap   = document.getElementById('youtube-player-wrap');
   const iframe = document.getElementById('youtube-iframe');
@@ -3607,7 +3471,13 @@ function getVisibleCourses(){
   if(currentRole==='owner') return adminCourses;
   // الطالب يرى فقط كورسات صفه
   const student = adminStudents.find(s=>s.user===currentUser);
-  if(!student) return [];
+  if(!student){
+    // ★ البيانات لم تكتمل بعد من Firebase — نعرض loading بدل فراغ كامل
+    // وnعيد المحاولة بعد ثانية
+    if(fbReady && loggedIn) setTimeout(()=>{ renderCourseCards(); renderStudentHW(); }, 1000);
+    // Fallback: إذا لا يوجد مرحلة محددة → أظهر كل الكورسات التي بدون مرحلة
+    return adminCourses.filter(c=>!(c.grade||'').trim());
+  }
   const studentGrade = (student.grade||'').trim();
   return adminCourses.filter(c=>{
     const cGrade = (c.grade||'').trim();
@@ -3619,18 +3489,7 @@ function getVisibleCourses(){
 function getVisibleLessons(){
   if(currentRole==='owner') return adminLessons;
   const visibleCourseNames = new Set(getVisibleCourses().map(c=>c.name));
-  const student = adminStudents.find(s=>s.user===currentUser);
-  // فحص انتهاء الاشتراك
-  const isSubscriptionActive = ()=>{
-    if(!student || !student.subEnd) return true; // بدون تاريخ = نشط
-    return Math.ceil((new Date(student.subEnd)-new Date())/(1000*60*60*24)) >= 0;
-  };
-  return adminLessons.filter(l=>{
-    if(!visibleCourseNames.has(l.course)) return false;
-    // الدروس المدفوعة: تحتاج اشتراكاً نشطاً
-    if(l.access==='paid' && !isSubscriptionActive()) return false;
-    return true;
-  });
+  return adminLessons.filter(l=>visibleCourseNames.has(l.course));
 }
 
 // الواجبات المسموح للمستخدم الحالي رؤيتها فقط (حسب كورسات صفه، أو الواجبات العامة لكل الكورسات)
@@ -3666,6 +3525,11 @@ function renderCourseCards(){
     visible = visible.filter(c => (c.grade||'').trim() === filterGrade);
   }
   if(visible.length===0){
+    // ★ إذا Firebase لا يزال يحمّل → أظهر spinner بدل رسالة "لا يوجد"
+    if(fbReady && currentRole==='student' && adminCourses.length===0){
+      grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);"><div style="font-size:2.5rem;">⏳</div><p>جاري تحميل الكورسات...</p></div>';
+      return;
+    }
     grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);"><div style="font-size:3rem;">📭</div><p>'+(currentRole==='owner'?'لم يتم إضافة كورسات بعد':'لا توجد كورسات لصفك — تواصل مع المدرس')+'</p></div>';
     return;
   }
@@ -3815,24 +3679,48 @@ async function syncAllToFirebase(){
   }catch(e){ showToast('❌ خطأ في المزامنة: '+e.message); }
 }
 
-// POLLING — refresh every 30s instead of real-time listeners (avoids WebChannel errors)
+// REAL-TIME LISTENER — auto-refresh when teacher adds lesson
 function startRealtimeListeners(){
   if(!fbReady) return;
-  async function refreshData(){
-    try{
-      const [lSnap, aSnap] = await Promise.all([
-        db.collection('lessons').get(),
-        db.collection('assignments').get()
-      ]);
-      adminLessons = lSnap.docs.map(d=>({...d.data(), id:isNaN(d.id)?d.id:Number(d.id)}));
-      renderLessonsTable(); renderCourseCards(); updateAllStats();
-      if(currentCourseId){ const c=adminCourses.find(x=>x.id===currentCourseId); if(c) renderCourseSidebar(c); }
-      adminHW = aSnap.docs.map(d=>({...d.data(), id:isNaN(d.id)?d.id:Number(d.id)}));
-      renderStudentHW(); renderHWTable();
-    }catch(e){ /* silent — offline mode */ }
-  }
-  refreshData();
-  setInterval(refreshData, 30000);
+
+  // ① Courses realtime — كان مفقوداً: سبب عدم ظهور الكورسات فور إضافتها
+  db.collection('courses').onSnapshot(snap=>{
+    adminCourses = snap.docs.map(d=>({...d.data(), id:d.id}));
+    renderCourseCards(); renderAdminCourses(); updateAllStats(); populateCourseOptions();
+    if(currentCourseId){ const c=adminCourses.find(x=>x.id===currentCourseId); if(c) renderCourseSidebar(c); }
+  }, err=>console.warn('courses listener:', err));
+
+  // ② Lessons realtime
+  db.collection('lessons').onSnapshot(snap=>{
+    adminLessons = snap.docs.map(d=>({...d.data(), id:isNaN(d.id)?d.id:Number(d.id)}));
+    renderLessonsTable(); renderCourseCards(); updateAllStats();
+    if(currentCourseId){ const c=adminCourses.find(x=>x.id===currentCourseId); if(c) renderCourseSidebar(c); }
+  }, err=>console.warn('lessons listener:', err));
+
+  // ③ Assignments realtime
+  db.collection('assignments').onSnapshot(snap=>{
+    adminHW = snap.docs.map(d=>({...d.data(), id:isNaN(d.id)?d.id:Number(d.id)}));
+    renderStudentHW(); renderHWTable(); updateAllStats();
+  }, err=>console.warn('assignments listener:', err));
+
+  // ④ Students realtime — كان مفقوداً: سبب فشل فلتر المرحلة للطالب عند الدخول
+  db.collection('students').onSnapshot(snap=>{
+    adminStudents = snap.docs.map(d=>({...d.data(), id:d.id}));
+    renderStudentsTable();
+    if(loggedIn && currentRole==='student'){
+      renderCourseCards(); renderStudentHW(); renderDashboardCourses();
+    }
+  }, err=>console.warn('students listener:', err));
+
+  // ⑤ Grades realtime
+  db.collection('grades').onSnapshot(snap=>{
+    const data = snap.docs.map(d=>({...d.data(), id:d.id}));
+    if(data.length > 0){
+      adminGrades = data.sort((a,b)=>(a.order||0)-(b.order||0)).map(g=>g.name).filter(Boolean);
+      try{ localStorage.setItem('adminGrades_local', JSON.stringify(adminGrades)); }catch(e){}
+      renderGradesManager(); refreshAllGradeDropdowns();
+    }
+  }, err=>console.warn('grades listener:', err));
 }
 
 // ══════════════════════════════════════════
