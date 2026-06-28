@@ -296,6 +296,30 @@ footer{background:var(--blue-dark);color:rgba(255,255,255,0.85);padding:3rem 2re
 /* WHATSAPP */
 .wa-btn{position:fixed;bottom:1.5rem;left:1.5rem;width:52px;height:52px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:1.4rem;box-shadow:0 4px 14px rgba(37,211,102,0.5);cursor:pointer;z-index:90;text-decoration:none;}
 
+/* Q&A STYLES */
+.qa-card{background:white;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.07);padding:1.25rem;margin-bottom:1rem;border-right:4px solid #E3F2FD;}
+.qa-card.unanswered{border-right-color:#FF9800;}
+.qa-card.answered{border-right-color:#4CAF50;}
+.qa-meta{display:flex;gap:0.6rem;align-items:center;margin-bottom:0.6rem;flex-wrap:wrap;}
+.qa-author{font-weight:700;font-size:0.88rem;}
+.qa-lesson-tag{background:#E3F2FD;color:var(--blue);padding:2px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;}
+.qa-time{color:var(--muted);font-size:0.78rem;}
+.qa-question{font-size:0.92rem;line-height:1.7;margin-bottom:0.75rem;}
+.qa-answer-box{background:#F0FFF4;border-radius:8px;padding:0.85rem 1rem;margin-top:0.75rem;border-right:3px solid #4CAF50;}
+.qa-answer-box .qa-answer-label{font-size:0.78rem;font-weight:700;color:#2E7D32;margin-bottom:0.4rem;}
+.qa-answer-box .qa-answer-text{font-size:0.9rem;line-height:1.6;color:#1B5E20;}
+.qa-reply-form{margin-top:0.75rem;display:none;}
+.qa-reply-form textarea{width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.88rem;resize:none;outline:none;box-sizing:border-box;}
+.qa-reply-form .reply-actions{display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.5rem;}
+
+/* CONTACT CHANNEL CARD */
+.contact-channel-card{background:white;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,0.08);padding:1.5rem;display:flex;flex-direction:column;align-items:center;text-align:center;gap:0.6rem;border:2px solid transparent;transition:all 0.2s;cursor:pointer!important;}
+.contact-channel-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.12);}
+.contact-channel-icon{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;}
+.contact-channel-label{font-size:0.95rem;font-weight:700;}
+.contact-channel-val{font-size:0.85rem;color:var(--muted);}
+.contact-channel-btn{margin-top:0.5rem;padding:8px 22px;border-radius:50px;border:none;font-family:'Cairo',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer!important;transition:all 0.2s;}
+
 /* FORCE ARROW CURSOR EVERYWHERE */
 *{cursor:default;}
 button,a,[onclick],.course-btn,.back-btn,.download-btn,.assign-dl-btn,.lesson-item,.unit-title,.mat-item,.lang-btn,.nav-links a,.wa-btn,.play-btn,.ctrl-btn{cursor:pointer!important;}
@@ -816,10 +840,34 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
         <button class="download-btn" onclick="simulateDownload('تمارين_الوحدة')" id="mat3-btn">⬇ تحميل</button>
       </div>
     </div>
+
+    <!-- Q&A SECTION -->
+    <div id="lesson-qa-section" style="background:white;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,0.08);padding:1.5rem;margin-top:1.25rem;">
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:1rem;display:flex;align-items:center;gap:8px;">
+        💬 <span id="qa-section-title">أسئلة ونقاش</span>
+        <span id="qa-count-badge" style="background:rgba(21,101,192,0.1);color:var(--blue);border-radius:20px;padding:2px 10px;font-size:0.75rem;font-weight:700;"></span>
+      </h3>
+
+      <!-- Ask a question -->
+      <div id="qa-ask-box" style="background:#F5F7FA;border-radius:12px;padding:1rem;margin-bottom:1.25rem;">
+        <textarea id="qa-new-question" placeholder="اكتب سؤالك هنا..." rows="3"
+          style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.9rem;resize:none;outline:none;box-sizing:border-box;"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:0.75rem;">
+          <button class="admin-btn" onclick="submitQuestion()" style="padding:9px 22px;font-size:0.88rem;" id="qa-submit-btn">إرسال السؤال ✉️</button>
+        </div>
+      </div>
+
+      <!-- Questions list -->
+      <div id="qa-questions-list">
+        <div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:0.9rem;">
+          <div style="font-size:2rem;margin-bottom:0.5rem;">💭</div>
+          <p>لا توجد أسئلة بعد — كن أول من يسأل!</p>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
-
-<!-- DASHBOARD PAGE -->
 <div class="page" id="page-dashboard">
   <div class="section">
     <button class="back-btn" onclick="showPage('home')" style="margin-bottom:1rem;">← الرئيسية</button>
@@ -877,38 +925,19 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     <button class="back-btn" onclick="showPage('home')" style="margin-bottom:1rem;">← الرئيسية</button>
     <div style="text-align:center;margin-bottom:2rem;">
       <div class="section-tag" id="ct-tag">تواصل معنا</div>
-      <h2 class="section-title" id="ct-title">ارسل لنا رسالة</h2>
+      <h2 class="section-title" id="ct-title">تواصل مع الأستاذ</h2>
+      <p class="section-sub" id="ct-sub">اختر وسيلة التواصل المناسبة</p>
     </div>
-    <div class="contact-card">
-      <h2 id="ct-h">استفسارات ودعم</h2>
-      <div class="form-group">
-        <label id="ct-name">الاسم الكامل</label>
-        <input type="text" id="contactName" placeholder="اكتب اسمك...">
-      </div>
-      <div class="form-group">
-        <label id="ct-email">البريد الإلكتروني</label>
-        <input type="email" id="contactEmail" placeholder="email@example.com">
-      </div>
-      <div class="form-group">
-        <label id="ct-msg">الرسالة</label>
-        <textarea id="contactMsg" placeholder="اكتب رسالتك..."></textarea>
-      </div>
-      <button class="btn-primary" style="width:100%;padding:12px;" onclick="sendContact()" id="ct-btn">إرسال الرسالة</button>
-      <div id="ct-success" style="display:none;background:#E8F5E9;color:#2E7D32;padding:10px;border-radius:8px;margin-top:1rem;text-align:center;">✓ تم إرسال رسالتك بنجاح!</div>
-    </div>
-    <div style="display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap;margin-top:2rem;">
-      <div class="dash-card" style="text-align:center;min-width:180px;">
-        <div style="font-size:1.5rem;margin-bottom:0.5rem;">📧</div>
-        <div style="font-size:0.85rem;" id="ct-info1">anasfayad@math.edu</div>
-      </div>
-      <div class="dash-card" style="text-align:center;min-width:180px;">
-        <div style="font-size:1.5rem;margin-bottom:0.5rem;">📱</div>
-        <div style="font-size:0.85rem;" id="ct-info2">+971 50 XXX XXXX</div>
-      </div>
-      <div class="dash-card" style="text-align:center;min-width:180px;">
-        <div style="font-size:1.5rem;margin-bottom:0.5rem;">📍</div>
-        <div style="font-size:0.85rem;" id="ct-info3">الإمارات العربية المتحدة</div>
-      </div>
+
+    <!-- Contact Buttons Grid -->
+    <div id="contact-channels" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.25rem;margin-bottom:2rem;"></div>
+
+    <!-- Q&A Shortcut -->
+    <div style="background:linear-gradient(135deg,#E3F2FD,#F3E5F5);border-radius:16px;padding:1.5rem;text-align:center;border:2px dashed #90CAF9;">
+      <div style="font-size:2rem;margin-bottom:0.5rem;">💬</div>
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:0.4rem;" id="ct-qa-h">لديك سؤال عن درس؟</h3>
+      <p style="color:var(--muted);font-size:0.88rem;margin-bottom:1rem;" id="ct-qa-p">ادخل الكورس وضع سؤالك في قسم النقاش — الأستاذ يرد عليك مباشرةً</p>
+      <button class="btn-primary" onclick="showPage('courses')" style="padding:10px 24px;font-size:0.9rem;" id="ct-qa-btn">اذهب للدروس</button>
     </div>
   </div>
 </div>
@@ -1091,6 +1120,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     <button class="admin-tab" onclick="adminTab('lessons',this)" id="adm-nav-lessons">🎬 الدروس</button>
     <button class="admin-tab" onclick="adminTab('assignments',this)" id="adm-nav-assignments">📝 الواجبات</button>
     <button class="admin-tab" onclick="adminTab('students',this)" id="adm-nav-students">👥 الطلاب</button>
+    <button class="admin-tab" onclick="adminTab('qa',this)" id="adm-nav-qa">💬 النقاش <span id="qa-notif-badge" style="display:none;background:#F44336;color:white;border-radius:50%;width:16px;height:16px;font-size:0.65rem;display:inline-flex;align-items:center;justify-content:center;margin-right:4px;font-weight:700;vertical-align:middle;"></span></button>
     <button class="admin-tab" onclick="adminTab('settings',this)" id="adm-nav-settings">⚙️ الإعدادات</button>
     <h2 id="adm-panel-title">لوحة تحكم المدرس — Mr. Anas Fayad</h2>
     <span id="supabase-status" style="font-size:0.75rem;padding:4px 12px;border-radius:20px;background:rgba(244,67,54,0.2);color:#C62828;margin-left:auto;">🔴 وضع تجريبي</span>
@@ -1317,6 +1347,36 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
       </div>
     </div>
     <h2 style="font-size:1.3rem;font-weight:900;margin-bottom:1.5rem;" id="adm-settings-h">الإعدادات</h2>
+    <!-- ═══ إعدادات التواصل ═══ -->
+    <div class="admin-card" style="border:2px solid #4CAF50;margin-bottom:1.5rem;">
+      <h3 style="margin-bottom:0.5rem;">📞 معلومات التواصل</h3>
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">هذه المعلومات تظهر في صفحة "اتصل بنا" للطلاب</p>
+      <div class="form-row">
+        <div>
+          <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">📧 البريد الإلكتروني</label>
+          <input type="email" id="contact-email-setting" placeholder="example@gmail.com" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.9rem;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">📱 رقم الواتساب (مع كود الدولة)</label>
+          <input type="text" id="contact-whatsapp-setting" placeholder="96650XXXXXXX" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.9rem;outline:none;">
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">✈️ رابط تيليغرام</label>
+          <input type="text" id="contact-telegram-setting" placeholder="https://t.me/username" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.9rem;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">📞 رقم الهاتف (للعرض فقط)</label>
+          <input type="text" id="contact-phone-setting" placeholder="+971 50 XXX XXXX" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.9rem;outline:none;">
+        </div>
+      </div>
+      <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+        <button class="admin-btn green" onclick="saveContactSettings()">💾 حفظ معلومات التواصل</button>
+        <span id="contact-settings-result" style="font-size:0.85rem;"></span>
+      </div>
+    </div>
+
     <div class="admin-card">
       <h3 id="adm-owner-cred-h">🔑 بيانات دخول المالك</h3>
       <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.25rem;" id="adm-owner-cred-sub">تغيير الإيميل وكلمة المرور الخاصة بالمالك — تُحفظ تلقائياً في المتصفح</p>
@@ -1354,6 +1414,27 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
       </div>
     </div>
   </div>
+  <!-- Q&A ADMIN SECTION -->
+  <div class="admin-section" id="adm-qa">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
+      <div>
+        <h2 style="font-size:1.3rem;font-weight:900;">💬 أسئلة الطلاب</h2>
+        <p style="color:var(--muted);font-size:0.9rem;">اقرأ أسئلة الطلاب وارد عليها مباشرة</p>
+      </div>
+      <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+        <select id="qa-filter-course" onchange="renderAdminQA()" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.88rem;cursor:pointer;">
+          <option value="">كل الكورسات</option>
+        </select>
+        <select id="qa-filter-status" onchange="renderAdminQA()" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.88rem;cursor:pointer;">
+          <option value="">كل الأسئلة</option>
+          <option value="unanswered">⏳ بدون رد</option>
+          <option value="answered">✅ مُجاب</option>
+        </select>
+      </div>
+    </div>
+    <div id="admin-qa-list"></div>
+  </div>
+
 </div>
 
 <!-- FOOTER -->
@@ -1434,6 +1515,8 @@ function initFirebase(){
     loadLessonsFromDB();
     loadHWFromDB();
     loadStudentsFromDB();
+    loadContactSettings();
+    refreshQABadge();
   } catch(e){
     console.warn('Firebase init error:', e);
     updateFBBadge(false);
@@ -2040,6 +2123,7 @@ function showPage(name){
   // Re-render dynamic content
   if(name==='dashboard'){ renderStudentHW(); updateProgressDisplay(); renderDashboardCourses(); }
   if(name==='courses'){ renderCourseCards(); }
+  if(name==='contact'){ renderContactPage(); }
 }
 
 function showCourseDetail(){showPage('course-detail');}
@@ -2296,6 +2380,12 @@ function adminTab(name,btn){
     refreshAllGradeDropdowns();
     renderGradesManager();
     if(fbReady){ loadGradesFromDB(); } // إعادة تحميل من Firebase عند كل فتح للإعدادات
+  }
+  if(name==='qa'){
+    // تحديث قائمة الكورسات في فلتر Q&A
+    const sel=document.getElementById('qa-filter-course');
+    if(sel){ const opts=adminCourses.map(c=>`<option value="${c.name}">${c.name}</option>`).join(''); sel.innerHTML='<option value="">كل الكورسات</option>'+opts; }
+    renderAdminQA();
   }
 }
 function toggleUnit(el){el.closest('.unit-expand').classList.toggle('open');}
@@ -2654,6 +2744,317 @@ function saveAnnouncement(){
   showToast('تم نشر الإعلان: '+t);
 }
 
+// ════════════════════════════════════════════════════
+// CONTACT SETTINGS — حفظ وعرض معلومات التواصل
+// ════════════════════════════════════════════════════
+let contactSettings = {
+  email: '',
+  whatsapp: '',
+  telegram: '',
+  phone: ''
+};
+
+function loadContactSettings(){
+  if(fbReady){
+    db.collection('settings').doc('contact').get().then(doc=>{
+      if(doc.exists){
+        contactSettings = {...contactSettings, ...doc.data()};
+        applyContactSettings();
+      }
+    }).catch(()=>{
+      try{ const s=JSON.parse(localStorage.getItem('contactSettings')||'{}'); if(s) contactSettings={...contactSettings,...s}; applyContactSettings(); }catch(e){}
+    });
+  } else {
+    try{ const s=JSON.parse(localStorage.getItem('contactSettings')||'{}'); if(s) contactSettings={...contactSettings,...s}; applyContactSettings(); }catch(e){}
+  }
+}
+
+function applyContactSettings(){
+  // ملء حقول الإعدادات
+  const ids=['email','whatsapp','telegram','phone'];
+  ids.forEach(k=>{
+    const el=document.getElementById('contact-'+k+'-setting');
+    if(el) el.value=contactSettings[k]||'';
+  });
+  // تحديث الفوتر
+  const ftEl=document.querySelector('footer .footer-contact');
+  if(ftEl){
+    let html=`<h4 id="ft-cu">اتصل بنا</h4>`;
+    if(contactSettings.email) html+=`<p>📧 ${contactSettings.email}</p>`;
+    if(contactSettings.phone) html+=`<p>📞 ${contactSettings.phone}</p>`;
+    html+=`<p>📍 <span id="ft-loc">الإمارات العربية المتحدة</span></p>`;
+    ftEl.innerHTML=html;
+  }
+  renderContactPage();
+}
+
+function saveContactSettings(){
+  const email    = document.getElementById('contact-email-setting')?.value.trim()||'';
+  const whatsapp = document.getElementById('contact-whatsapp-setting')?.value.trim()||'';
+  const telegram = document.getElementById('contact-telegram-setting')?.value.trim()||'';
+  const phone    = document.getElementById('contact-phone-setting')?.value.trim()||'';
+  contactSettings = {email, whatsapp, telegram, phone};
+  // حفظ Firebase
+  if(fbReady) db.collection('settings').doc('contact').set(contactSettings).catch(()=>{});
+  // حفظ محلي
+  try{ localStorage.setItem('contactSettings', JSON.stringify(contactSettings)); }catch(e){}
+  const res=document.getElementById('contact-settings-result');
+  if(res){ res.textContent='✅ تم الحفظ!'; res.style.color='#2E7D32'; setTimeout(()=>res.textContent='',3000); }
+  showToast('✅ تم حفظ معلومات التواصل');
+  applyContactSettings();
+}
+
+function renderContactPage(){
+  const container = document.getElementById('contact-channels');
+  if(!container) return;
+  const channels=[];
+  if(contactSettings.email){
+    channels.push({icon:'📧',bg:'#E3F2FD',color:['#1565C0','#42A5F5'],label:'البريد الإلكتروني',val:contactSettings.email,
+      action:`window.location.href='mailto:${contactSettings.email}'`,btnTxt:'إرسال إيميل',btnBg:'#1565C0'});
+  }
+  if(contactSettings.whatsapp){
+    const num=contactSettings.whatsapp.replace(/[^0-9]/g,'');
+    channels.push({icon:'💬',bg:'#E8F5E9',color:['#1B5E20','#43A047'],label:'واتساب',val:contactSettings.whatsapp,
+      action:`window.open('https://wa.me/${num}','_blank')`,btnTxt:'فتح واتساب',btnBg:'#25D366'});
+  }
+  if(contactSettings.telegram){
+    channels.push({icon:'✈️',bg:'#E3F2FD',color:['#0277BD','#039BE5'],label:'تيليغرام',val:contactSettings.telegram,
+      action:`window.open('${contactSettings.telegram}','_blank')`,btnTxt:'فتح تيليغرام',btnBg:'#0088cc'});
+  }
+  if(contactSettings.phone){
+    channels.push({icon:'📞',bg:'#FFF3E0',color:['#E65100','#FB8C00'],label:'رقم الهاتف',val:contactSettings.phone,
+      action:`window.location.href='tel:${contactSettings.phone}'`,btnTxt:'اتصل الآن',btnBg:'#E65100'});
+  }
+  if(channels.length===0){
+    container.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--muted);"><div style="font-size:2.5rem;margin-bottom:0.5rem;">📭</div><p>لم يتم إضافة وسائل التواصل بعد</p></div>';
+    return;
+  }
+  container.innerHTML=channels.map(c=>`
+    <div class="contact-channel-card" onclick="${c.action}" style="border-color:${c.btnBg}22;">
+      <div class="contact-channel-icon" style="background:${c.bg};">${c.icon}</div>
+      <div class="contact-channel-label">${c.label}</div>
+      <div class="contact-channel-val">${c.val}</div>
+      <button class="contact-channel-btn" onclick="event.stopPropagation();${c.action}" style="background:${c.btnBg};color:white;">${c.btnTxt}</button>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════════
+// Q&A SYSTEM — أسئلة وأجوبة حقيقية على Firestore
+// ════════════════════════════════════════════════════
+let currentLessonForQA = null; // {id, title, course}
+let qaUnsubscribe = null;
+
+function openLessonQA(lessonId){
+  const lesson = adminLessons.find(l=>l.id===lessonId);
+  currentLessonForQA = lesson ? {id:lesson.id, title:lesson.title, course:lesson.course||''} : null;
+  if(fbReady && currentLessonForQA){
+    loadQAForLesson(lessonId);
+  }
+}
+
+function loadQAForLesson(lessonId){
+  if(qaUnsubscribe){ try{qaUnsubscribe();}catch(e){} }
+  if(!fbReady) return;
+  const list=document.getElementById('qa-questions-list');
+  if(list) list.innerHTML='<div style="text-align:center;padding:1rem;color:var(--muted);">⏳ جاري التحميل...</div>';
+  qaUnsubscribe = db.collection('qa')
+    .where('lessonId','==',String(lessonId))
+    .orderBy('createdAt','desc')
+    .onSnapshot(snap=>{
+      const questions=snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderQAList(questions);
+    }, err=>{
+      // Fallback: بدون orderBy لو لم يتم إنشاء الـ index
+      db.collection('qa').where('lessonId','==',String(lessonId)).get().then(snap=>{
+        const questions=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+        renderQAList(questions);
+      });
+    });
+}
+
+function renderQAList(questions){
+  const list=document.getElementById('qa-questions-list');
+  const badge=document.getElementById('qa-count-badge');
+  if(badge) badge.textContent=questions.length+' سؤال';
+  if(!list) return;
+  if(questions.length===0){
+    list.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:0.9rem;"><div style="font-size:2rem;margin-bottom:0.5rem;">💭</div><p>لا توجد أسئلة بعد — كن أول من يسأل!</p></div>';
+    return;
+  }
+  list.innerHTML=questions.map(q=>{
+    const timeStr=q.createdAt ? new Date(q.createdAt).toLocaleString('ar-EG',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+    const isOwner=currentRole==='owner';
+    const answerHtml = q.answer
+      ? `<div class="qa-answer-box"><div class="qa-answer-label">✅ رد الأستاذ Anas:</div><div class="qa-answer-text">${q.answer}</div></div>`
+      : isOwner ? `<div class="qa-reply-form" id="reply-form-${q.id}">
+          <textarea id="reply-txt-${q.id}" rows="2" placeholder="اكتب ردك..."></textarea>
+          <div class="reply-actions">
+            <button class="icon-btn" onclick="document.getElementById('reply-form-${q.id}').style.display='none'">إلغاء</button>
+            <button class="admin-btn green" onclick="submitAnswer('${q.id}')" style="padding:6px 16px;font-size:0.85rem;">نشر الرد ✅</button>
+          </div>
+        </div>` : '';
+    const replyBtn = isOwner && !q.answer
+      ? `<button class="icon-btn edit" onclick="document.getElementById('reply-form-${q.id}').style.display='block'">💬 رد</button>` : '';
+    const delBtn = isOwner
+      ? `<button class="icon-btn del" onclick="deleteQuestion('${q.id}')">🗑️</button>` : '';
+    return `<div class="qa-card ${q.answer?'answered':'unanswered'}">
+      <div class="qa-meta">
+        <span class="qa-author">👤 ${q.studentName||'طالب'}</span>
+        <span class="qa-lesson-tag">📚 ${q.lessonTitle||''}</span>
+        <span class="qa-time">${timeStr}</span>
+        ${!q.answer?'<span style="background:#FFF3E0;color:#E65100;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;">⏳ بانتظار الرد</span>':'<span style="background:#E8F5E9;color:#2E7D32;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;">✅ مُجاب</span>'}
+      </div>
+      <div class="qa-question">${q.question}</div>
+      ${answerHtml}
+      <div style="display:flex;gap:0.4rem;margin-top:0.5rem;">${replyBtn}${delBtn}</div>
+    </div>`;
+  }).join('');
+}
+
+function submitQuestion(){
+  const txt=document.getElementById('qa-new-question')?.value.trim();
+  if(!txt){showToast('اكتب سؤالك أولاً');return;}
+  if(!fbReady){showToast('❌ غير متصل بالإنترنت');return;}
+  if(!currentUser){showToast('❌ يجب تسجيل الدخول');return;}
+  if(!currentLessonForQA){showToast('❌ تعذر تحديد الدرس');return;}
+  const student=adminStudents.find(s=>s.user===currentUser);
+  const studentName=student?student.name:currentUser;
+  const qData={
+    lessonId:String(currentLessonForQA.id),
+    lessonTitle:currentLessonForQA.title||'',
+    course:currentLessonForQA.course||'',
+    studentUser:currentUser,
+    studentName,
+    question:txt,
+    answer:null,
+    createdAt:Date.now()
+  };
+  const btn=document.getElementById('qa-submit-btn');
+  if(btn){btn.textContent='⏳ جاري الإرسال...';btn.disabled=true;}
+  db.collection('qa').add(qData).then(()=>{
+    document.getElementById('qa-new-question').value='';
+    showToast('✅ تم إرسال سؤالك — سيرد الأستاذ قريباً');
+  }).catch(e=>{
+    showToast('❌ فشل الإرسال: '+e.message);
+  }).finally(()=>{
+    if(btn){btn.textContent='إرسال السؤال ✉️';btn.disabled=false;}
+  });
+}
+
+function submitAnswer(qId){
+  const txt=document.getElementById('reply-txt-'+qId)?.value.trim();
+  if(!txt){showToast('اكتب ردك أولاً');return;}
+  if(!fbReady) return;
+  db.collection('qa').doc(qId).update({answer:txt, answeredAt:Date.now()}).then(()=>{
+    showToast('✅ تم نشر ردك');
+    document.getElementById('reply-form-'+qId).style.display='none';
+  }).catch(e=>showToast('❌ '+e.message));
+}
+
+function deleteQuestion(qId){
+  if(!confirm('حذف هذا السؤال؟')) return;
+  if(!fbReady) return;
+  db.collection('qa').doc(qId).delete().then(()=>showToast('✅ تم الحذف')).catch(e=>showToast('❌ '+e.message));
+}
+
+// Admin Q&A panel
+function renderAdminQA(){
+  if(!fbReady){
+    const el=document.getElementById('admin-qa-list');
+    if(el) el.innerHTML='<div class="admin-card" style="text-align:center;padding:2rem;color:var(--muted);">Firebase غير متصل</div>';
+    return;
+  }
+  const filterCourse=document.getElementById('qa-filter-course')?.value||'';
+  const filterStatus=document.getElementById('qa-filter-status')?.value||'';
+  let query=db.collection('qa').orderBy('createdAt','desc');
+  if(filterCourse) query=query.where('course','==',filterCourse);
+  query.get().then(snap=>{
+    let questions=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(filterStatus==='unanswered') questions=questions.filter(q=>!q.answer);
+    if(filterStatus==='answered')   questions=questions.filter(q=>!!q.answer);
+    const el=document.getElementById('admin-qa-list');
+    if(!el) return;
+    if(questions.length===0){
+      el.innerHTML='<div class="admin-card" style="text-align:center;padding:2rem;color:var(--muted);"><div style="font-size:2.5rem;margin-bottom:0.5rem;">💭</div><p>لا توجد أسئلة حتى الآن</p></div>';
+      return;
+    }
+    el.innerHTML=questions.map(q=>{
+      const timeStr=q.createdAt?new Date(q.createdAt).toLocaleString('ar-EG',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+      const answerHtml=q.answer
+        ?`<div class="qa-answer-box"><div class="qa-answer-label">✅ ردك:</div><div class="qa-answer-text">${q.answer}</div>
+           <button class="icon-btn" onclick="editAnswer('${q.id}','${q.answer.replace(/'/g,'\\\'')}')" style="margin-top:0.5rem;">✏️ تعديل الرد</button>
+          </div>`
+        :`<div class="qa-reply-form" id="reply-form-${q.id}" style="display:block;">
+          <textarea id="reply-txt-${q.id}" rows="2" placeholder="اكتب ردك..."></textarea>
+          <div class="reply-actions">
+            <button class="admin-btn green" onclick="submitAnswer('${q.id}')" style="padding:6px 16px;font-size:0.85rem;">نشر الرد ✅</button>
+          </div>
+        </div>`;
+      return `<div class="admin-card qa-card ${q.answer?'answered':'unanswered'}" style="margin-bottom:0.75rem;">
+        <div class="qa-meta">
+          <span class="qa-author">👤 ${q.studentName||q.studentUser||'طالب'}</span>
+          <span class="qa-lesson-tag">📚 ${q.lessonTitle||q.course||''}</span>
+          <span class="qa-time">${timeStr}</span>
+          ${!q.answer?'<span style="background:#FFF3E0;color:#E65100;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;">⏳ بانتظار الرد</span>':'<span style="background:#E8F5E9;color:#2E7D32;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;">✅ مُجاب</span>'}
+        </div>
+        <div class="qa-question" style="font-weight:600;">${q.question}</div>
+        ${answerHtml}
+        <div style="margin-top:0.5rem;"><button class="icon-btn del" onclick="deleteQuestion('${q.id}')">🗑️ حذف</button></div>
+      </div>`;
+    }).join('');
+    // تحديث badge بدون رد
+    const unanswered=questions.filter(q=>!q.answer).length;
+    const badge=document.getElementById('qa-notif-badge');
+    if(badge){
+      badge.textContent=unanswered||'';
+      badge.style.display=unanswered?'inline-flex':'none';
+    }
+  }).catch(e=>{
+    // Fallback بدون orderBy
+    db.collection('qa').get().then(snap=>{
+      const el=document.getElementById('admin-qa-list');
+      const questions=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+      if(!el) return;
+      if(questions.length===0){
+        el.innerHTML='<div class="admin-card" style="text-align:center;padding:2rem;color:var(--muted);"><div style="font-size:2.5rem;margin-bottom:0.5rem;">💭</div><p>لا توجد أسئلة حتى الآن</p></div>';
+        return;
+      }
+      el.innerHTML=questions.map(q=>{
+        const timeStr=q.createdAt?new Date(q.createdAt).toLocaleString('ar-EG'):'';
+        const answerHtml=q.answer?`<div class="qa-answer-box"><div class="qa-answer-label">✅ ردك:</div><div class="qa-answer-text">${q.answer}</div></div>`:
+          `<div class="qa-reply-form" id="reply-form-${q.id}" style="display:block;"><textarea id="reply-txt-${q.id}" rows="2" placeholder="اكتب ردك..."></textarea><div class="reply-actions"><button class="admin-btn green" onclick="submitAnswer('${q.id}')" style="padding:6px 16px;font-size:0.85rem;">نشر الرد ✅</button></div></div>`;
+        return `<div class="admin-card qa-card ${q.answer?'answered':'unanswered'}" style="margin-bottom:0.75rem;">
+          <div class="qa-meta"><span class="qa-author">👤 ${q.studentName||'طالب'}</span><span class="qa-lesson-tag">📚 ${q.lessonTitle||''}</span><span class="qa-time">${timeStr}</span>
+          ${!q.answer?'<span style="background:#FFF3E0;color:#E65100;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;">⏳ بانتظار الرد</span>':''}</div>
+          <div class="qa-question" style="font-weight:600;">${q.question}</div>${answerHtml}
+          <div style="margin-top:0.5rem;"><button class="icon-btn del" onclick="deleteQuestion('${q.id}')">🗑️ حذف</button></div>
+        </div>`;
+      }).join('');
+    });
+  });
+}
+
+function editAnswer(qId, currentAnswer){
+  const txt=prompt('تعديل الرد:', currentAnswer);
+  if(txt===null) return;
+  if(!txt.trim()){showToast('الرد لا يمكن أن يكون فارغاً');return;}
+  db.collection('qa').doc(qId).update({answer:txt.trim(), answeredAt:Date.now()}).then(()=>{
+    showToast('✅ تم تحديث الرد');
+    renderAdminQA();
+  }).catch(e=>showToast('❌ '+e.message));
+}
+
+function refreshQABadge(){
+  if(!fbReady) return;
+  db.collection('qa').where('answer','==',null).get().then(snap=>{
+    const n=snap.size;
+    const badge=document.getElementById('qa-notif-badge');
+    if(badge){badge.textContent=n||'';badge.style.display=n?'inline-flex':'none';}
+  }).catch(()=>{});
+}
+
+// ════════════════════════════════════════════════════
 // Init
 applyLang('ar');
 
@@ -3014,6 +3415,7 @@ function clickLesson(id, title, url, vsrc){
   }
 
   markLessonWatched(id, title);
+  openLessonQA(id);
   showPage('lesson');
 }
 
@@ -3311,9 +3713,11 @@ function waitForFirebaseAndInit(retries) {
 }
 
 if(document.readyState === 'loading'){
-  document.addEventListener('DOMContentLoaded', function(){ waitForFirebaseAndInit(); });
+  document.addEventListener('DOMContentLoaded', function(){ waitForFirebaseAndInit(); loadContactSettings(); });
 } else {
   waitForFirebaseAndInit();
+  // حاول تحميل إعدادات التواصل المحلية فوراً
+  try{ const s=JSON.parse(localStorage.getItem('contactSettings')||'{}'); if(s&&Object.keys(s).length){ contactSettings={...contactSettings,...s}; setTimeout(()=>renderContactPage(),200); } }catch(e){}
 }
 
 </script>
