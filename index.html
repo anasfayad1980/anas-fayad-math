@@ -175,29 +175,35 @@ body.ltr .feature-card:hover .feature-card-arrow{transform:translateX(0);}
 .course-btn.primary:active{transform:translateY(4px);box-shadow:0 1px 0 #3a1580,0 2px 8px rgba(108,63,197,0.2);}
 
 /* COURSE DETAIL */
-.back-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--blue),var(--blue-light));color:white;padding:10px 20px;border-radius:50px;border:none;cursor:pointer;font-size:0.9rem;font-weight:600;font-family:'Cairo',sans-serif;margin-bottom:1.5rem;box-shadow:0 5px 0 #3a1580,0 7px 16px rgba(108,63,197,0.35);transition:all 0.15s;position:relative;top:0;}
+.cd-topbar{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:1.25rem 1.5rem 0;margin-bottom:0;}
+.cd-breadcrumb{display:flex;align-items:center;gap:0.5rem;}
+.cd-badge-paid{background:#E3F2FD;color:var(--blue);padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:700;}
+.cd-badge-grade{background:#F3E5F5;color:#7B1FA2;padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:700;}
+.back-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--blue),var(--blue-light));color:white;padding:10px 20px;border-radius:50px;border:none;cursor:pointer;font-size:0.9rem;font-weight:600;font-family:'Cairo',sans-serif;box-shadow:0 5px 0 #3a1580,0 7px 16px rgba(108,63,197,0.35);transition:all 0.15s;position:relative;top:0;}
 .back-btn:hover{transform:translateY(-2px);box-shadow:0 7px 0 #3a1580,0 10px 20px rgba(108,63,197,0.4);}
 .back-btn:active{transform:translateY(4px);box-shadow:0 1px 0 #3a1580,0 3px 8px rgba(108,63,197,0.2);}
-.course-detail-layout{display:grid;grid-template-columns:300px 1fr;gap:2rem;align-items:start;}
-.sidebar{background:white;border-radius:var(--radius);box-shadow:var(--card-shadow);overflow:hidden;}
-.sidebar h3{padding:1rem 1.25rem;font-size:1rem;font-weight:700;border-bottom:1px solid #eee;}
+.course-detail-layout{display:grid;grid-template-columns:300px 1fr;gap:0;align-items:start;padding:1.25rem 1.5rem;}
+.sidebar{background:white;border-radius:var(--radius);box-shadow:var(--card-shadow);overflow:hidden;position:sticky;top:80px;}
+.sidebar-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.25rem;border-bottom:2px solid #f0f0f0;background:#FAFBFF;}
+.sidebar-header h3{font-size:0.95rem;font-weight:800;color:var(--blue);margin:0;}
+.sidebar-count{font-size:0.75rem;background:rgba(21,101,192,0.1);color:var(--blue);padding:2px 10px;border-radius:20px;font-weight:700;}
 .unit-group{}
-.unit-title{padding:0.75rem 1.25rem;background:#F5F7FA;font-size:0.9rem;font-weight:700;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border-bottom:1px solid #eee;}
-.lesson-item{padding:0.6rem 1.5rem;font-size:0.85rem;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f5f5f5;cursor:pointer;transition:background 0.15s;}
-.lesson-item:hover{background:#F5F7FA;}
-.lesson-item.active{background:#E3F2FD;color:var(--blue);}
-.lesson-num{min-width:22px;height:22px;border-radius:50%;background:var(--blue);color:white;font-size:0.7rem;display:flex;align-items:center;justify-content:center;}
-.main-content{}
-.course-info-card{background:white;border-radius:var(--radius);box-shadow:var(--card-shadow);padding:1.75rem;margin-bottom:1.5rem;}
-.course-label{display:inline-block;padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:600;margin-bottom:0.75rem;}
-.label-paid{background:#E3F2FD;color:var(--blue);}
-.label-level{background:#F3E5F5;color:#7B1FA2;margin-right:8px;}
-.course-info-title{font-size:1.5rem;font-weight:900;margin-bottom:0.3rem;}
+.unit-title{padding:0.65rem 1.25rem;background:#F5F7FA;font-size:0.85rem;font-weight:700;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border-bottom:1px solid #e8e8e8;transition:background 0.15s;}
+.unit-title:hover{background:#EEF1F8;}
+.lesson-item{padding:0.65rem 1.25rem 0.65rem 1.5rem;font-size:0.83rem;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f5f5f5;cursor:pointer;transition:background 0.15s;}
+.lesson-item:hover{background:#F0F4FF;}
+.lesson-item.active{background:#E3F2FD;color:var(--blue);font-weight:600;}
+.lesson-num{min-width:24px;height:24px;border-radius:50%;background:#E3F2FD;color:var(--blue);font-size:0.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.main-content{padding-right:1.5rem;}
+.course-info-card{background:white;border-radius:var(--radius);box-shadow:var(--card-shadow);padding:1.75rem;margin-bottom:1.25rem;}
+.course-info-title{font-size:1.5rem;font-weight:900;margin-bottom:0.3rem;line-height:1.4;}
 .course-info-sem{color:var(--muted);font-size:0.9rem;margin-bottom:0.5rem;}
 .teacher-name{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:0.9rem;margin-bottom:1.5rem;}
-.course-stats{display:flex;gap:1.5rem;flex-wrap:wrap;}
-.cs{display:flex;align-items:center;gap:6px;font-size:0.9rem;}
-.cs-icon{color:var(--blue);}
+.course-stats{display:flex;gap:2rem;flex-wrap:wrap;border-top:1px solid #f0f0f0;padding-top:1.25rem;}
+.cs{display:flex;align-items:center;gap:10px;font-size:0.9rem;}
+.cs-icon{font-size:1.3rem;color:var(--blue);}
+.cd-forum-card{display:flex;justify-content:space-between;align-items:center;gap:1rem;}
+.cd-forum-btn-big{padding:12px 28px;border-radius:8px;font-size:1rem;width:auto;white-space:nowrap;}
 
 /* VIDEO PLAYER */
 .video-card{background:white;border-radius:var(--radius);box-shadow:var(--card-shadow);padding:1.75rem;margin-bottom:1.5rem;}
@@ -420,11 +426,14 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
   .course-thumb{height:130px;}
 
   /* COURSE DETAIL */
-  .course-detail-layout{grid-template-columns:1fr;gap:1rem;}
-  .sidebar{order:2;}
-  .main-content{order:1;}
+  .course-detail-layout{grid-template-columns:1fr;gap:1rem;padding:0.75rem;}
+  .cd-topbar{padding:0.75rem 0.75rem 0;}
+  .sidebar{order:2;position:static;}
+  .main-content{order:1;padding-right:0;}
   .course-info-title{font-size:1.2rem;}
-  .course-stats{gap:0.75rem;}
+  .course-stats{gap:1rem;}
+  .cd-forum-card{flex-direction:column;align-items:flex-start;}
+  .cd-forum-btn-big{width:100%;}
 
   /* VIDEO PAGE */
   #youtube-iframe,#youtube-no-url{height:220px!important;}
@@ -675,39 +684,55 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
 
 <!-- COURSE DETAIL PAGE -->
 <div class="page" id="page-course-detail">
-  <div class="section">
+  <div class="cd-topbar">
     <button class="back-btn" onclick="showPage('courses')" id="cd-back">← العودة للدروس</button>
-    <div class="course-detail-layout">
-      <div class="sidebar">
+    <div class="cd-breadcrumb">
+      <span class="cd-badge-paid" id="cd-paid">كورس مدفوع</span>
+      <span class="cd-badge-grade" id="cd-grade-badge">G12</span>
+    </div>
+  </div>
+  <div class="course-detail-layout">
+    <!-- SIDEBAR: lesson list -->
+    <div class="sidebar">
+      <div class="sidebar-header">
         <h3 id="cd-content">محتوى الكورس</h3>
-        <div id="dynamic-sidebar">
-          <!-- يتم ملؤه ديناميكياً من adminLessons -->
-          <div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:0.9rem;">
-            <div style="font-size:2rem;margin-bottom:0.5rem;">📂</div>
-            <p>اختر كورساً لعرض الدروس</p>
-          </div>
+        <span class="sidebar-count" id="cd-lesson-count">0 حصة</span>
+      </div>
+      <div id="dynamic-sidebar">
+        <div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:0.9rem;">
+          <div style="font-size:2rem;margin-bottom:0.5rem;">📂</div>
+          <p>اختر كورساً لعرض الدروس</p>
         </div>
       </div>
-      <div class="main-content">
-        <div class="course-info-card">
-          <div>
-            <span class="course-label label-paid" id="cd-paid">كورس مدفوع</span>
-            <span class="course-label label-level">G12_Arabic</span>
-          </div>
-          <h2 class="course-info-title" id="cd-course-title">الصف الثاني عشر متقدم - الجبر وحساب المثلثات</h2>
-          <p class="course-info-sem" id="cd-sem">الفصل الدراسي الأول</p>
-          <p class="teacher-name">👤 <span id="cd-teacher">Anas Fayad</span></p>
-          <div class="course-stats">
-            <div class="cs"><span class="cs-icon">⏱</span> <span id="cd-dur">المدة: 60 ساعة</span></div>
-            <div class="cs"><span class="cs-icon">🎬</span> <span id="cd-les">الحصص: 58</span></div>
-            <div class="cs"><span class="cs-icon">📊</span> <span id="cd-lvl">المستوى: متقدم</span></div>
-          </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <!-- Course Info -->
+      <div class="course-info-card">
+        <h2 class="course-info-title" id="cd-course-title">الصف الثاني عشر متقدم - الجبر وحساب المثلثات</h2>
+        <p class="course-info-sem" id="cd-sem">الفصل الدراسي الأول</p>
+        <p class="teacher-name">👤 <span id="cd-teacher">Anas Fayad</span></p>
+        <div class="course-stats">
+          <div class="cs"><span class="cs-icon">⏱</span><div><div style="font-size:0.75rem;color:var(--muted);" id="cd-dur-lbl">Duration</div><div style="font-weight:700;" id="cd-dur">—</div></div></div>
+          <div class="cs"><span class="cs-icon">🎬</span><div><div style="font-size:0.75rem;color:var(--muted);" id="cd-les-lbl">Lessons</div><div style="font-weight:700;" id="cd-les">58</div></div></div>
+          <div class="cs"><span class="cs-icon">📊</span><div><div style="font-size:0.75rem;color:var(--muted);" id="cd-lvl-lbl">Level</div><div style="font-weight:700;" id="cd-lvl">متقدم</div></div></div>
         </div>
-        <div class="course-info-card" style="padding:1.25rem;">
-          <h3 style="margin-bottom:0.75rem;" id="cd-forum">منتدى النقاش</h3>
-          <p style="color:var(--muted);font-size:0.9rem;margin-bottom:0.75rem;" id="cd-qa">أسئلة وأجوبة</p>
-          <button class="course-btn primary" style="width:auto;padding:9px 20px;" onclick="showPage('contact')" id="cd-forum-btn" style="border-radius:50px;box-shadow:0 4px 14px rgba(21,101,192,0.3);">انضم للنقاش</button>
+      </div>
+
+      <!-- Forum card -->
+      <div class="course-info-card cd-forum-card">
+        <div>
+          <h3 id="cd-forum">منتدى النقاش</h3>
+          <p style="color:var(--muted);font-size:0.9rem;" id="cd-qa">أسئلة وأجوبة</p>
         </div>
+        <button class="course-btn primary cd-forum-btn-big" onclick="showPage('contact')" id="cd-forum-btn">انضم للنقاش</button>
+      </div>
+
+      <!-- About course card -->
+      <div class="course-info-card">
+        <h3 style="margin-bottom:0.75rem;" id="cd-about-h">عن هذا الكورس</h3>
+        <p id="cd-about-txt" style="color:var(--muted);font-size:0.9rem;line-height:1.8;">منصة تعليمية متخصصة في الرياضيات للمرحلة الثانوية مع أستاذ Anas Fayad. تشمل تسجيلات Zoom وTeams، مذكرات PDF، وواجبات تفاعلية.</p>
       </div>
     </div>
   </div>
@@ -910,32 +935,32 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
 <!-- TEACHER LOGIN MODAL -->
 <div class="modal-overlay" id="teacherLoginModal">
   <div class="modal-box">
-    <h3>🔐 دخول المدرس</h3>
-    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.25rem;">هذه المنطقة مخصصة للمدرس فقط</p>
+    <h3 id="tl-title">🔐 دخول المدرس</h3>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.25rem;" id="tl-sub">هذه المنطقة مخصصة للمدرس فقط</p>
     <div class="form-group">
-      <label>اسم المستخدم</label>
+      <label id="tl-lbl-user">اسم المستخدم</label>
       <input type="text" id="teacherUser" placeholder="teacher_admin">
     </div>
     <div class="form-group">
-      <label>كلمة المرور</label>
+      <label id="tl-lbl-pass">كلمة المرور</label>
       <input type="password" id="teacherPass" placeholder="كلمة المرور">
     </div>
     <div id="teacherErr" style="display:none;background:#FFEBEE;color:#C62828;padding:8px 12px;border-radius:8px;font-size:0.85rem;margin-bottom:0.75rem;">كلمة المرور غير صحيحة</div>
 
     <div class="modal-footer">
-      <button class="icon-btn" onclick="document.getElementById('teacherLoginModal').classList.remove('open')">إلغاء</button>
-      <button class="admin-btn" onclick="doTeacherLogin()">دخول ←</button>
+      <button class="icon-btn" onclick="document.getElementById('teacherLoginModal').classList.remove('open')" id="tl-btn-cancel">إلغاء</button>
+      <button class="admin-btn" onclick="doTeacherLogin()" id="teacher-login-btn">دخول ←</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="confirmModal">
   <div class="modal-box" style="max-width:360px;">
-    <h3>تأكيد الحذف</h3>
+    <h3 id="modal-confirm-title">تأكيد الحذف</h3>
     <p id="confirmMsg" style="color:var(--muted);margin-bottom:1.5rem;">هل أنت متأكد من حذف هذا العنصر؟</p>
     <div class="modal-footer">
-      <button class="icon-btn" onclick="closeConfirm()">إلغاء</button>
-      <button class="admin-btn red" onclick="execDelete()">حذف</button>
+      <button class="icon-btn" onclick="closeConfirm()" id="modal-confirm-cancel">إلغاء</button>
+      <button class="admin-btn red" onclick="execDelete()" id="modal-confirm-delete">حذف</button>
     </div>
   </div>
 </div>
@@ -945,21 +970,21 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     <h3 id="studentModalTitle">إضافة طالب جديد</h3>
     <div class="form-row">
       <div>
-        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الاسم الكامل</label>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="sm-lbl-name">الاسم الكامل</label>
         <input type="text" id="sm-name" placeholder="محمد أحمد">
       </div>
       <div>
-        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">اسم المستخدم (يوزرنايم)</label>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="sm-lbl-user">اسم المستخدم (يوزرنايم)</label>
         <input type="text" id="sm-user" placeholder="student_m">
       </div>
     </div>
     <div class="form-row">
       <div>
-        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">كلمة المرور</label>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="sm-lbl-pass">كلمة المرور</label>
         <input type="text" id="sm-pass" placeholder="pass1234">
       </div>
       <div>
-        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الصف</label>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="sm-lbl-grade">الصف</label>
         <select id="sm-grade">
           <option>الصف العاشر</option>
           <option>الصف الحادي عشر</option>
@@ -970,13 +995,13 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     </div>
     <div class="form-row">
       <div>
-        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">رقم الهاتف (اختياري)</label>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="sm-lbl-phone">رقم الهاتف (اختياري)</label>
         <input type="text" id="sm-phone" placeholder="+971 50 XXX XXXX">
       </div>
     </div>
     <div class="modal-footer">
-      <button class="icon-btn" onclick="closeStudentModal()">إلغاء</button>
-      <button class="admin-btn" onclick="saveStudent()">حفظ</button>
+      <button class="icon-btn" onclick="closeStudentModal()" id="sm-btn-cancel">إلغاء</button>
+      <button class="admin-btn" onclick="saveStudent()" id="sm-btn-save">حفظ</button>
     </div>
   </div>
 </div>
@@ -986,11 +1011,11 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     <h3 id="lessonModalTitle">رفع درس جديد</h3>
     <div class="form-row">
       <div>
-        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">عنوان الحصة</label>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="lm-lbl-title">عنوان الحصة</label>
         <input type="text" id="lm-title" placeholder="الحصة الأولى - مقدمة في المثلثات">
       </div>
       <div>
-        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الكورس</label>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="lm-lbl-course">الكورس</label>
         <select id="lm-course">
           <option>G12 متقدم - جبر ومثلثات</option>
           <option>G11 - احتمالات وإحصاء</option>
@@ -1000,14 +1025,14 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     </div>
     <div class="form-row">
       <div>
-        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الوحدة</label>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="lm-lbl-unit">الوحدة</label>
         <input type="text" id="lm-unit" placeholder="الوحدة الأولى - المثلثات">
       </div>
       <div>
-        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">مصدر الفيديو</label>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="lm-lbl-vsrc">مصدر الفيديو</label>
         <div style="display:flex;gap:0.5rem;margin-bottom:0.6rem;">
-          <button type="button" class="video-type-btn active" id="vsrc-url" onclick="switchVideoSrc('url')">🔗 رابط</button>
-          <button type="button" class="video-type-btn" id="vsrc-upload" onclick="switchVideoSrc('upload')">📤 رفع فيديو</button>
+          <button type="button" class="video-type-btn active" id="vsrc-url" onclick="switchVideoSrc('url')">🔗 <span id="vsrc-url-lbl">رابط</span></button>
+          <button type="button" class="video-type-btn" id="vsrc-upload" onclick="switchVideoSrc('upload')">📤 <span id="vsrc-upload-lbl">رفع فيديو</span></button>
           <button type="button" class="video-type-btn" id="vsrc-zoom" onclick="switchVideoSrc('zoom')">🎥 Zoom</button>
         </div>
         <!-- URL mode -->
@@ -1015,7 +1040,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
           <div style="display:flex;gap:0.5rem;">
             <select id="lm-vtype" style="min-width:120px;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.85rem;cursor:pointer;">
               <option value="youtube">▶ YouTube</option>
-              <option value="direct">🎬 رابط مباشر</option>
+              <option value="direct" id="lm-vtype-direct">🎬 رابط مباشر</option>
             </select>
             <input type="url" id="lm-url" placeholder="https://youtube.com/watch?v=..." style="flex:1;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;font-family:'Cairo',sans-serif;outline:none;">
           </div>
@@ -1025,8 +1050,8 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
           <div class="lesson-upload-area" onclick="document.getElementById('videoUpload').click()" style="border-color:#90CAF9;background:#F0F4FF;">
             <input type="file" id="videoUpload" accept="video/mp4,video/webm,video/ogg,video/avi,video/mov,video/*" onchange="handleVideoUpload(this)">
             <div class="upload-icon">🎬</div>
-            <div class="upload-text">انقر لرفع ملف فيديو<br><small>MP4, WebM, MOV — الحجم الأقصى 500MB</small></div>
-            <div style="font-size:0.75rem;color:#90CAF9;margin-top:6px;">📱 يعمل من الموبايل والكمبيوتر</div>
+            <div class="upload-text" id="lm-video-upload-text">انقر لرفع ملف فيديو<br><small>MP4, WebM, MOV — الحجم الأقصى 500MB</small></div>
+            <div style="font-size:0.75rem;color:#90CAF9;margin-top:6px;" id="lm-video-mobile">📱 يعمل من الموبايل والكمبيوتر</div>
           </div>
           <div id="videoUploadInfo" style="font-size:0.85rem;color:var(--muted);margin-top:0.4rem;"></div>
           <div id="videoUploadProgress" style="display:none;margin-top:0.5rem;">
@@ -1039,39 +1064,39 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
         <!-- Zoom mode -->
         <div id="vsrc-zoom-area" style="display:none;">
           <input type="url" id="lm-zoom-url" placeholder="https://zoom.us/rec/share/... أو رابط Teams" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;font-family:'Cairo',sans-serif;outline:none;">
-          <p style="font-size:0.78rem;color:var(--muted);margin-top:4px;">الصق رابط تسجيل Zoom أو Microsoft Teams</p>
+          <p style="font-size:0.78rem;color:var(--muted);margin-top:4px;" id="lm-zoom-hint">الصق رابط تسجيل Zoom أو Microsoft Teams</p>
         </div>
       </div>
     </div>
     <div style="margin-bottom:1rem;">
-      <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;">رفع ملفات PDF (مذكرات / واجبات)</label>
+      <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;" id="lm-lbl-pdf">رفع ملفات PDF (مذكرات / واجبات)</label>
       <div class="lesson-upload-area" onclick="document.getElementById('pdfUpload').click()">
         <input type="file" id="pdfUpload" accept=".pdf,.doc,.docx,image/*" multiple onchange="handleFileSelect(this)">
         <div class="upload-icon">📎</div>
-        <div class="upload-text">انقر لرفع ملفات PDF / صور<br><small>المذكرات، الواجبات، الملخصات</small></div>
-        <div style="font-size:0.75rem;color:#90CAF9;margin-top:6px;">📱 يعمل من الموبايل والكمبيوتر</div>
+        <div class="upload-text" id="lm-pdf-upload-text">انقر لرفع ملفات PDF / صور<br><small>المذكرات، الواجبات، الملخصات</small></div>
+        <div style="font-size:0.75rem;color:#90CAF9;margin-top:6px;" id="lm-pdf-mobile">📱 يعمل من الموبايل والكمبيوتر</div>
       </div>
       <div id="uploadedFiles" style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;"></div>
     </div>
     <div class="form-row">
       <div>
-        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الوصول</label>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="lm-lbl-access">الوصول</label>
         <select id="lm-access">
-          <option value="all">جميع الطلاب</option>
-          <option value="paid">المدفوعون فقط</option>
+          <option value="all" id="lm-access-all">جميع الطلاب</option>
+          <option value="paid" id="lm-access-paid">المدفوعون فقط</option>
         </select>
       </div>
       <div>
-        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الحالة</label>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="lm-lbl-status">الحالة</label>
         <select id="lm-status">
-          <option value="active">منشور</option>
-          <option value="draft">مسودة</option>
+          <option value="active" id="lm-status-active">منشور</option>
+          <option value="draft" id="lm-status-draft">مسودة</option>
         </select>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="icon-btn" onclick="closeLessonModal()">إلغاء</button>
-      <button class="admin-btn" onclick="saveLesson()">نشر الدرس</button>
+      <button class="icon-btn" onclick="closeLessonModal()" id="lm-btn-cancel">إلغاء</button>
+      <button class="admin-btn" onclick="saveLesson()" id="lm-btn-save">نشر الدرس</button>
     </div>
   </div>
 </div>
@@ -1079,28 +1104,28 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
 <!-- ADMIN PAGE -->
 <div class="page" id="page-admin">
   <div class="admin-nav">
-    <button class="admin-tab active" onclick="adminTab('overview',this)">📊 الرئيسية</button>
-    <button class="admin-tab" onclick="adminTab('courses-mgmt',this)">📚 الكورسات</button>
-    <button class="admin-tab" onclick="adminTab('lessons',this)">🎬 الدروس</button>
-    <button class="admin-tab" onclick="adminTab('assignments',this)">📝 الواجبات</button>
-    <button class="admin-tab" onclick="adminTab('students',this)">👥 الطلاب</button>
-    <button class="admin-tab" onclick="adminTab('settings',this)">⚙️ الإعدادات</button>
-    <h2>لوحة تحكم المدرس — Mr. Anas Fayad</h2>
+    <button class="admin-tab active" onclick="adminTab('overview',this)" id="adm-nav-overview">📊 الرئيسية</button>
+    <button class="admin-tab" onclick="adminTab('courses-mgmt',this)" id="adm-nav-courses">📚 الكورسات</button>
+    <button class="admin-tab" onclick="adminTab('lessons',this)" id="adm-nav-lessons">🎬 الدروس</button>
+    <button class="admin-tab" onclick="adminTab('assignments',this)" id="adm-nav-assignments">📝 الواجبات</button>
+    <button class="admin-tab" onclick="adminTab('students',this)" id="adm-nav-students">👥 الطلاب</button>
+    <button class="admin-tab" onclick="adminTab('settings',this)" id="adm-nav-settings">⚙️ الإعدادات</button>
+    <h2 id="adm-panel-title">لوحة تحكم المدرس — Mr. Anas Fayad</h2>
     <span id="supabase-status" style="font-size:0.75rem;padding:4px 12px;border-radius:20px;background:rgba(244,67,54,0.2);color:#C62828;margin-left:auto;">🔴 وضع تجريبي</span>
-    <button class="admin-tab" onclick="adminLogout()" style="color:#FF7043;">خروج ↩</button>
+    <button class="admin-tab" onclick="adminLogout()" style="color:#FF7043;" id="adm-nav-logout">خروج ↩</button>
   </div>
 
   <div class="admin-section active" id="adm-overview">
     <div class="admin-stats">
-      <div class="admin-stat" onclick="adminTab('students',document.querySelector('.admin-tab:nth-child(5)'))" style="cursor:pointer;" title="إدارة الطلاب"><div class="num" id="stat-students">12</div><div class="lbl">طالب مسجل</div></div>
-      <div class="admin-stat gold" onclick="adminTab('lessons',document.querySelector('.admin-tab:nth-child(3)'))" style="cursor:pointer;" title="إدارة الدروس"><div class="num" id="stat-lessons">24</div><div class="lbl">درس منشور</div></div>
-      <div class="admin-stat green" onclick="adminTab('assignments',document.querySelector('.admin-tab:nth-child(4)'))" style="cursor:pointer;" title="إدارة الواجبات"><div class="num" id="stat-hw">8</div><div class="lbl">واجب متاح</div></div>
-      <div class="admin-stat red"><div class="num" id="stat-pending">3</div><div class="lbl">طلبات معلقة</div></div>
+      <div class="admin-stat" onclick="adminTab('students',document.querySelector('.admin-tab:nth-child(5)'))" style="cursor:pointer;" title="إدارة الطلاب"><div class="num" id="stat-students">12</div><div class="lbl" id="adm-lbl-students">طالب مسجل</div></div>
+      <div class="admin-stat gold" onclick="adminTab('lessons',document.querySelector('.admin-tab:nth-child(3)'))" style="cursor:pointer;" title="إدارة الدروس"><div class="num" id="stat-lessons">24</div><div class="lbl" id="adm-lbl-lessons">درس منشور</div></div>
+      <div class="admin-stat green" onclick="adminTab('assignments',document.querySelector('.admin-tab:nth-child(4)'))" style="cursor:pointer;" title="إدارة الواجبات"><div class="num" id="stat-hw">8</div><div class="lbl" id="adm-lbl-hw">واجب متاح</div></div>
+      <div class="admin-stat red"><div class="num" id="stat-pending">3</div><div class="lbl" id="adm-lbl-pending">طلبات معلقة</div></div>
     </div>
     <div class="admin-card">
-      <h3>آخر النشاطات</h3>
+      <h3 id="adm-activity-h">آخر النشاطات</h3>
       <table class="admin-table">
-        <thead><tr><th>الحدث</th><th>التاريخ</th><th>التفاصيل</th></tr></thead>
+        <thead><tr><th id="adm-th-event">الحدث</th><th id="adm-th-date">التاريخ</th><th id="adm-th-detail">التفاصيل</th></tr></thead>
         <tbody id="activityLog">
           <tr><td>تم رفع درس جديد</td><td>اليوم</td><td>الحصة 3 - قانون جيب التمام</td></tr>
           <tr><td>طالب جديد</td><td>أمس</td><td>سهر فيصل — G12 متقدم</td></tr>
@@ -1109,11 +1134,11 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
       </table>
     </div>
     <div class="admin-card">
-      <h3>إجراءات سريعة</h3>
+      <h3 id="adm-quick-h">إجراءات سريعة</h3>
       <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
-        <button class="admin-btn" onclick="openLessonModal()">🎬 رفع درس جديد</button>
-        <button class="admin-btn green" onclick="openStudentModal()">👤 إضافة طالب</button>
-        <button class="admin-btn gold" onclick="adminTab('assignments',null)">📝 إضافة واجب</button>
+        <button class="admin-btn" onclick="openLessonModal()" id="adm-btn-upload-lesson">🎬 رفع درس جديد</button>
+        <button class="admin-btn green" onclick="openStudentModal()" id="adm-btn-add-student">👤 إضافة طالب</button>
+        <button class="admin-btn gold" onclick="adminTab('assignments',null)" id="adm-btn-add-hw">📝 إضافة واجب</button>
       </div>
     </div>
   </div>
@@ -1121,20 +1146,20 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
   <div class="admin-section" id="adm-courses-mgmt">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
       <div>
-        <h2 style="font-size:1.3rem;font-weight:900;">📚 إدارة الكورسات</h2>
-        <p style="color:var(--muted);font-size:0.9rem;">أضف الكورسات والمراحل الدراسية — الدروس تنتمي لكورس</p>
+        <h2 style="font-size:1.3rem;font-weight:900;" id="adm-courses-h">📚 إدارة الكورسات</h2>
+        <p style="color:var(--muted);font-size:0.9rem;" id="adm-courses-sub">أضف الكورسات والمراحل الدراسية — الدروس تنتمي لكورس</p>
       </div>
     </div>
     <div class="admin-card">
-      <h3>➕ إضافة كورس جديد</h3>
+      <h3 id="adm-add-course-h">➕ إضافة كورس جديد</h3>
       <div class="add-form">
         <div class="form-row">
           <div>
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">اسم الكورس</label>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-cname">اسم الكورس</label>
             <input type="text" id="new-course-name" placeholder="مثال: الصف الثاني عشر متقدم — جبر ومثلثات">
           </div>
           <div>
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">المرحلة الدراسية</label>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-cgrade">المرحلة الدراسية</label>
             <select id="new-course-grade">
               <option>الصف العاشر</option>
               <option>الصف الحادي عشر</option>
@@ -1146,13 +1171,13 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
         </div>
         <div class="form-row">
           <div>
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الفصل الدراسي</label>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-csem">الفصل الدراسي</label>
             <input type="text" id="new-course-sem" placeholder="مثال: الفصل الدراسي الأول">
           </div>
         </div>
-        <button class="admin-btn green" onclick="saveAdminCourse()">✅ إضافة الكورس</button>
+        <button class="admin-btn green" onclick="saveAdminCourse()" id="adm-btn-save-course">✅ إضافة الكورس</button>
       </div>
-      <h3 style="margin-top:1rem;">الكورسات الحالية</h3>
+      <h3 style="margin-top:1rem;" id="adm-current-courses-h">الكورسات الحالية</h3>
       <div id="admin-courses-list"></div>
     </div>
   </div>
@@ -1160,10 +1185,10 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
   <div class="admin-section" id="adm-lessons">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
       <div>
-        <h2 style="font-size:1.3rem;font-weight:900;">إدارة الدروس</h2>
-        <p style="color:var(--muted);font-size:0.9rem;">رفع وإدارة تسجيلات الحصص من Zoom وTeams</p>
+        <h2 style="font-size:1.3rem;font-weight:900;" id="adm-lessons-h">إدارة الدروس</h2>
+        <p style="color:var(--muted);font-size:0.9rem;" id="adm-lessons-sub">رفع وإدارة تسجيلات الحصص من Zoom وTeams</p>
       </div>
-      <button class="admin-btn" onclick="openLessonModal()">+ رفع درس جديد</button>
+      <button class="admin-btn" onclick="openLessonModal()" id="adm-btn-new-lesson">+ رفع درس جديد</button>
     </div>
     <div class="admin-card">
       <h3>هيكل الكورسات والوحدات</h3>
@@ -1189,29 +1214,29 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
       </div>
     </div>
     <div class="admin-card">
-      <h3>كل الدروس</h3>
+      <h3 id="adm-all-lessons-h">كل الدروس</h3>
       <input class="search-admin" id="lessonSearch" placeholder="بحث عن درس..." oninput="filterLessons(this.value)">
-      <div style="overflow-x:auto;"><table class="admin-table"><thead><tr><th>#</th><th>عنوان الحصة</th><th>الكورس</th><th>الوحدة</th><th>الرابط</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody id="lessonsTbody"></tbody></table></div>
+      <div style="overflow-x:auto;"><table class="admin-table"><thead><tr><th>#</th><th id="adm-th-lesson-title">عنوان الحصة</th><th id="adm-th-lesson-course">الكورس</th><th id="adm-th-lesson-unit">الوحدة</th><th id="adm-th-lesson-url">الرابط</th><th id="adm-th-lesson-status">الحالة</th><th id="adm-th-lesson-actions">إجراءات</th></tr></thead><tbody id="lessonsTbody"></tbody></table></div>
     </div>
   </div>
 
   <div class="admin-section" id="adm-assignments">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
       <div>
-        <h2 style="font-size:1.3rem;font-weight:900;">إدارة الواجبات</h2>
-        <p style="color:var(--muted);font-size:0.9rem;">رفع وتوزيع الواجبات والمذكرات</p>
+        <h2 style="font-size:1.3rem;font-weight:900;" id="adm-hw-h">إدارة الواجبات</h2>
+        <p style="color:var(--muted);font-size:0.9rem;" id="adm-hw-sub">رفع وتوزيع الواجبات والمذكرات</p>
       </div>
     </div>
     <div class="admin-card">
-      <h3>رفع واجب / مذكرة جديدة</h3>
+      <h3 id="adm-upload-hw-h">رفع واجب / مذكرة جديدة</h3>
       <div class="add-form">
         <div class="form-row">
           <div>
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">عنوان الواجب</label>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-hw-title">عنوان الواجب</label>
             <input type="text" id="hw-title" placeholder="واجب الوحدة الأولى - المثلثات">
           </div>
           <div>
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الكورس</label>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-hw-course">الكورس</label>
             <select id="hw-course">
               <option>G12 متقدم - جبر ومثلثات</option>
               <option>G11 - احتمالات</option>
@@ -1221,51 +1246,51 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
         </div>
         <div class="form-row">
           <div>
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">تاريخ التسليم</label>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-hw-due">تاريخ التسليم</label>
             <input type="date" id="hw-due">
           </div>
           <div>
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">النوع</label>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-hw-type">النوع</label>
             <select id="hw-type">
-              <option>واجب منزلي</option>
-              <option>مذكرة دراسة</option>
-              <option>ورقة تمارين</option>
-              <option>مراجعة شاملة</option>
+              <option id="hw-type-1">واجب منزلي</option>
+              <option id="hw-type-2">مذكرة دراسة</option>
+              <option id="hw-type-3">ورقة تمارين</option>
+              <option id="hw-type-4">مراجعة شاملة</option>
             </select>
           </div>
         </div>
         <div style="margin-bottom:0.75rem;">
-          <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;">رفع ملف PDF</label>
+          <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;" id="adm-lbl-hw-file">رفع ملف PDF</label>
           <div class="lesson-upload-area" onclick="document.getElementById('hwUpload').click()">
             <input type="file" id="hwUpload" accept=".pdf,.doc,.docx,image/*" capture="environment" onchange="handleHWUpload(this)">
             <div class="upload-icon">📄</div>
-            <div class="upload-text">انقر لرفع ملف الواجب (PDF / صورة)</div>
-            <div style="font-size:0.78rem;color:#90CAF9;margin-top:6px;">📱 يعمل من الموبايل والكمبيوتر</div>
+            <div class="upload-text" id="adm-hw-upload-text">انقر لرفع ملف الواجب (PDF / صورة)</div>
+            <div style="font-size:0.78rem;color:#90CAF9;margin-top:6px;" id="adm-hw-mobile-hint">📱 يعمل من الموبايل والكمبيوتر</div>
           </div>
           <div id="hwFileName" style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;"></div>
         </div>
-        <button class="admin-btn green" onclick="saveHW()">نشر الواجب</button>
+        <button class="admin-btn green" onclick="saveHW()" id="adm-btn-save-hw">نشر الواجب</button>
       </div>
-      <div style="overflow-x:auto;"><table class="admin-table"><thead><tr><th>#</th><th>عنوان الواجب</th><th>الكورس</th><th>التسليم</th><th>النوع</th><th>إجراءات</th></tr></thead><tbody id="hwTbody"></tbody></table></div>
+      <div style="overflow-x:auto;"><table class="admin-table"><thead><tr><th>#</th><th id="adm-th-hw-title">عنوان الواجب</th><th id="adm-th-hw-course">الكورس</th><th id="adm-th-hw-due">التسليم</th><th id="adm-th-hw-type">النوع</th><th id="adm-th-hw-actions">إجراءات</th></tr></thead><tbody id="hwTbody"></tbody></table></div>
     </div>
   </div>
 
   <div class="admin-section" id="adm-students">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
       <div>
-        <h2 style="font-size:1.3rem;font-weight:900;">إدارة الطلاب</h2>
-        <p style="color:var(--muted);font-size:0.9rem;">تسجيل الطلاب ومنحهم بيانات الدخول</p>
+        <h2 style="font-size:1.3rem;font-weight:900;" id="adm-students-h">إدارة الطلاب</h2>
+        <p style="color:var(--muted);font-size:0.9rem;" id="adm-students-sub">تسجيل الطلاب ومنحهم بيانات الدخول</p>
       </div>
-      <button class="admin-btn green" onclick="openStudentModal()">+ تسجيل طالب جديد</button>
+      <button class="admin-btn green" onclick="openStudentModal()" id="adm-btn-register-student">+ تسجيل طالب جديد</button>
     </div>
     <div class="admin-card">
-      <h3>قائمة الطلاب وبيانات الدخول</h3>
+      <h3 id="adm-students-list-h">قائمة الطلاب وبيانات الدخول</h3>
       <input class="search-admin" id="studentSearch" placeholder="بحث باسم الطالب أو اليوزرنايم..." oninput="filterStudents(this.value)">
-      <div style="overflow-x:auto;"><table class="admin-table"><thead><tr><th>#</th><th>اسم الطالب</th><th>اليوزرنايم</th><th>الباسوورد</th><th>الصف</th><th>الاشتراك</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody id="studentsTbody"></tbody></table></div>
+      <div style="overflow-x:auto;"><table class="admin-table"><thead><tr><th>#</th><th id="adm-th-sname">اسم الطالب</th><th id="adm-th-suser">اليوزرنايم</th><th id="adm-th-spass">الباسوورد</th><th id="adm-th-sgrade">الصف</th><th id="adm-th-ssub">الاشتراك</th><th id="adm-th-sstatus">الحالة</th><th id="adm-th-sactions">إجراءات</th></tr></thead><tbody id="studentsTbody"></tbody></table></div>
     </div>
     <div class="admin-card">
-      <h3>نسخ بيانات الدخول</h3>
-      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">انقر على زر النسخ لإرسال بيانات الدخول للطالب</p>
+      <h3 id="adm-cred-h">نسخ بيانات الدخول</h3>
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;" id="adm-cred-sub">انقر على زر النسخ لإرسال بيانات الدخول للطالب</p>
       <div id="credentialsList"></div>
     </div>
   </div>
@@ -1292,8 +1317,8 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
         </div>
       </div>
       <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
-        <button class="admin-btn" onclick="testFirebase()">🔍 اختبار الاتصال</button>
-        <button class="admin-btn green" onclick="syncAllToFirebase()">🔄 مزامنة البيانات المحلية</button>
+        <button class="admin-btn" onclick="testFirebase()" id="adm-btn-test-fb">🔍 اختبار الاتصال</button>
+        <button class="admin-btn green" onclick="syncAllToFirebase()" id="adm-btn-sync">🔄 مزامنة البيانات المحلية</button>
         <span id="supabase-test-result" style="font-size:0.85rem;color:var(--muted);"></span>
       </div>
       <div style="margin-top:1rem;background:#FFF8E1;border-radius:8px;padding:1rem;font-size:0.83rem;color:#795548;line-height:2;">
@@ -1301,41 +1326,41 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
         Collections: <code>courses</code> | <code>lessons</code> | <code>assignments</code> | <code>students</code>
       </div>
     </div>
-    <h2 style="font-size:1.3rem;font-weight:900;margin-bottom:1.5rem;">الإعدادات</h2>
+    <h2 style="font-size:1.3rem;font-weight:900;margin-bottom:1.5rem;" id="adm-settings-h">الإعدادات</h2>
     <div class="admin-card">
-      <h3>🔑 بيانات دخول المالك</h3>
-      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.25rem;">تغيير الإيميل وكلمة المرور الخاصة بالمالك — تُحفظ تلقائياً في المتصفح</p>
+      <h3 id="adm-owner-cred-h">🔑 بيانات دخول المالك</h3>
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.25rem;" id="adm-owner-cred-sub">تغيير الإيميل وكلمة المرور الخاصة بالمالك — تُحفظ تلقائياً في المتصفح</p>
       <div class="form-row">
-        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الإيميل الحالي (للتحقق)</label><input type="email" id="old-email" placeholder="الإيميل الحالي"></div>
-        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">كلمة المرور الحالية (للتحقق)</label><input type="password" id="old-pass" placeholder="كلمة المرور الحالية"></div>
+        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-old-email">الإيميل الحالي (للتحقق)</label><input type="email" id="old-email" placeholder="الإيميل الحالي"></div>
+        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-old-pass">كلمة المرور الحالية (للتحقق)</label><input type="password" id="old-pass" placeholder="كلمة المرور الحالية"></div>
       </div>
       <div class="form-row">
-        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">الإيميل الجديد</label><input type="email" id="new-email" placeholder="إيميل جديد (اختياري)"></div>
-        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">كلمة المرور الجديدة</label><input type="password" id="new-pass" placeholder="كلمة مرور جديدة (اختياري)"></div>
-        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">تأكيد كلمة المرور</label><input type="password" id="conf-pass" placeholder="تأكيد"></div>
+        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-new-email">الإيميل الجديد</label><input type="email" id="new-email" placeholder="إيميل جديد (اختياري)"></div>
+        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-new-pass">كلمة المرور الجديدة</label><input type="password" id="new-pass" placeholder="كلمة مرور جديدة (اختياري)"></div>
+        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-conf-pass">تأكيد كلمة المرور</label><input type="password" id="conf-pass" placeholder="تأكيد"></div>
       </div>
       <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
-        <button class="admin-btn gold" onclick="changeOwnerCredentials()">💾 حفظ التغييرات</button>
+        <button class="admin-btn gold" onclick="changeOwnerCredentials()" id="adm-btn-save-cred">💾 حفظ التغييرات</button>
         <span id="owner-cred-result" style="font-size:0.85rem;"></span>
       </div>
-      <div style="margin-top:1rem;background:#F5F7FA;border-radius:8px;padding:0.75rem;font-size:0.82rem;color:var(--muted);">
+      <div style="margin-top:1rem;background:#F5F7FA;border-radius:8px;padding:0.75rem;font-size:0.82rem;color:var(--muted);" id="adm-cred-tip">
         💡 يمكن تغيير الإيميل فقط أو كلمة المرور فقط أو كليهما معاً — اتركها فارغة إذا لم تريد تغييرها
       </div>
     </div>
     <div class="admin-card">
-      <h3>إضافة إعلان</h3>
+      <h3 id="adm-ann-h">إضافة إعلان</h3>
       <div class="form-row">
-        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">عنوان الإعلان</label><input type="text" id="ann-title" placeholder="عنوان..."></div>
-        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">النص</label><input type="text" id="ann-text" placeholder="تفاصيل الإعلان..."></div>
+        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-ann-title">عنوان الإعلان</label><input type="text" id="ann-title" placeholder="عنوان..."></div>
+        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-ann-text">النص</label><input type="text" id="ann-text" placeholder="تفاصيل الإعلان..."></div>
       </div>
-      <button class="admin-btn gold" onclick="saveAnnouncement()">نشر الإعلان</button>
+      <button class="admin-btn gold" onclick="saveAnnouncement()" id="adm-btn-ann">نشر الإعلان</button>
     </div>
     <div class="admin-card">
-      <h3>إحصائيات عامة</h3>
+      <h3 id="adm-gen-stats-h">إحصائيات عامة</h3>
       <div class="admin-stats">
-        <div class="admin-stat"><div class="num" id="s-total">12</div><div class="lbl">إجمالي الطلاب</div></div>
-        <div class="admin-stat gold"><div class="num" id="s-lessons">24</div><div class="lbl">إجمالي الدروس</div></div>
-        <div class="admin-stat green"><div class="num" id="s-hw">8</div><div class="lbl">إجمالي الواجبات</div></div>
+        <div class="admin-stat"><div class="num" id="s-total">12</div><div class="lbl" id="adm-lbl-s-total">إجمالي الطلاب</div></div>
+        <div class="admin-stat gold"><div class="num" id="s-lessons">24</div><div class="lbl" id="adm-lbl-s-lessons">إجمالي الدروس</div></div>
+        <div class="admin-stat green"><div class="num" id="s-hw">8</div><div class="lbl" id="adm-lbl-s-hw">إجمالي الواجبات</div></div>
       </div>
     </div>
   </div>
@@ -1427,7 +1452,7 @@ function initFirebase(){
 function updateFBBadge(ok){
   const badge = document.getElementById('supabase-status');
   if(!badge) return;
-  badge.textContent    = ok ? '🟢 Firebase متصل' : '🔴 وضع تجريبي';
+  badge.textContent    = ok ? '🟢 Firebase '+(currentLang==='ar'?'متصل':'Connected') : '🔴 '+(currentLang==='ar'?'وضع تجريبي':'Demo Mode');
   badge.style.background = ok ? 'rgba(76,175,80,0.2)' : 'rgba(244,67,54,0.2)';
   badge.style.color      = ok ? '#2E7D32' : '#C62828';
 }
@@ -1670,7 +1695,7 @@ const T={
     'cc-sem2':'الفصل الدراسي الثاني','cc-t2':'الصف الحادي عشر - الاحتمالات والإحصاء','cc-btn2':'متابعة التعلم',
     'cc-sem3':'الفصل الدراسي الثالث','cc-t3':'الصف الثاني عشر - التفاضل والتكامل','cc-btn3':'عرض التفاصيل',
     'cc-sem4':'جميع الفصول','cc-t4':'حصص تجريبية - مقدمة في الرياضيات المتقدمة','cc-btn4':'ابدأ مجاناً',
-    'cd-back':'← العودة للدروس','cd-content':'محتوى الكورس',
+    'cd-back':'← العودة للدروس','cd-content':'محتوى الكورس','cd-about-h':'عن هذا الكورس',
     'cd-u1':'الوحدة الأولى - المثلثات','cd-l1':'الحصة 1 - مقدمة في المثلثات',
     'cd-l2':'الحصة 2 - قانون الجيب','cd-l3':'الحصة 3 - قانون جيب التمام',
     'cd-u2':'الوحدة الثانية - الجبر','cd-l4':'الحصة 4 - المعادلات التربيعية','cd-l5':'الحصة 5 - المتراجحات',
@@ -1709,7 +1734,61 @@ const T={
     'ft-cu':'اتصل بنا','ft-loc':'الإمارات العربية المتحدة',
     'ft-copy':'© 2026 Mr. Anas Fayad. جميع الحقوق محفوظة',
     'toast-dl':'جاري التحميل: ','toast-contact':'تم إرسال رسالتك بنجاح!',
-    'navUser':'👤 الطالب ▾','lang-btn':'🌐 English'
+    'navUser':'👤 الطالب ▾','lang-btn':'🌐 English',
+    // Admin panel
+    'adm-nav-overview':'📊 الرئيسية','adm-nav-courses':'📚 الكورسات','adm-nav-lessons':'🎬 الدروس',
+    'adm-nav-assignments':'📝 الواجبات','adm-nav-students':'👥 الطلاب','adm-nav-settings':'⚙️ الإعدادات',
+    'adm-panel-title':'لوحة تحكم المدرس — Mr. Anas Fayad',
+    'adm-nav-logout':'خروج ↩',
+    'adm-lbl-students':'طالب مسجل','adm-lbl-lessons':'درس منشور','adm-lbl-hw':'واجب متاح','adm-lbl-pending':'طلبات معلقة',
+    'adm-activity-h':'آخر النشاطات','adm-th-event':'الحدث','adm-th-date':'التاريخ','adm-th-detail':'التفاصيل',
+    'adm-quick-h':'إجراءات سريعة','adm-btn-upload-lesson':'🎬 رفع درس جديد','adm-btn-add-student':'👤 إضافة طالب','adm-btn-add-hw':'📝 إضافة واجب',
+    'adm-courses-h':'📚 إدارة الكورسات','adm-courses-sub':'أضف الكورسات والمراحل الدراسية — الدروس تنتمي لكورس',
+    'adm-add-course-h':'➕ إضافة كورس جديد','adm-lbl-cname':'اسم الكورس','adm-lbl-cgrade':'المرحلة الدراسية',
+    'adm-lbl-csem':'الفصل الدراسي','adm-btn-save-course':'✅ إضافة الكورس','adm-current-courses-h':'الكورسات الحالية',
+    'adm-lessons-h':'إدارة الدروس','adm-lessons-sub':'رفع وإدارة تسجيلات الحصص من Zoom وTeams',
+    'adm-btn-new-lesson':'+ رفع درس جديد','adm-all-lessons-h':'كل الدروس',
+    'adm-th-lesson-title':'عنوان الحصة','adm-th-lesson-course':'الكورس','adm-th-lesson-unit':'الوحدة','adm-th-lesson-url':'الرابط','adm-th-lesson-status':'الحالة','adm-th-lesson-actions':'إجراءات',
+    'adm-hw-h':'إدارة الواجبات','adm-hw-sub':'رفع وتوزيع الواجبات والمذكرات',
+    'adm-upload-hw-h':'رفع واجب / مذكرة جديدة','adm-lbl-hw-title':'عنوان الواجب','adm-lbl-hw-course':'الكورس',
+    'adm-lbl-hw-due':'تاريخ التسليم','adm-lbl-hw-type':'النوع','adm-lbl-hw-file':'رفع ملف PDF',
+    'adm-hw-upload-text':'انقر لرفع ملف الواجب (PDF / صورة)','adm-hw-mobile-hint':'📱 يعمل من الموبايل والكمبيوتر',
+    'adm-btn-save-hw':'نشر الواجب',
+    'adm-th-hw-title':'عنوان الواجب','adm-th-hw-course':'الكورس','adm-th-hw-due':'التسليم','adm-th-hw-type':'النوع','adm-th-hw-actions':'إجراءات',
+    'hw-type-1':'واجب منزلي','hw-type-2':'مذكرة دراسة','hw-type-3':'ورقة تمارين','hw-type-4':'مراجعة شاملة',
+    'adm-students-h':'إدارة الطلاب','adm-students-sub':'تسجيل الطلاب ومنحهم بيانات الدخول',
+    'adm-btn-register-student':'+ تسجيل طالب جديد','adm-students-list-h':'قائمة الطلاب وبيانات الدخول',
+    'adm-th-sname':'اسم الطالب','adm-th-suser':'اليوزرنايم','adm-th-spass':'الباسوورد','adm-th-sgrade':'الصف','adm-th-ssub':'الاشتراك','adm-th-sstatus':'الحالة','adm-th-sactions':'إجراءات',
+    'adm-cred-h':'نسخ بيانات الدخول','adm-cred-sub':'انقر على زر النسخ لإرسال بيانات الدخول للطالب',
+    'adm-gen-stats-h':'إحصائيات عامة','adm-lbl-s-total':'إجمالي الطلاب','adm-lbl-s-lessons':'إجمالي الدروس','adm-lbl-s-hw':'إجمالي الواجبات',
+    // Modals
+    'modal-confirm-title':'تأكيد الحذف','modal-confirm-cancel':'إلغاء','modal-confirm-delete':'حذف',
+    'sm-lbl-name':'الاسم الكامل','sm-lbl-user':'اسم المستخدم (يوزرنايم)','sm-lbl-pass':'كلمة المرور','sm-lbl-grade':'الصف','sm-lbl-phone':'رقم الهاتف (اختياري)',
+    'sm-btn-cancel':'إلغاء','sm-btn-save':'حفظ',
+    'lm-lbl-title':'عنوان الحصة','lm-lbl-course':'الكورس','lm-lbl-unit':'الوحدة','lm-lbl-vsrc':'مصدر الفيديو',
+    'vsrc-url-lbl':'رابط','vsrc-upload-lbl':'رفع فيديو',
+    'lm-vtype-direct':'🎬 رابط مباشر',
+    'lm-video-upload-text':'انقر لرفع ملف فيديو<br><small>MP4, WebM, MOV — الحجم الأقصى 500MB</small>',
+    'lm-video-mobile':'📱 يعمل من الموبايل والكمبيوتر','lm-pdf-mobile':'📱 يعمل من الموبايل والكمبيوتر',
+    'lm-zoom-hint':'الصق رابط تسجيل Zoom أو Microsoft Teams',
+    'lm-lbl-pdf':'رفع ملفات PDF (مذكرات / واجبات)',
+    'lm-pdf-upload-text':'انقر لرفع ملفات PDF / صور<br><small>المذكرات، الواجبات، الملخصات</small>',
+    'lm-lbl-access':'الوصول','lm-access-all':'جميع الطلاب','lm-access-paid':'المدفوعون فقط',
+    'lm-lbl-status':'الحالة','lm-status-active':'منشور','lm-status-draft':'مسودة',
+    'lm-btn-cancel':'إلغاء','lm-btn-save':'نشر الدرس',
+    // Teacher login modal
+    'tl-title':'🔐 دخول المدرس','tl-sub':'هذه المنطقة مخصصة للمدرس فقط',
+    'tl-lbl-user':'اسم المستخدم','tl-lbl-pass':'كلمة المرور',
+    'tl-btn-cancel':'إلغاء','teacher-login-btn':'دخول ←',
+    // Settings
+    'adm-btn-test-fb':'🔍 اختبار الاتصال','adm-btn-sync':'🔄 مزامنة البيانات المحلية',
+    'adm-settings-h':'الإعدادات','adm-owner-cred-h':'🔑 بيانات دخول المالك',
+    'adm-owner-cred-sub':'تغيير الإيميل وكلمة المرور الخاصة بالمالك — تُحفظ تلقائياً في المتصفح',
+    'adm-lbl-old-email':'الإيميل الحالي (للتحقق)','adm-lbl-old-pass':'كلمة المرور الحالية (للتحقق)',
+    'adm-lbl-new-email':'الإيميل الجديد','adm-lbl-new-pass':'كلمة المرور الجديدة','adm-lbl-conf-pass':'تأكيد كلمة المرور',
+    'adm-btn-save-cred':'💾 حفظ التغييرات',
+    'adm-cred-tip':'💡 يمكن تغيير الإيميل فقط أو كلمة المرور فقط أو كليهما معاً — اتركها فارغة إذا لم تريد تغييرها',
+    'adm-ann-h':'إضافة إعلان','adm-lbl-ann-title':'عنوان الإعلان','adm-lbl-ann-text':'النص','adm-btn-ann':'نشر الإعلان'
   },
   en:{
     'nav-home':'Home','nav-courses':'Courses','nav-about':'About Us',
@@ -1739,7 +1818,7 @@ const T={
     'cc-sem2':'Semester 2','cc-t2':'Grade 11 - Probability & Statistics','cc-btn2':'Continue Learning',
     'cc-sem3':'Semester 3','cc-t3':'Grade 12 - Calculus','cc-btn3':'View Details',
     'cc-sem4':'All Semesters','cc-t4':'Trial Lessons - Intro to Advanced Math','cc-btn4':'Start Free',
-    'cd-back':'← Back to Courses','cd-content':'Course Content',
+    'cd-back':'← Back to Courses','cd-content':'Course Content','cd-about-h':'About This Course',
     'cd-u1':'Unit 1 - Trigonometry','cd-l1':'Lesson 1 - Introduction to Trigonometry',
     'cd-l2':'Lesson 2 - Sine Rule','cd-l3':'Lesson 3 - Cosine Rule',
     'cd-u2':'Unit 2 - Algebra','cd-l4':'Lesson 4 - Quadratic Equations','cd-l5':'Lesson 5 - Inequalities',
@@ -1778,7 +1857,61 @@ const T={
     'ft-cu':'Contact Us','ft-loc':'United Arab Emirates',
     'ft-copy':'© 2026 Mr. Anas Fayad. All rights reserved',
     'toast-dl':'Downloading: ','toast-contact':'Message sent successfully!',
-    'navUser':'👤 Student ▾','lang-btn':'🌐 العربية'
+    'navUser':'👤 Student ▾','lang-btn':'🌐 العربية',
+    // Admin panel
+    'adm-nav-overview':'📊 Overview','adm-nav-courses':'📚 Courses','adm-nav-lessons':'🎬 Lessons',
+    'adm-nav-assignments':'📝 Assignments','adm-nav-students':'👥 Students','adm-nav-settings':'⚙️ Settings',
+    'adm-panel-title':'Teacher Dashboard — Mr. Anas Fayad',
+    'adm-nav-logout':'Logout ↩',
+    'adm-lbl-students':'Registered Students','adm-lbl-lessons':'Published Lessons','adm-lbl-hw':'Available HW','adm-lbl-pending':'Pending Requests',
+    'adm-activity-h':'Recent Activity','adm-th-event':'Event','adm-th-date':'Date','adm-th-detail':'Details',
+    'adm-quick-h':'Quick Actions','adm-btn-upload-lesson':'🎬 Upload New Lesson','adm-btn-add-student':'👤 Add Student','adm-btn-add-hw':'📝 Add Assignment',
+    'adm-courses-h':'📚 Manage Courses','adm-courses-sub':'Add courses and grade levels — lessons belong to a course',
+    'adm-add-course-h':'➕ Add New Course','adm-lbl-cname':'Course Name','adm-lbl-cgrade':'Grade Level',
+    'adm-lbl-csem':'Semester','adm-btn-save-course':'✅ Add Course','adm-current-courses-h':'Current Courses',
+    'adm-lessons-h':'Manage Lessons','adm-lessons-sub':'Upload and manage Zoom & Teams session recordings',
+    'adm-btn-new-lesson':'+ Upload New Lesson','adm-all-lessons-h':'All Lessons',
+    'adm-th-lesson-title':'Lesson Title','adm-th-lesson-course':'Course','adm-th-lesson-unit':'Unit','adm-th-lesson-url':'Link','adm-th-lesson-status':'Status','adm-th-lesson-actions':'Actions',
+    'adm-hw-h':'Manage Assignments','adm-hw-sub':'Upload and distribute assignments and notes',
+    'adm-upload-hw-h':'Upload New Assignment / Note','adm-lbl-hw-title':'Assignment Title','adm-lbl-hw-course':'Course',
+    'adm-lbl-hw-due':'Due Date','adm-lbl-hw-type':'Type','adm-lbl-hw-file':'Upload PDF File',
+    'adm-hw-upload-text':'Click to upload assignment file (PDF / Image)','adm-hw-mobile-hint':'📱 Works on mobile and desktop',
+    'adm-btn-save-hw':'Publish Assignment',
+    'adm-th-hw-title':'Assignment Title','adm-th-hw-course':'Course','adm-th-hw-due':'Due Date','adm-th-hw-type':'Type','adm-th-hw-actions':'Actions',
+    'hw-type-1':'Homework','hw-type-2':'Study Notes','hw-type-3':'Exercise Sheet','hw-type-4':'Comprehensive Review',
+    'adm-students-h':'Manage Students','adm-students-sub':'Register students and provide login credentials',
+    'adm-btn-register-student':'+ Register New Student','adm-students-list-h':'Student List & Login Credentials',
+    'adm-th-sname':'Student Name','adm-th-suser':'Username','adm-th-spass':'Password','adm-th-sgrade':'Grade','adm-th-ssub':'Subscription','adm-th-sstatus':'Status','adm-th-sactions':'Actions',
+    'adm-cred-h':'Copy Login Credentials','adm-cred-sub':'Click the copy button to send login info to the student',
+    'adm-gen-stats-h':'General Statistics','adm-lbl-s-total':'Total Students','adm-lbl-s-lessons':'Total Lessons','adm-lbl-s-hw':'Total Assignments',
+    // Modals
+    'modal-confirm-title':'Confirm Deletion','modal-confirm-cancel':'Cancel','modal-confirm-delete':'Delete',
+    'sm-lbl-name':'Full Name','sm-lbl-user':'Username','sm-lbl-pass':'Password','sm-lbl-grade':'Grade','sm-lbl-phone':'Phone Number (optional)',
+    'sm-btn-cancel':'Cancel','sm-btn-save':'Save',
+    'lm-lbl-title':'Lesson Title','lm-lbl-course':'Course','lm-lbl-unit':'Unit','lm-lbl-vsrc':'Video Source',
+    'vsrc-url-lbl':'Link','vsrc-upload-lbl':'Upload Video',
+    'lm-vtype-direct':'🎬 Direct Link',
+    'lm-video-upload-text':'Click to upload video file<br><small>MP4, WebM, MOV — Max size 500MB</small>',
+    'lm-video-mobile':'📱 Works on mobile and desktop','lm-pdf-mobile':'📱 Works on mobile and desktop',
+    'lm-zoom-hint':'Paste your Zoom or Microsoft Teams recording link',
+    'lm-lbl-pdf':'Upload PDF Files (Notes / Assignments)',
+    'lm-pdf-upload-text':'Click to upload PDF / Images<br><small>Notes, assignments, summaries</small>',
+    'lm-lbl-access':'Access','lm-access-all':'All Students','lm-access-paid':'Paid Only',
+    'lm-lbl-status':'Status','lm-status-active':'Published','lm-status-draft':'Draft',
+    'lm-btn-cancel':'Cancel','lm-btn-save':'Publish Lesson',
+    // Teacher login modal
+    'tl-title':'🔐 Teacher Login','tl-sub':'This area is for the teacher only',
+    'tl-lbl-user':'Username','tl-lbl-pass':'Password',
+    'tl-btn-cancel':'Cancel','teacher-login-btn':'Login ←',
+    // Settings
+    'adm-btn-test-fb':'🔍 Test Connection','adm-btn-sync':'🔄 Sync Local Data',
+    'adm-settings-h':'Settings','adm-owner-cred-h':'🔑 Owner Login Credentials',
+    'adm-owner-cred-sub':'Change the owner email and password — saved automatically in the browser',
+    'adm-lbl-old-email':'Current Email (to verify)','adm-lbl-old-pass':'Current Password (to verify)',
+    'adm-lbl-new-email':'New Email','adm-lbl-new-pass':'New Password','adm-lbl-conf-pass':'Confirm Password',
+    'adm-btn-save-cred':'💾 Save Changes',
+    'adm-cred-tip':'💡 You can change email only, password only, or both — leave blank if you don\'t want to change',
+    'adm-ann-h':'Add Announcement','adm-lbl-ann-title':'Announcement Title','adm-lbl-ann-text':'Text','adm-btn-ann':'Publish Announcement'
   }
 };
 
@@ -1796,6 +1929,7 @@ function applyLang(lang){
 function toggleLang(){
   currentLang=currentLang==='ar'?'en':'ar';
   applyLang(currentLang);
+  updateFBBadge(fbReady);
 }
 
 // ======= AUTH =======
@@ -2026,8 +2160,8 @@ function renderNotifPanel(){
   }
   panel.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.75rem 0.6rem;border-bottom:1px solid #eee;">' +
-    '<span style="font-size:0.78rem;font-weight:700;color:var(--blue);">الإشعارات ('+notifList.length+')</span>' +
-    '<button onclick="clearAllNotifications()" style="background:#FFEBEE;border:none;color:#C62828;font-size:0.72rem;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:Cairo,sans-serif;font-weight:700;">مسح الكل ✕</button></div>' +
+    '<span style="font-size:0.78rem;font-weight:700;color:var(--blue);">'+(currentLang==='ar'?'الإشعارات':'Notifications')+' ('+notifList.length+')</span>' +
+    '<button onclick="clearAllNotifications()" style="background:#FFEBEE;border:none;color:#C62828;font-size:0.72rem;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:Cairo,sans-serif;font-weight:700;">'+(currentLang==='ar'?'مسح الكل ✕':'Clear All ✕')+'</button></div>' +
     notifList.map(n =>
       '<div style="padding:0.55rem 0.75rem;border-bottom:1px solid #f0f0f0;font-size:0.82rem;">' +
       '<div style="font-weight:600;margin-bottom:2px;">' + n.msg + '</div>' +
@@ -2475,16 +2609,40 @@ function showCourseDetail(courseId){
   const course = adminCourses.find(c=>c.id===currentCourseId) || adminCourses[0];
   if(!course) return;
 
-  // Update course info card
+  // Course title & semester
   const el = document.getElementById('cd-course-title');
   if(el) el.textContent = course.name;
   const sem = document.getElementById('cd-sem');
   if(sem) sem.textContent = course.sem || '';
 
-  // Update stats
+  // Grade badge
+  const gradeBadge = document.getElementById('cd-grade-badge');
+  if(gradeBadge) gradeBadge.textContent = course.grade || 'G12';
+
+  // About text
+  const aboutTxt = document.getElementById('cd-about-txt');
+  if(aboutTxt) aboutTxt.textContent = course.desc || (currentLang==='ar'
+    ? 'منصة تعليمية متخصصة في الرياضيات مع أستاذ Anas Fayad. تشمل تسجيلات Zoom وTeams، مذكرات PDF، وواجبات تفاعلية.'
+    : 'A specialized math learning platform with Mr. Anas Fayad. Includes Zoom & Teams recordings, PDF notes, and interactive assignments.');
+
+  // Stats — live lesson count
   const courseLessons = adminLessons.filter(l=>l.course===course.name && l.status==='active');
   const elLes = document.getElementById('cd-les');
-  if(elLes) elLes.textContent = (currentLang==='ar'?'الحصص: ':'Lessons: ') + courseLessons.length;
+  if(elLes) elLes.textContent = courseLessons.length;
+  const lesLbl = document.getElementById('cd-les-lbl');
+  if(lesLbl) lesLbl.textContent = currentLang==='ar' ? 'الحصص' : 'Lessons';
+  const durLbl = document.getElementById('cd-dur-lbl');
+  if(durLbl) durLbl.textContent = currentLang==='ar' ? 'المدة' : 'Duration';
+  const lvlLbl = document.getElementById('cd-lvl-lbl');
+  if(lvlLbl) lvlLbl.textContent = currentLang==='ar' ? 'المستوى' : 'Level';
+  const lvl = document.getElementById('cd-lvl');
+  if(lvl) lvl.textContent = course.grade || (currentLang==='ar' ? 'متقدم' : 'Advanced');
+  const dur = document.getElementById('cd-dur');
+  if(dur) dur.textContent = '—';
+
+  // About heading
+  const aboutH = document.getElementById('cd-about-h');
+  if(aboutH) aboutH.textContent = currentLang==='ar' ? 'عن هذا الكورس' : 'About This Course';
 
   renderCourseSidebar(course);
   showPage('course-detail');
@@ -2499,8 +2657,12 @@ function renderCourseSidebar(course){
   // Get HW for this course
   const courseHW = adminHW.filter(h=>h.course===course.name || h.course==='جميع الكورسات');
 
+  // Update count badge
+  const countEl = document.getElementById('cd-lesson-count');
+  if(countEl) countEl.textContent = courseLessons.length + (currentLang==='ar' ? ' حصة' : ' lessons');
+
   if(courseLessons.length===0 && courseHW.length===0){
-    sidebar.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:0.9rem;"><div style="font-size:2rem;margin-bottom:0.5rem;">📭</div><p>لا توجد دروس بعد</p></div>';
+    sidebar.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:0.9rem;"><div style="font-size:2rem;margin-bottom:0.5rem;">📭</div><p>'+(currentLang==='ar'?'لا توجد دروس بعد':'No lessons yet')+'</p></div>';
     return;
   }
 
