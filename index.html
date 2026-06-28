@@ -2046,12 +2046,18 @@ function toggleLang(){
 // ======= AUTH =======
 
 // بيانات المالك — تُحمَّل من localStorage إن وُجدت، وإلا تُستخدم الافتراضية
-const OWNER_DEFAULT = { email: 'anasfayad1980@gmail.com', pass: '01011980' };
+const OWNER_DEFAULT = { email: 'anasfayad1980@gmail.com', pass: '123456' };
 let OWNER_ACCOUNTS = (()=>{
   try {
     const saved = localStorage.getItem('ownerCredentials');
-    if(saved){ const p = JSON.parse(saved); if(p.email && p.pass) return [p]; }
+    if(saved){
+      const p = JSON.parse(saved);
+      // تجاهل الباسورد القديم الخاطئ إذا كان محفوظاً
+      if(p.email && p.pass && p.pass !== '01011980') return [p];
+    }
   } catch(e){}
+  // مسح القديم وإعادة الافتراضي الصحيح
+  try{ localStorage.removeItem('ownerCredentials'); }catch(e){}
   return [{ ...OWNER_DEFAULT }];
 })();
 
