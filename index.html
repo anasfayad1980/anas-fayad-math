@@ -1479,6 +1479,14 @@ async function loadGradesFromDB(){
     // نرتبها حسب الترتيب المحفوظ إن وُجد
     const sorted = data.sort((a,b)=>(a.order||0)-(b.order||0));
     adminGrades = sorted.map(g=>g.name).filter(Boolean);
+    // نحدّث localStorage أيضاً
+    try{ localStorage.setItem('adminGrades_local', JSON.stringify(adminGrades)); }catch(e){}
+  } else {
+    // fallback: تحميل من localStorage إذا لم يأتِ شيء من Firebase
+    try{
+      const local = JSON.parse(localStorage.getItem('adminGrades_local')||'[]');
+      if(local.length > 0 && adminGrades.length === 0) adminGrades = local;
+    }catch(e){}
   }
   refreshAllGradeDropdowns();
   renderGradesManager();
@@ -2283,8 +2291,12 @@ function adminTab(name,btn){
   const sec=document.getElementById('adm-'+name);
   if(sec)sec.classList.add('active');
   if(btn)btn.classList.add('active');
-  // عند فتح الإعدادات: تحديث عرض المراحل
-  if(name==='settings'){ refreshAllGradeDropdowns(); renderGradesManager(); }
+  // عند فتح الإعدادات: تحديث عرض المراحل (مع إعادة تحميل من Firebase)
+  if(name==='settings'){
+    refreshAllGradeDropdowns();
+    renderGradesManager();
+    if(fbReady){ loadGradesFromDB(); } // إعادة تحميل من Firebase عند كل فتح للإعدادات
+  }
 }
 function toggleUnit(el){el.closest('.unit-expand').classList.toggle('open');}
 
@@ -2901,6 +2913,8 @@ function deleteGrade(idx){
 }
 
 async function saveGradesToDB(){
+  // حفظ محلي كـ fallback دائماً
+  try{ localStorage.setItem('adminGrades_local', JSON.stringify(adminGrades)); }catch(e){}
   if(!fbReady) return;
   // نحذف السجلات القديمة ونعيد رفع الجديدة
   try{
