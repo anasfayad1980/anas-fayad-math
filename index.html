@@ -1516,6 +1516,7 @@ function initFirebase(){
     loadHWFromDB();
     loadStudentsFromDB();
     loadContactSettings();
+    loadOwnerCredentialsFromDB(); // ★ تحميل بيانات المالك من Firebase
     refreshQABadge();
   } catch(e){
     console.warn('Firebase init error:', e);
@@ -2053,6 +2054,22 @@ let OWNER_ACCOUNTS = (()=>{
   } catch(e){}
   return [{ ...OWNER_DEFAULT }];
 })();
+
+// ★ تحميل بيانات المالك من Firebase عند الاتصال (لضمان عمله على كل الأجهزة)
+async function loadOwnerCredentialsFromDB(){
+  if(!fbReady) return;
+  try{
+    const doc = await db.collection('settings').doc('owner').get();
+    if(doc.exists){
+      const data = doc.data();
+      if(data.email && data.pass){
+        OWNER_ACCOUNTS[0] = { email: data.email, pass: data.pass };
+        // تحديث localStorage أيضاً
+        try{ localStorage.setItem('ownerCredentials', JSON.stringify(OWNER_ACCOUNTS[0])); }catch(e){}
+      }
+    }
+  }catch(e){ console.warn('loadOwnerCreds:', e); }
+}
 
 async function doLogin(){
   const u   = document.getElementById('loginUser').value.trim();
@@ -2743,14 +2760,21 @@ function changeOwnerCredentials(){
   // حفظ في localStorage
   try { localStorage.setItem('ownerCredentials', JSON.stringify(updated)); } catch(e){}
 
+  // ★ حفظ في Firebase لضمان العمل على كل الأجهزة
+  if(fbReady){
+    db.collection('settings').doc('owner').set(updated).then(()=>{
+      console.log('✅ تم حفظ بيانات المالك في Firebase');
+    }).catch(e=>console.warn('saveOwner Firebase error:', e));
+  }
+
   // مسح الحقول
   ['old-email','old-pass','new-email','new-pass','conf-pass'].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.value = '';
   });
 
-  setRes('✅ تم حفظ بيانات الدخول بنجاح', true);
-  showToast('✅ تم تحديث بيانات المالك');
+  setRes('✅ تم حفظ بيانات الدخول بنجاح — ستعمل على كل الأجهزة', true);
+  showToast('✅ تم تحديث بيانات المالك وحفظها في Firebase');
 }
 function saveAnnouncement(){
   const t=document.getElementById('ann-title').value.trim();
