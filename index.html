@@ -847,24 +847,8 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     </div>
 
     <h3 style="font-size:1.1rem;font-weight:700;margin:1.5rem 0 1rem;" id="dash-my">كورساتي</h3>
-    <div class="courses-grid">
-      <div class="course-card">
-        <div class="course-thumb blue">📐</div>
-        <div class="course-body">
-          <h3 id="dc1-t">الصف الثاني عشر - الجبر والمثلثات</h3>
-          <div style="background:#E3F2FD;border-radius:6px;padding:6px 10px;margin:0.75rem 0;font-size:0.85rem;color:var(--blue);">▓▓▓▓▓▓▓░░░ 72%</div>
-          <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.5rem;" id="last-lesson-lbl">الدرس الأخير: لم تبدأ بعد</div>
-          <button class="course-btn primary" onclick="continueLastLesson()" id="dc1-btn">▶ كمّل من حيث توقفت</button>
-        </div>
-      </div>
-      <div class="course-card">
-        <div class="course-thumb purple">🔢</div>
-        <div class="course-body">
-          <h3 id="dc2-t">الصف الحادي عشر - الاحتمالات</h3>
-          <div style="background:#F3E5F5;border-radius:6px;padding:6px 10px;margin:0.75rem 0;font-size:0.85rem;color:#7B1FA2;">▓▓▓▓░░░░░░ 40%</div>
-          <button class="course-btn primary" onclick="showCourseDetail()" id="dc2-btn">متابعة</button>
-        </div>
-      </div>
+    <div class="courses-grid" id="dashboard-courses-grid">
+      <!-- يتم ملؤها ديناميكياً عبر renderDashboardCourses() حسب صف الطالب -->
     </div>
   </div>
 </div>
@@ -1539,6 +1523,7 @@ const USERS={}; // يتم ملؤه من Firebase عند التحميل
 let currentLang='ar';
 let loggedIn=false;
 let currentUser='';
+let currentRole=null; // 'owner' | 'student' | null — مصدر الحقيقة الوحيد للصلاحيات (لا نعتمد على نص الزر)
 let watchedLessons = {}; // {lessonId: true}
 let lastWatchedLesson = null;
 
@@ -1564,7 +1549,8 @@ function loadWatchedLessons(){
 function renderStudentHW(){
   const list = document.getElementById('student-hw-list');
   if(!list) return;
-  if(adminHW.length === 0){
+  const visibleHW = getVisibleHW();
+  if(visibleHW.length === 0){
     list.innerHTML = '<div style="background:white;border-radius:12px;padding:2rem;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.08);">'
       + '<div style="font-size:2.5rem;margin-bottom:0.75rem;">📭</div>'
       + '<p style="color:var(--muted);" id="no-hw-txt">لا توجد واجبات متاحة حالياً</p>'
@@ -1574,7 +1560,7 @@ function renderStudentHW(){
   }
 
   const today = new Date();
-  list.innerHTML = adminHW.map((hw, i) => {
+  list.innerHTML = visibleHW.map((hw, i) => {
     const due    = hw.due ? new Date(hw.due) : null;
     const isNew  = !due || due >= today;
     const isDone = due && due < today;
@@ -1604,7 +1590,7 @@ function renderStudentHW(){
   }).join('');
 
   const el=document.getElementById('d3-num');
-  if(el) el.textContent = adminHW.filter(h=>{ const d=h.due?new Date(h.due):null; return !d||d>=today; }).length;
+  if(el) el.textContent = visibleHW.filter(h=>{ const d=h.due?new Date(h.due):null; return !d||d>=today; }).length;
 }
 
 function downloadHW(id){
@@ -1637,18 +1623,19 @@ function downloadHW(id){
 }
 
 function continueLastLesson(){
+  const visibleLessons = getVisibleLessons();
   if(lastWatchedLesson){
-    const lesson = adminLessons.find(l=>l.id===lastWatchedLesson.id);
+    const lesson = visibleLessons.find(l=>l.id===lastWatchedLesson.id);
     if(lesson){ loadLesson({...lesson, videoUrl:lesson.url, videoType:lesson.vtype||'youtube'}); return; }
   }
-  // Go to first lesson
-  if(adminLessons.length){
-    const l=adminLessons[0];
+  // Go to first lesson المسموح به فقط لصف المستخدم (لا أول درس في النظام كله)
+  if(visibleLessons.length){
+    const l=visibleLessons[0];
     loadLesson({id:l.id,title:l.title,unit:l.unit,videoUrl:l.url,videoType:l.vtype||'youtube'});
   } else { showPage('courses'); }
 }
 function updateProgressDisplay(){
-  const total = adminLessons.filter(l=>l.status==='active').length || 1;
+  const total = getVisibleLessons().filter(l=>l.status==='active').length || 1;
   const done  = Object.keys(watchedLessons).length;
   const pct   = Math.round((done/total)*100);
   const el = document.getElementById('progress-pct');
@@ -1963,6 +1950,7 @@ async function doLogin(){
   // CASE 1: تحقق أولاً هل هو مالك (بدون Firebase)
   const ownerMatch = OWNER_ACCOUNTS.find(o => o.email===u && o.pass===p);
   if(ownerMatch){
+    currentRole='owner'; currentUser=''; loggedIn=true;
     document.getElementById('loginOverlay').style.display='none';
     resetBtn();
     showPage('admin');
@@ -1995,6 +1983,7 @@ async function doLogin(){
 function loginSuccess(found){
   loggedIn   = true;
   currentUser= found.user;
+  currentRole= 'student';
   document.getElementById('loginOverlay').style.display='none';
   // Subscription check
   if(found.subEnd){
@@ -2210,6 +2199,7 @@ async function doTeacherLogin(){
 
   const ownerMatch = OWNER_ACCOUNTS.find(o => o.email===email && o.pass===pass);
   if(ownerMatch){
+    currentRole='owner'; currentUser=''; loggedIn=true;
     document.getElementById('teacherLoginModal').classList.remove('open');
     document.getElementById('teacherUser').value='';
     document.getElementById('teacherPass').value='';
@@ -2229,6 +2219,7 @@ async function doTeacherLogin(){
 function adminLogout(){showPage('home');showToast('تم الخروج من لوحة التحكم');}
 function doLogout(){
   if(confirm('هل تريد الخروج من التطبيق؟')){
+    currentRole=null; currentUser=''; loggedIn=false;
     document.getElementById('loginOverlay').style.display='flex';
     showPage('home');
     document.getElementById('navUser').textContent='👤 الطالب ▾';
@@ -2605,8 +2596,17 @@ applyLang('ar');
 let currentCourseId = null;
 
 function showCourseDetail(courseId){
-  currentCourseId = courseId || (adminCourses[0] && adminCourses[0].id);
-  const course = adminCourses.find(c=>c.id===currentCourseId) || adminCourses[0];
+  const visible = getVisibleCourses();
+  // إن لم يُحدَّد كورس، اختر أول كورس مسموح للمستخدم (لا أول كورس في النظام كله)
+  currentCourseId = courseId || (visible[0] && visible[0].id);
+  let course = adminCourses.find(c=>c.id===currentCourseId);
+  // حماية: إن لم يكن المستخدم مالكاً، يجب أن يكون الكورس ضمن الكورسات المسموحة لصفه
+  if(currentRole!=='owner' && (!course || !visible.some(c=>c.id===course.id))){
+    showToast('⛔ هذا الكورس غير متاح لصفك');
+    showPage('courses');
+    return;
+  }
+  if(!course) course = visible[0];
   if(!course) return;
 
   // Course title & semester
@@ -2854,9 +2854,8 @@ function loadUploadedVideo(blobUrl, title){
 // COURSE CARDS — link to dynamic detail
 // ════════════════════════════════════════════════════
 function getVisibleCourses(){
-  // المعلم/المالك يرى كل الكورسات
-  const isTeacher = document.getElementById('navUser')?.textContent?.includes('المدرس');
-  if(isTeacher) return adminCourses;
+  // المالك يرى كل الكورسات
+  if(currentRole==='owner') return adminCourses;
   // الطالب يرى فقط كورسات صفه
   const student = adminStudents.find(s=>s.user===currentUser);
   if(!student) return [];
@@ -2867,13 +2866,29 @@ function getVisibleCourses(){
   });
 }
 
+// الدروس المسموح للمستخدم الحالي رؤيتها فقط (حسب كورسات صفه) — تُستخدم في كل مكان نحتاج فيه دروساً بدل الاعتماد على adminLessons كاملة
+function getVisibleLessons(){
+  if(currentRole==='owner') return adminLessons;
+  const visibleCourseNames = new Set(getVisibleCourses().map(c=>c.name));
+  return adminLessons.filter(l=>visibleCourseNames.has(l.course));
+}
+
+// الواجبات المسموح للمستخدم الحالي رؤيتها فقط (حسب كورسات صفه، أو الواجبات العامة لكل الكورسات)
+function getVisibleHW(){
+  if(currentRole==='owner') return adminHW;
+  const visibleCourseNames = new Set(getVisibleCourses().map(c=>c.name));
+  return adminHW.filter(h=>h.course==='جميع الكورسات' || visibleCourseNames.has(h.course));
+}
+
 function renderCourseCards(){
   const grid = document.getElementById('courses-dynamic-grid');
   if(!grid) return;
+  // فلتر اختيار المرحلة مخصص للمالك فقط — الطالب أصلاً لا يرى إلا كورسات صفه
+  const cFilter = document.getElementById('c-filter');
+  if(cFilter) cFilter.style.display = (currentRole==='owner') ? '' : 'none';
   const visible = getVisibleCourses();
   if(visible.length===0){
-    const isTeacher = document.getElementById('navUser')?.textContent?.includes('المدرس');
-    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);"><div style="font-size:3rem;">📭</div><p>'+(isTeacher?'لم يتم إضافة كورسات بعد':'لا توجد كورسات لصفك — تواصل مع المدرس')+'</p></div>';
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);"><div style="font-size:3rem;">📭</div><p>'+(currentRole==='owner'?'لم يتم إضافة كورسات بعد':'لا توجد كورسات لصفك — تواصل مع المدرس')+'</p></div>';
     return;
   }
   const colors=['blue','purple','green','orange'];
