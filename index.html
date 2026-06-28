@@ -669,9 +669,6 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
         <input class="search-input" type="text" id="c-search" placeholder="بحث..." oninput="renderCourseCards()">
         <select class="filter-select" id="c-filter" onchange="renderCourseCards()">
           <option id="c-f0">جميع المراحل</option>
-          <option>الصف العاشر</option>
-          <option>الصف الحادي عشر</option>
-          <option>الصف الثاني عشر</option>
         </select>
         <button class="back-btn" onclick="showPage('dashboard')" style="margin:0;" id="c-back">← لوحتي</button>
       </div>
@@ -970,10 +967,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
       <div>
         <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="sm-lbl-grade">الصف</label>
         <select id="sm-grade">
-          <option>الصف العاشر</option>
-          <option>الصف الحادي عشر</option>
-          <option selected>الصف الثاني عشر متقدم</option>
-          <option>الصف الثاني عشر عام</option>
+          <option>-- اختر الصف --</option>
         </select>
       </div>
     </div>
@@ -1149,11 +1143,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
           <div>
             <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-cgrade">المرحلة الدراسية</label>
             <select id="new-course-grade">
-              <option>الصف العاشر</option>
-              <option>الصف الحادي عشر</option>
-              <option selected>الصف الثاني عشر متقدم</option>
-              <option>الصف الثاني عشر عام</option>
-              <option>جميع المراحل</option>
+              <option value="">-- اختر المرحلة --</option>
             </select>
           </div>
         </div>
@@ -1284,8 +1274,20 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
   </div>
 
   <div class="admin-section" id="adm-settings">
-    <div class="admin-card" style="border:2px solid var(--gold);">
-      <h3>🔥 Firebase — قاعدة البيانات السحابية</h3>
+    <!-- ═══ إدارة المراحل الدراسية ═══ -->
+    <div class="admin-card" style="border:2px solid var(--blue);margin-bottom:1.5rem;">
+      <h3 style="margin-bottom:0.5rem;">🎓 إدارة المراحل الدراسية</h3>
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">أضف أو احذف المراحل الدراسية — تظهر تلقائياً في كل قوائم المنصة</p>
+      <!-- إضافة مرحلة -->
+      <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;">
+        <input type="text" id="new-grade-input" placeholder="مثال: الصف السابع"
+          style="flex:1;min-width:180px;padding:9px 14px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.9rem;outline:none;"
+          onkeydown="if(event.key==='Enter')addGrade()">
+        <button class="admin-btn green" onclick="addGrade()" style="white-space:nowrap;">➕ إضافة مرحلة</button>
+      </div>
+      <!-- قائمة المراحل الحالية -->
+      <div id="grades-manager-list" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
+    </div>
       <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">المنصة متصلة بـ Firebase — Project: <strong>anas-fayad-math</strong></p>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1rem;">
         <div style="background:#FFF8E1;border-radius:8px;padding:0.75rem;text-align:center;">
@@ -1427,6 +1429,7 @@ function initFirebase(){
     console.log('✅ Firebase متصل');
     startRealtimeListeners();
     // Load data from Firestore
+    loadGradesFromDB();
     loadCoursesFromDB();
     loadLessonsFromDB();
     loadHWFromDB();
@@ -1470,6 +1473,16 @@ async function fbDel(col, id){
 // ══════════════════════════════════════════════
 // LOAD FROM FIRESTORE (on login / admin open)
 // ══════════════════════════════════════════════
+async function loadGradesFromDB(){
+  const data = await fbGet('grades');
+  if(data && data.length > 0){
+    // نرتبها حسب الترتيب المحفوظ إن وُجد
+    const sorted = data.sort((a,b)=>(a.order||0)-(b.order||0));
+    adminGrades = sorted.map(g=>g.name).filter(Boolean);
+  }
+  refreshAllGradeDropdowns();
+  renderGradesManager();
+}
 async function loadCoursesFromDB(){
   const data = await fbGet('courses');
   if(data && data.length > 0){
@@ -1477,6 +1490,7 @@ async function loadCoursesFromDB(){
     renderCourseCards();
     renderAdminCourses();
   }
+  refreshAllGradeDropdowns();
 }
 async function loadLessonsFromDB(){
   const data = await fbGet('lessons');
@@ -2183,8 +2197,14 @@ let TEACHER_PASS='admin123';
 let adminStudents=[]; // يتم تحميلهم من Firebase
 let adminLessons=[]; // يتم تحميلها من Firebase
 let adminCourses=[]; // يتم تحميلها من Firebase
-
 let adminHW=[]; // يتم تحميلها من Firebase
+
+// المراحل الدراسية — قابلة للإضافة والحذف من لوحة التحكم
+let adminGrades = [
+  'الصف السابع','الصف الثامن','الصف التاسع',
+  'الصف العاشر','الصف الحادي عشر',
+  'الصف الثاني عشر متقدم','الصف الثاني عشر عام'
+];
 let deleteAction=null;
 let editingStudentId=null;
 let editingLessonId=null;
@@ -2263,6 +2283,8 @@ function adminTab(name,btn){
   const sec=document.getElementById('adm-'+name);
   if(sec)sec.classList.add('active');
   if(btn)btn.classList.add('active');
+  // عند فتح الإعدادات: تحديث عرض المراحل
+  if(name==='settings'){ refreshAllGradeDropdowns(); renderGradesManager(); }
 }
 function toggleUnit(el){el.closest('.unit-expand').classList.toggle('open');}
 
@@ -2828,7 +2850,108 @@ function syncCourseInput(val){
   if(txt) txt.value = val;
 }
 
-// UPDATED saveLesson — handles all 3 video sources
+// ════════════════════════════════════════════════════
+// GRADES MANAGER — إدارة المراحل الدراسية
+// ════════════════════════════════════════════════════
+function renderGradesManager(){
+  const el = document.getElementById('grades-manager-list');
+  if(!el) return;
+  if(adminGrades.length===0){
+    el.innerHTML='<p style="color:var(--muted);font-size:0.85rem;">لا توجد مراحل مضافة — أضف مرحلة من الحقل أعلاه</p>';
+    return;
+  }
+  el.innerHTML = adminGrades.map((g,i)=>`
+    <div style="display:inline-flex;align-items:center;gap:0.4rem;background:#E3F2FD;border:1px solid #90CAF9;border-radius:20px;padding:5px 12px;font-size:0.88rem;font-weight:600;color:#1565C0;">
+      <span>${g}</span>
+      <button onclick="deleteGrade(${i})" title="حذف هذه المرحلة"
+        style="background:none;border:none;cursor:pointer;color:#E53935;font-size:1rem;line-height:1;padding:0 2px;">✕</button>
+    </div>
+  `).join('');
+}
+
+function addGrade(){
+  const inp = document.getElementById('new-grade-input');
+  if(!inp) return;
+  const name = inp.value.trim();
+  if(!name){ showToast('أدخل اسم المرحلة'); return; }
+  if(adminGrades.includes(name)){ showToast('هذه المرحلة موجودة مسبقاً'); return; }
+  adminGrades.push(name);
+  inp.value = '';
+  saveGradesToDB();
+  refreshAllGradeDropdowns();
+  renderGradesManager();
+  showToast('✅ تمت إضافة: '+name);
+}
+
+function deleteGrade(idx){
+  const name = adminGrades[idx];
+  if(!name) return;
+  // تحقق إن كانت مستخدمة في كورس أو طالب
+  const usedInCourse  = adminCourses.some(c=>c.grade===name);
+  const usedInStudent = adminStudents.some(s=>s.grade===name);
+  if(usedInCourse || usedInStudent){
+    const places = [usedInCourse?'كورسات':null, usedInStudent?'طلاب':null].filter(Boolean).join(' و');
+    if(!confirm(`⚠️ المرحلة "${name}" مستخدمة في ${places}.\nهل تريد حذفها رغم ذلك؟`)) return;
+  }
+  adminGrades.splice(idx,1);
+  saveGradesToDB();
+  refreshAllGradeDropdowns();
+  renderGradesManager();
+  showToast('🗑️ تم حذف المرحلة: '+name);
+}
+
+async function saveGradesToDB(){
+  if(!fbReady) return;
+  // نحذف السجلات القديمة ونعيد رفع الجديدة
+  try{
+    // بسيط: نحفظ كل مرحلة كـ document بـ id = اسمها المُشفَّر
+    const existing = await fbGet('grades');
+    if(existing){
+      for(const g of existing){
+        if(!adminGrades.includes(g.name)){
+          await fbDel('grades', g.id);
+        }
+      }
+    }
+    for(let i=0;i<adminGrades.length;i++){
+      const id = 'grade_'+adminGrades[i].replace(/\s+/g,'_');
+      await fbSet('grades', id, {name:adminGrades[i], order:i, id});
+    }
+  }catch(e){ console.warn('saveGrades error',e); }
+}
+
+// يُحدّث كل القوائم المنسدلة التي تعتمد على adminGrades في الصفحة
+function refreshAllGradeDropdowns(){
+  const gradeOptions = adminGrades.map(g=>`<option value="${g}">${g}</option>`).join('');
+  const gradeWithAll = `<option value="">جميع المراحل</option>` + gradeOptions;
+  const gradeWithEmpty = `<option value="">-- اختر المرحلة --</option>` + gradeOptions + `<option value="جميع المراحل">جميع المراحل</option>`;
+  const gradeStudentOpts = `<option value="">-- اختر الصف --</option>` + gradeOptions;
+
+  // فلتر صفحة الكورسات
+  const cFilter = document.getElementById('c-filter');
+  if(cFilter){
+    const prev = cFilter.value;
+    cFilter.innerHTML = gradeWithAll;
+    // استعادة الاختيار السابق إن أمكن
+    if(prev && Array.from(cFilter.options).find(o=>o.value===prev)) cFilter.value=prev;
+  }
+  // قائمة الصف في إضافة طالب
+  const smGrade = document.getElementById('sm-grade');
+  if(smGrade){
+    const prev = smGrade.value;
+    smGrade.innerHTML = gradeStudentOpts;
+    if(prev && Array.from(smGrade.options).find(o=>o.value===prev)) smGrade.value=prev;
+  }
+  // قائمة المرحلة في إضافة كورس
+  const courseGrade = document.getElementById('new-course-grade');
+  if(courseGrade){
+    const prev = courseGrade.value;
+    courseGrade.innerHTML = gradeWithEmpty;
+    if(prev && Array.from(courseGrade.options).find(o=>o.value===prev)) courseGrade.value=prev;
+  }
+}
+
+// GRADES MANAGER — إدارة المراحل الدراسية
 // ════════════════════════════════════════════════════
 function getVideoSrcData(){
   const urlArea    = document.getElementById('vsrc-url-area');
