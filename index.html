@@ -1347,25 +1347,6 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
       </div>
     </div>
     <h2 style="font-size:1.3rem;font-weight:900;margin-bottom:1.5rem;" id="adm-settings-h">الإعدادات</h2>
-    <!-- ═══ تنبيه Firebase Storage ═══ -->
-    <div class="admin-card" style="border:2px solid #FF9800;margin-bottom:1.5rem;background:#FFFDE7;">
-      <h3 style="margin-bottom:0.5rem;">🔥 إعداد Firebase Storage (مهم للرفع)</h3>
-      <p style="font-size:0.88rem;line-height:1.8;color:#5D4037;">
-        لكي تعمل عملية رفع الملفات والفيديوهات، يجب ضبط <strong>Firebase Storage Rules</strong> للسماح بالكتابة.<br>
-        اذهب إلى <a href="https://console.firebase.google.com" target="_blank" style="color:var(--blue);">Firebase Console</a> 
-        → Storage → Rules، والصق:
-      </p>
-      <pre style="background:#FFF8E1;padding:0.75rem;border-radius:8px;font-size:0.8rem;margin:0.5rem 0;overflow-x:auto;direction:ltr;text-align:left;">rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null || true;
-    }
-  }
-}</pre>
-      <p style="font-size:0.78rem;color:var(--muted);">بعد الحفظ يمكن للأستاذ رفع الملفات وتتوفر للطلاب مباشرة.</p>
-    </div>
 
     <!-- ═══ إعدادات التواصل ═══ -->
     <div class="admin-card" style="border:2px solid #4CAF50;margin-bottom:1.5rem;">
@@ -3834,21 +3815,24 @@ async function syncAllToFirebase(){
   }catch(e){ showToast('❌ خطأ في المزامنة: '+e.message); }
 }
 
-// REAL-TIME LISTENER — auto-refresh when teacher adds lesson
+// POLLING — refresh every 30s instead of real-time listeners (avoids WebChannel errors)
 function startRealtimeListeners(){
   if(!fbReady) return;
-  // Listen for new lessons
-  db.collection('lessons').onSnapshot(snap=>{
-    adminLessons = snap.docs.map(d=>({...d.data(), id:isNaN(d.id)?d.id:Number(d.id)}));
-    renderLessonsTable(); renderCourseCards(); updateAllStats();
-    if(currentCourseId){ const c=adminCourses.find(x=>x.id===currentCourseId); if(c) renderCourseSidebar(c); }
-  });
-  // Listen for new assignments
-  db.collection('assignments').onSnapshot(snap=>{
-    adminHW = snap.docs.map(d=>({...d.data(), id:isNaN(d.id)?d.id:Number(d.id)}));
-    renderStudentHW(); renderHWTable(); updateAllStats();
-    addNotification('تم تحديث الواجبات');
-  });
+  async function refreshData(){
+    try{
+      const [lSnap, aSnap] = await Promise.all([
+        db.collection('lessons').get(),
+        db.collection('assignments').get()
+      ]);
+      adminLessons = lSnap.docs.map(d=>({...d.data(), id:isNaN(d.id)?d.id:Number(d.id)}));
+      renderLessonsTable(); renderCourseCards(); updateAllStats();
+      if(currentCourseId){ const c=adminCourses.find(x=>x.id===currentCourseId); if(c) renderCourseSidebar(c); }
+      adminHW = aSnap.docs.map(d=>({...d.data(), id:isNaN(d.id)?d.id:Number(d.id)}));
+      renderStudentHW(); renderHWTable();
+    }catch(e){ /* silent — offline mode */ }
+  }
+  refreshData();
+  setInterval(refreshData, 30000);
 }
 
 // ══════════════════════════════════════════
