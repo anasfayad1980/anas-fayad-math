@@ -999,11 +999,15 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
         <input type="text" id="lm-title" placeholder="الحصة الأولى - مقدمة في المثلثات">
       </div>
       <div>
-        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="lm-lbl-course">الكورس</label>
-        <select id="lm-course">
-          <option>G12 متقدم - جبر ومثلثات</option>
-          <option>G11 - احتمالات وإحصاء</option>
-          <option>G12 - تفاضل وتكامل</option>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="lm-lbl-course">الكورس <span style="color:var(--muted);font-weight:400;font-size:0.8rem;">(اختياري)</span></label>
+        <!-- حقل كتابة اسم الكورس (يمكن الكتابة أو الاختيار من القائمة) -->
+        <input type="text" id="lm-course-text" placeholder="اكتب اسم الكورس أو اختر من القائمة أدناه (اختياري)"
+          style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px 8px 0 0;font-family:'Cairo',sans-serif;font-size:0.9rem;outline:none;box-sizing:border-box;"
+          oninput="syncCourseDropdown(this.value)" list="lm-course-list">
+        <datalist id="lm-course-list"></datalist>
+        <select id="lm-course" onchange="syncCourseInput(this.value)"
+          style="width:100%;padding:9px 12px;border:1px solid #ddd;border-top:none;border-radius:0 0 8px 8px;font-family:'Cairo',sans-serif;font-size:0.85rem;cursor:pointer;background:#fafafa;">
+          <option value="">-- بدون كورس محدد --</option>
         </select>
       </div>
     </div>
@@ -2392,6 +2396,13 @@ function openLessonModal(){
   document.getElementById('lessonModalTitle').textContent='رفع درس جديد';
   ['lm-title','lm-unit','lm-url'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('uploadedFiles').textContent='';
+  // تفريغ حقل الكورس
+  const courseText = document.getElementById('lm-course-text');
+  if(courseText) courseText.value='';
+  const courseSel = document.getElementById('lm-course');
+  if(courseSel) courseSel.value='';
+  // ملء قائمة الكورسات الموجودة
+  populateCourseOptions();
   document.getElementById('lessonModal').classList.add('open');
 }
 function editLesson(id){
@@ -2402,17 +2413,40 @@ function editLesson(id){
   document.getElementById('lm-unit').value=l.unit;
   document.getElementById('lm-url').value=l.url||'';
   document.getElementById('lm-status').value=l.status;
+  // ملء حقل الكورس
+  populateCourseOptions();
+  const courseText = document.getElementById('lm-course-text');
+  const courseSel = document.getElementById('lm-course');
+  if(courseText) courseText.value = l.course||'';
+  if(courseSel){
+    // إن كان الكورس موجوداً في القائمة حدده، وإلا اتركه فارغاً
+    const found = Array.from(courseSel.options).find(o=>o.value===l.course);
+    courseSel.value = found ? l.course : '';
+  }
   document.getElementById('lessonModal').classList.add('open');
 }
 function closeLessonModal(){document.getElementById('lessonModal').classList.remove('open');}
 function saveLesson(){
   const title=document.getElementById('lm-title').value.trim();
-  const course=document.getElementById('lm-course').value;
+  // قراءة الكورس: الأولوية لحقل النص، ثم القائمة المنسدلة
+  const courseText = (document.getElementById('lm-course-text')?.value||'').trim();
+  const courseSel  = (document.getElementById('lm-course')?.value||'').trim();
+  const course = courseText || courseSel || '';
   const unit=document.getElementById('lm-unit').value.trim();
   const url=document.getElementById('lm-url').value.trim();
   const vtype=document.getElementById('lm-vtype')?.value||'youtube';
   const status=document.getElementById('lm-status').value;
-  if(!title||!unit){showToast('يرجى إدخال عنوان الحصة والوحدة');return;}
+  if(!title){showToast('يرجى إدخال عنوان الحصة');return;}
+
+  // إن أُدخل اسم كورس جديد غير موجود → أنشئه تلقائياً
+  if(course && !adminCourses.find(c=>c.name===course)){
+    const newCourse={id:'c_'+Date.now(),name:course,grade:'',sem:''};
+    adminCourses.push(newCourse);
+    if(fbReady) fbSet('courses',newCourse.id,newCourse).catch(()=>{});
+    renderAdminCourses();
+    showToast('✅ تم إنشاء كورس جديد: '+course);
+  }
+
   if(editingLessonId){
     const l=adminLessons.find(x=>x.id===editingLessonId);
     if(l){ Object.assign(l,{title,course,unit,url,vtype,status});
@@ -2770,6 +2804,30 @@ function handleVideoUpload(input){
 }
 
 // ════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
+// COURSE FIELD HELPERS — lesson modal
+// ════════════════════════════════════════════════════
+function populateCourseOptions(){
+  const sel = document.getElementById('lm-course');
+  const dl  = document.getElementById('lm-course-list');
+  if(!sel) return;
+  const base = '<option value="">-- بدون كورس محدد --</option>';
+  sel.innerHTML = base + adminCourses.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
+  if(dl) dl.innerHTML = adminCourses.map(c=>`<option value="${c.name}">`).join('');
+}
+// مزامنة: عند الكتابة في حقل النص → نحدد القائمة إن تطابق
+function syncCourseDropdown(val){
+  const sel = document.getElementById('lm-course');
+  if(!sel) return;
+  const found = Array.from(sel.options).find(o=>o.value===val.trim());
+  sel.value = found ? val.trim() : '';
+}
+// مزامنة: عند الاختيار من القائمة → ننسخه لحقل النص
+function syncCourseInput(val){
+  const txt = document.getElementById('lm-course-text');
+  if(txt) txt.value = val;
+}
+
 // UPDATED saveLesson — handles all 3 video sources
 // ════════════════════════════════════════════════════
 function getVideoSrcData(){
