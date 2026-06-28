@@ -666,8 +666,8 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
         <p class="section-sub" style="margin-bottom:0;" id="c-sub">جميع تسجيلات الحصص والمواد</p>
       </div>
       <div class="search-bar">
-        <input class="search-input" type="text" id="c-search" placeholder="بحث...">
-        <select class="filter-select" id="c-filter">
+        <input class="search-input" type="text" id="c-search" placeholder="بحث..." oninput="renderCourseCards()">
+        <select class="filter-select" id="c-filter" onchange="renderCourseCards()">
           <option id="c-f0">جميع المراحل</option>
           <option>الصف العاشر</option>
           <option>الصف الحادي عشر</option>
@@ -2886,7 +2886,25 @@ function renderCourseCards(){
   // فلتر اختيار المرحلة مخصص للمالك فقط — الطالب أصلاً لا يرى إلا كورسات صفه
   const cFilter = document.getElementById('c-filter');
   if(cFilter) cFilter.style.display = (currentRole==='owner') ? '' : 'none';
-  const visible = getVisibleCourses();
+
+  // نبدأ من الكورسات المسموح بها للمستخدم الحالي (الطالب = صفه فقط، المالك = الكل)
+  let visible = getVisibleCourses();
+
+  // فلتر النص (بحث)
+  const searchVal = (document.getElementById('c-search')?.value || '').trim().toLowerCase();
+  if(searchVal) {
+    visible = visible.filter(c =>
+      (c.name||'').toLowerCase().includes(searchVal) ||
+      (c.grade||'').toLowerCase().includes(searchVal) ||
+      (c.sem||'').toLowerCase().includes(searchVal)
+    );
+  }
+
+  // فلتر المرحلة — للمالك فقط (الطالب لا يرى الفلتر أصلاً)
+  if(currentRole==='owner' && cFilter && cFilter.value && cFilter.selectedIndex > 0){
+    const filterGrade = cFilter.value.trim();
+    visible = visible.filter(c => (c.grade||'').trim() === filterGrade);
+  }
   if(visible.length===0){
     grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);"><div style="font-size:3rem;">📭</div><p>'+(currentRole==='owner'?'لم يتم إضافة كورسات بعد':'لا توجد كورسات لصفك — تواصل مع المدرس')+'</p></div>';
     return;
