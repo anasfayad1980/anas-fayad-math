@@ -2047,17 +2047,25 @@ function toggleLang(){
 
 // بيانات المالك — تُحمَّل من localStorage إن وُجدت، وإلا تُستخدم الافتراضية
 const OWNER_DEFAULT = { email: 'anasfayad1980@gmail.com', pass: '123456' };
+// ★ مسح أي بيانات قديمة خاطئة من localStorage دائماً عند كل تحميل
+// وإعادة البناء من Firebase أو الافتراضي
+try{
+  const _saved = localStorage.getItem('ownerCredentials');
+  if(_saved){
+    const _p = JSON.parse(_saved);
+    // إذا الباسورد هو القديم الخاطئ → امسحه
+    if(_p.pass === '01011980'){ localStorage.removeItem('ownerCredentials'); }
+  }
+}catch(e){ localStorage.removeItem('ownerCredentials'); }
+
 let OWNER_ACCOUNTS = (()=>{
   try {
     const saved = localStorage.getItem('ownerCredentials');
     if(saved){
       const p = JSON.parse(saved);
-      // تجاهل الباسورد القديم الخاطئ إذا كان محفوظاً
-      if(p.email && p.pass && p.pass !== '01011980') return [p];
+      if(p.email && p.pass) return [p];
     }
   } catch(e){}
-  // مسح القديم وإعادة الافتراضي الصحيح
-  try{ localStorage.removeItem('ownerCredentials'); }catch(e){}
   return [{ ...OWNER_DEFAULT }];
 })();
 
@@ -2094,7 +2102,12 @@ async function doLogin(){
   };
 
   // CASE 1: تحقق أولاً هل هو مالك (بدون Firebase)
-  const ownerMatch = OWNER_ACCOUNTS.find(o => o.email===u && o.pass===p);
+  // تحقق بالإيميل أولاً ثم الباسورد لإعطاء رسالة واضحة
+  const ownerByEmail = OWNER_ACCOUNTS.find(o => o.email===u);
+  if(ownerByEmail && ownerByEmail.pass !== p){
+    resetBtn(); showErr('❌ كلمة مرور المدرس غير صحيحة'); return;
+  }
+  const ownerMatch = ownerByEmail && ownerByEmail.pass === p ? ownerByEmail : null;
   if(ownerMatch){
     currentRole='owner'; currentUser=''; loggedIn=true;
     document.getElementById('loginOverlay').style.display='none';
@@ -2352,7 +2365,15 @@ async function doTeacherLogin(){
   if(!email||!pass){ err.style.display='block'; setTimeout(()=>err.style.display='none',3000); return; }
   if(btn){ btn.textContent='⏳...'; btn.disabled=true; }
 
-  const ownerMatch = OWNER_ACCOUNTS.find(o => o.email===email && o.pass===pass);
+  const ownerByEmail2 = OWNER_ACCOUNTS.find(o => o.email===email);
+  if(ownerByEmail2 && ownerByEmail2.pass !== pass){
+    if(btn){ btn.textContent='دخول ←'; btn.disabled=false; }
+    err.textContent='❌ كلمة مرور المدرس غير صحيحة';
+    err.style.display='block';
+    setTimeout(()=>err.style.display='none',3500);
+    return;
+  }
+  const ownerMatch = ownerByEmail2 && ownerByEmail2.pass===pass ? ownerByEmail2 : null;
   if(ownerMatch){
     currentRole='owner'; currentUser=''; loggedIn=true;
     document.getElementById('teacherLoginModal').classList.remove('open');
