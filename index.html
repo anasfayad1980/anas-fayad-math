@@ -1671,6 +1671,16 @@ async function uploadToStorage(file, path, onProgress){
     );
   });
 }
+function diagnoseUploadError(err){
+  const code = err && err.code || '';
+  if(code==='storage/unauthorized' || code==='storage/unauthenticated'){
+    return 'صلاحيات Firebase Storage (Rules) ترفض الرفع — راجع المدرس/المطوّر لتعديل القواعد';
+  }
+  if(code==='storage/canceled'){ return 'تم إلغاء الرفع'; }
+  if(code==='storage/quota-exceeded'){ return 'تم تجاوز سعة التخزين المسموحة'; }
+  if(code==='storage/retry-limit-exceeded'){ return 'انتهت محاولات الإعادة — تحقق من سرعة الإنترنت'; }
+  return (err && (err.message||code)) || 'خطأ غير معروف';
+}
 // ══════════════════════════════════════════════
 
 // ======= DATA =======
@@ -2713,17 +2723,22 @@ async function saveLesson(){
         const progWrap = document.getElementById('videoUploadProgress');
         if(progWrap) progWrap.style.display='block';
         const path = 'lessons_videos/'+Date.now()+'_'+uploadedVideoFile.name;
-        const realUrl = await uploadToStorage(uploadedVideoFile, path, pct=>{
-          if(progFill) progFill.style.width=pct+'%';
-          if(progTxt) progTxt.textContent='جاري رفع الفيديو... '+pct+'%';
-        });
+        let realUrl = null, uploadErr = null;
+        try{
+          realUrl = await uploadToStorage(uploadedVideoFile, path, pct=>{
+            if(progFill) progFill.style.width=pct+'%';
+            if(progTxt) progTxt.textContent='جاري رفع الفيديو... '+pct+'%';
+          });
+        }catch(err){ uploadErr = err; }
         if(realUrl){
           finalUrl = realUrl; finalVsrc='upload'; finalVtype='upload'; finalVideoFileName = uploadedVideoFile.name;
           if(progTxt){ progTxt.textContent='✅ تم رفع الفيديو'; progTxt.style.color='#2E7D32'; }
         } else {
-          // لا يوجد اتصال فعلي بـ Firebase (وضع تجريبي) — نستخدم رابطاً محلياً مؤقتاً مع تحذير واضح
+          // فشل الرفع الفعلي (لا اتصال، أو صلاحيات Storage Rules ترفض الكتابة...) — نستخدم رابطاً محلياً مؤقتاً مع تحذير واضح بسبب الفشل
           finalUrl = uploadedVideoBlob || ''; finalVsrc='upload'; finalVtype='upload'; finalVideoFileName = uploadedVideoFile.name;
-          showToast('⚠️ لا يوجد اتصال بقاعدة البيانات — الفيديو محفوظ مؤقتاً على هذا المتصفح فقط ولن يظهر على أجهزة أخرى');
+          const reason = uploadErr ? diagnoseUploadError(uploadErr) : 'لا يوجد اتصال بقاعدة البيانات';
+          showToast('⚠️ فشل رفع الفيديو إلى التخزين السحابي ('+reason+') — تم حفظه مؤقتاً على هذا المتصفح فقط ولن يظهر على أجهزة أخرى');
+          console.warn('Video upload failed:', uploadErr);
         }
       } else if(existingLesson && existingLesson.vsrc==='upload'){
         // تعديل بدون اختيار ملف جديد → نحافظ على الفيديو القديم كما هو
@@ -2738,9 +2753,10 @@ async function saveLesson(){
     if(lessonUploadedFiles.length){
       for(const f of lessonUploadedFiles){
         const path = 'lessons_attachments/'+Date.now()+'_'+f.name;
-        const fUrl = await uploadToStorage(f, path);
+        let fUrl = null, attErr = null;
+        try{ fUrl = await uploadToStorage(f, path); }catch(err){ attErr = err; }
         if(fUrl) attachments.push({name:f.name, url:fUrl});
-        else showToast('⚠️ تعذر رفع الملف: '+f.name+' (لا يوجد اتصال بقاعدة البيانات)');
+        else showToast('⚠️ تعذر رفع الملف: '+f.name+' ('+(attErr?diagnoseUploadError(attErr):'لا يوجد اتصال بقاعدة البيانات')+')');
       }
     }
 
@@ -2854,14 +2870,17 @@ async function saveHW(){
 
   try{
     const path = 'assignments_files/'+Date.now()+'_'+hwUploadedFile.name;
-    const realUrl = await uploadToStorage(hwUploadedFile, path);
+    let realUrl = null, uploadErr = null;
+    try{ realUrl = await uploadToStorage(hwUploadedFile, path); }catch(err){ uploadErr = err; }
     const newHWId=Date.now();
     let fileUrl = realUrl;
     if(!fileUrl){
-      // لا يوجد اتصال فعلي بـ Firebase — نخزّن نسخة محلية مؤقتة على هذا المتصفح فقط كحل بديل
+      // فشل الرفع الفعلي (لا اتصال، أو صلاحيات Storage Rules ترفض الكتابة...) — نخزّن نسخة محلية مؤقتة على هذا المتصفح فقط كحل بديل
       fileUrl = hwUploadedFileData ? hwUploadedFileData.url : null;
       try{ const stored=JSON.parse(localStorage.getItem('adminHW_files')||'{}'); stored[newHWId]=fileUrl; localStorage.setItem('adminHW_files',JSON.stringify(stored)); }catch(e){}
-      showToast('⚠️ لا يوجد اتصال بقاعدة البيانات — الملف محفوظ مؤقتاً على هذا المتصفح فقط ولن يظهر على أجهزة أخرى');
+      const reason = uploadErr ? diagnoseUploadError(uploadErr) : 'لا يوجد اتصال بقاعدة البيانات';
+      showToast('⚠️ فشل رفع الملف إلى التخزين السحابي ('+reason+') — تم حفظه مؤقتاً على هذا المتصفح فقط ولن يظهر على أجهزة أخرى');
+      console.warn('HW upload failed:', uploadErr);
       fileUrl = fileUrl || 'local';
     }
     const newHW={id:newHWId,title,course,due,type,fileUrl,fileName:hwUploadedFile.name,fileType:hwUploadedFile.type,access,unlockPassword:accessPassword};
