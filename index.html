@@ -765,6 +765,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     <button class="back-btn" onclick="showPage('course-detail')" id="lv-back">← العودة للكورس</button>
     <h2 class="section-title" id="lv-title">الحصة الأولى - مقدمة في المثلثات (جلسة Zoom)</h2>
     <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.5rem;" id="lv-meta">الوحدة الأولى | الصف الثاني عشر متقدم - الجبر وحساب المثلثات</p>
+    <div id="lv-attachments" style="margin-bottom:1rem;"></div>
     <div class="video-card">
       <!-- Video Type Switcher -->
       <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
@@ -975,6 +976,19 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
   </div>
 </div>
 
+<div class="modal-overlay" id="unlockModal">
+  <div class="modal-box" style="max-width:360px;">
+    <h3 id="unlock-modal-title">🔒 محتوى مدفوع</h3>
+    <p style="color:var(--muted);margin-bottom:1rem;" id="unlock-modal-msg">هذا المحتوى مخصص للطلاب المدفوعين. أدخل كلمة المرور لفتحه:</p>
+    <input type="password" id="unlock-pass-input" placeholder="كلمة المرور" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:0.92rem;font-family:'Cairo',sans-serif;outline:none;margin-bottom:0.5rem;box-sizing:border-box;" onkeydown="if(event.key==='Enter'){event.preventDefault();submitUnlock();}">
+    <p id="unlock-error-msg" style="color:#C62828;font-size:0.85rem;display:none;margin:0;">❌ كلمة المرور غير صحيحة</p>
+    <div class="modal-footer">
+      <button class="icon-btn" onclick="closeUnlockModal()" id="unlock-btn-cancel">إلغاء</button>
+      <button class="admin-btn" onclick="submitUnlock()" id="unlock-btn-submit">فتح 🔓</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="studentModal">
   <div class="modal-box">
     <h3 id="studentModalTitle">إضافة طالب جديد</h3>
@@ -1092,10 +1106,14 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     <div class="form-row">
       <div>
         <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="lm-lbl-access">الوصول</label>
-        <select id="lm-access">
+        <select id="lm-access" onchange="toggleLessonAccessPassword()">
           <option value="all" id="lm-access-all">جميع الطلاب</option>
           <option value="paid" id="lm-access-paid">المدفوعون فقط</option>
         </select>
+      </div>
+      <div id="lm-access-pass-wrap" style="display:none;">
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="lm-lbl-access-pass">كلمة مرور الفتح</label>
+        <input type="text" id="lm-access-pass" placeholder="مثال: vip2026">
       </div>
       <div>
         <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="lm-lbl-status">الحالة</label>
@@ -1276,6 +1294,19 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
             <div style="font-size:0.78rem;color:#90CAF9;margin-top:6px;" id="adm-hw-mobile-hint">📱 يعمل من الموبايل والكمبيوتر</div>
           </div>
           <div id="hwFileName" style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;"></div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-hw-access">الوصول</label>
+            <select id="hw-access" onchange="toggleHWAccessPassword()">
+              <option value="all" id="hw-access-all">جميع الطلاب</option>
+              <option value="paid" id="hw-access-paid">المدفوعون فقط</option>
+            </select>
+          </div>
+          <div id="hw-access-pass-wrap" style="display:none;">
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-hw-access-pass">كلمة مرور الفتح</label>
+            <input type="text" id="hw-access-pass" placeholder="مثال: vip2026">
+          </div>
         </div>
         <button class="admin-btn green" onclick="saveHW()" id="adm-btn-save-hw">نشر الواجب</button>
       </div>
@@ -1700,15 +1731,19 @@ function renderStudentHW(){
       : (currentLang==='ar' ? 'جديد 🔔' : 'New 🔔');
 
     const btnColor = isDone ? '#4CAF50' : 'linear-gradient(135deg,var(--blue),var(--blue-light))';
+    const locked = hw.access==='paid' && !isContentUnlocked('hw', hw.id);
+    const lockBadge = hw.access==='paid'
+      ? `<span style="background:${locked?'#FFF3E0':'#E8F5E9'};color:${locked?'#E65100':'#2E7D32'};padding:2px 8px;border-radius:10px;font-size:0.78rem;margin-right:4px;">${locked?'🔒 مدفوع':'🔓 مفتوح'}</span>`
+      : '';
 
     return `<div class="assign-item" style="${isDone?'opacity:0.75;':''}">
       <div class="assign-info">
         <h4>${hw.title}</h4>
-        <p style="color:var(--muted);font-size:0.85rem;">${dueLabel} &nbsp;|&nbsp; ${hw.course} &nbsp;|&nbsp; <span style="background:#E3F2FD;color:var(--blue);padding:2px 8px;border-radius:10px;font-size:0.78rem;">${hw.type}</span></p>
+        <p style="color:var(--muted);font-size:0.85rem;">${dueLabel} &nbsp;|&nbsp; ${hw.course} &nbsp;|&nbsp; <span style="background:#E3F2FD;color:var(--blue);padding:2px 8px;border-radius:10px;font-size:0.78rem;">${hw.type}</span> ${lockBadge}</p>
       </div>
       <span class="assign-status ${statusClass}">${statusLabel}</span>
       <button class="assign-dl-btn" style="background:${btnColor};" onclick="downloadHW(${hw.id})">
-        ⬇ ${currentLang==='ar'?'تحميل الواجب':'Download'}
+        ${locked?'🔒 فتح وتحميل':'⬇ '+(currentLang==='ar'?'تحميل الواجب':'Download')}
       </button>
     </div>`;
   }).join('');
@@ -1721,7 +1756,12 @@ function downloadHW(id){
   const hw = adminHW.find(x=>x.id===id);
   if(!hw){ showToast('الواجب غير موجود'); return; }
 
-  // محاولة الحصول على الـ fileUrl من الكائن أو من localStorage
+  if(hw.access==='paid' && !isContentUnlocked('hw', id)){
+    requestUnlock('hw', id, hw.unlockPassword, ()=>downloadHW(id));
+    return;
+  }
+
+  // محاولة الحصول على الـ fileUrl من الكائن أو من localStorage (دعم الواجبات القديمة)
   let fileUrl = hw.fileUrl && hw.fileUrl !== 'local' ? hw.fileUrl : null;
   if(!fileUrl){
     try{
@@ -2047,25 +2087,17 @@ function toggleLang(){
 
 // بيانات المالك — تُحمَّل من localStorage إن وُجدت، وإلا تُستخدم الافتراضية
 const OWNER_DEFAULT = { email: 'anasfayad1980@gmail.com', pass: '123456' };
-// ★ مسح أي بيانات قديمة خاطئة من localStorage دائماً عند كل تحميل
-// وإعادة البناء من Firebase أو الافتراضي
-try{
-  const _saved = localStorage.getItem('ownerCredentials');
-  if(_saved){
-    const _p = JSON.parse(_saved);
-    // إذا الباسورد هو القديم الخاطئ → امسحه
-    if(_p.pass === '01011980'){ localStorage.removeItem('ownerCredentials'); }
-  }
-}catch(e){ localStorage.removeItem('ownerCredentials'); }
-
 let OWNER_ACCOUNTS = (()=>{
   try {
     const saved = localStorage.getItem('ownerCredentials');
     if(saved){
       const p = JSON.parse(saved);
-      if(p.email && p.pass) return [p];
+      // تجاهل الباسورد القديم الخاطئ إذا كان محفوظاً
+      if(p.email && p.pass && p.pass !== '01011980') return [p];
     }
   } catch(e){}
+  // مسح القديم وإعادة الافتراضي الصحيح
+  try{ localStorage.removeItem('ownerCredentials'); }catch(e){}
   return [{ ...OWNER_DEFAULT }];
 })();
 
@@ -2102,12 +2134,7 @@ async function doLogin(){
   };
 
   // CASE 1: تحقق أولاً هل هو مالك (بدون Firebase)
-  // تحقق بالإيميل أولاً ثم الباسورد لإعطاء رسالة واضحة
-  const ownerByEmail = OWNER_ACCOUNTS.find(o => o.email===u);
-  if(ownerByEmail && ownerByEmail.pass !== p){
-    resetBtn(); showErr('❌ كلمة مرور المدرس غير صحيحة'); return;
-  }
-  const ownerMatch = ownerByEmail && ownerByEmail.pass === p ? ownerByEmail : null;
+  const ownerMatch = OWNER_ACCOUNTS.find(o => o.email===u && o.pass===p);
   if(ownerMatch){
     currentRole='owner'; currentUser=''; loggedIn=true;
     document.getElementById('loginOverlay').style.display='none';
@@ -2365,15 +2392,7 @@ async function doTeacherLogin(){
   if(!email||!pass){ err.style.display='block'; setTimeout(()=>err.style.display='none',3000); return; }
   if(btn){ btn.textContent='⏳...'; btn.disabled=true; }
 
-  const ownerByEmail2 = OWNER_ACCOUNTS.find(o => o.email===email);
-  if(ownerByEmail2 && ownerByEmail2.pass !== pass){
-    if(btn){ btn.textContent='دخول ←'; btn.disabled=false; }
-    err.textContent='❌ كلمة مرور المدرس غير صحيحة';
-    err.style.display='block';
-    setTimeout(()=>err.style.display='none',3500);
-    return;
-  }
-  const ownerMatch = ownerByEmail2 && ownerByEmail2.pass===pass ? ownerByEmail2 : null;
+  const ownerMatch = OWNER_ACCOUNTS.find(o => o.email===email && o.pass===pass);
   if(ownerMatch){
     currentRole='owner'; currentUser=''; loggedIn=true;
     document.getElementById('teacherLoginModal').classList.remove('open');
@@ -2578,8 +2597,21 @@ function filterLessons(v){renderLessonsTable(v);}
 function openLessonModal(){
   editingLessonId=null;
   document.getElementById('lessonModalTitle').textContent='رفع درس جديد';
-  ['lm-title','lm-unit','lm-url'].forEach(id=>document.getElementById(id).value='');
+  ['lm-title','lm-unit','lm-url','lm-zoom-url','lm-access-pass'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('uploadedFiles').textContent='';
+  document.getElementById('lm-status').value='active';
+  const accessSel=document.getElementById('lm-access'); if(accessSel) accessSel.value='all';
+  toggleLessonAccessPassword();
+  const vtypeSel=document.getElementById('lm-vtype'); if(vtypeSel) vtypeSel.value='youtube';
+  // إعادة ضبط منطقة رفع الفيديو لوضعها الافتراضي (رابط)
+  switchVideoSrc('url');
+  const videoInput=document.getElementById('videoUpload'); if(videoInput) videoInput.value='';
+  const videoInfo=document.getElementById('videoUploadInfo'); if(videoInfo) videoInfo.textContent='';
+  const videoProg=document.getElementById('videoUploadProgress'); if(videoProg) videoProg.style.display='none';
+  uploadedVideoFile=null; uploadedVideoBlob=null; uploadedVideoName='';
+  // إعادة ضبط مرفقات PDF الجديدة
+  lessonUploadedFiles=[];
+  const pdfInput=document.getElementById('pdfUpload'); if(pdfInput) pdfInput.value='';
   // تفريغ حقل الكورس
   const courseText = document.getElementById('lm-course-text');
   if(courseText) courseText.value='';
@@ -2595,7 +2627,6 @@ function editLesson(id){
   document.getElementById('lessonModalTitle').textContent='تعديل الدرس';
   document.getElementById('lm-title').value=l.title;
   document.getElementById('lm-unit').value=l.unit;
-  document.getElementById('lm-url').value=l.url||'';
   document.getElementById('lm-status').value=l.status;
   // ملء حقل الكورس
   populateCourseOptions();
@@ -2607,23 +2638,59 @@ function editLesson(id){
     const found = Array.from(courseSel.options).find(o=>o.value===l.course);
     courseSel.value = found ? l.course : '';
   }
+  // إعادة بناء منطقة الفيديو بحسب مصدره الحالي
+  uploadedVideoFile=null; uploadedVideoBlob=null; uploadedVideoName='';
+  const videoInput=document.getElementById('videoUpload'); if(videoInput) videoInput.value='';
+  const videoInfo=document.getElementById('videoUploadInfo'); if(videoInfo) videoInfo.textContent='';
+  const videoProg=document.getElementById('videoUploadProgress'); if(videoProg) videoProg.style.display='none';
+  if(l.vsrc==='upload'){
+    switchVideoSrc('upload');
+    if(videoInfo) videoInfo.textContent = '📹 يوجد فيديو مرفوع حالياً' + (l.videoFileName?(': '+l.videoFileName):'') + ' — اختر ملفاً جديداً فقط إن أردت استبداله، وإلا اتركه كما هو.';
+    document.getElementById('lm-url').value='';
+  } else if(l.vsrc==='zoom'){
+    switchVideoSrc('zoom');
+    document.getElementById('lm-zoom-url').value = l.url||'';
+    document.getElementById('lm-url').value='';
+  } else {
+    switchVideoSrc('url');
+    document.getElementById('lm-url').value = l.url||'';
+    const vtypeSel=document.getElementById('lm-vtype'); if(vtypeSel) vtypeSel.value = l.vtype||'youtube';
+  }
+  // الوصول وكلمة مرور المحتوى المدفوع
+  const accessSel = document.getElementById('lm-access');
+  if(accessSel) accessSel.value = l.access||'all';
+  const accessPass = document.getElementById('lm-access-pass');
+  if(accessPass) accessPass.value = l.unlockPassword||'';
+  toggleLessonAccessPassword();
+  // مرفقات PDF — لا نحذف القديمة، فقط نعرضها ونسمح بإضافة جديدة
+  lessonUploadedFiles=[];
+  const pdfInput=document.getElementById('pdfUpload'); if(pdfInput) pdfInput.value='';
+  const filesInfo=document.getElementById('uploadedFiles');
+  if(filesInfo) filesInfo.textContent = (l.attachments&&l.attachments.length) ? ('مرفقات حالية: '+l.attachments.map(a=>a.name).join('، ')+' — اختر ملفات جديدة لإضافتها إن أردت') : '';
   document.getElementById('lessonModal').classList.add('open');
 }
 function closeLessonModal(){document.getElementById('lessonModal').classList.remove('open');}
-function saveLesson(){
+async function saveLesson(){
   const title=document.getElementById('lm-title').value.trim();
   // قراءة الكورس: الأولوية لحقل النص، ثم القائمة المنسدلة
-  const courseText = (document.getElementById('lm-course-text')?.value||'').trim();
-  const courseSel  = (document.getElementById('lm-course')?.value||'').trim();
-  const course = courseText || courseSel || '';
+  const courseTextRaw = (document.getElementById('lm-course-text')?.value||'').trim();
+  const courseSelRaw  = (document.getElementById('lm-course')?.value||'').trim();
+  const course = (courseTextRaw || courseSelRaw || '').replace(/\s+/g,' ');
   const unit=document.getElementById('lm-unit').value.trim();
-  const url=document.getElementById('lm-url').value.trim();
-  const vtype=document.getElementById('lm-vtype')?.value||'youtube';
   const status=document.getElementById('lm-status').value;
+  const access = document.getElementById('lm-access')?.value || 'all';
+  let accessPassword = (document.getElementById('lm-access-pass')?.value||'').trim();
   if(!title){showToast('يرجى إدخال عنوان الحصة');return;}
 
-  // إن أُدخل اسم كورس جديد غير موجود → أنشئه تلقائياً
-  if(course && !adminCourses.find(c=>c.name===course)){
+  const existingLesson = editingLessonId ? adminLessons.find(x=>x.id===editingLessonId) : null;
+  if(access==='paid' && !accessPassword){
+    // عند التعديل: إن تُرك الحقل فارغاً نحافظ على كلمة المرور القديمة إن وجدت
+    accessPassword = (existingLesson && existingLesson.unlockPassword) || '';
+    if(!accessPassword){ showToast('⚠️ يرجى تحديد كلمة مرور لفتح المحتوى المدفوع'); return; }
+  }
+
+  // إن أُدخل اسم كورس جديد غير موجود (بعد تطبيع المسافات) → أنشئه تلقائياً
+  if(course && !adminCourses.find(c=>(c.name||'').replace(/\s+/g,' ').trim()===course)){
     const newCourse={id:'c_'+Date.now(),name:course,grade:'',sem:''};
     adminCourses.push(newCourse);
     if(fbReady) fbSet('courses',newCourse.id,newCourse).catch(()=>{});
@@ -2631,28 +2698,134 @@ function saveLesson(){
     showToast('✅ تم إنشاء كورس جديد: '+course);
   }
 
-  if(editingLessonId){
-    const l=adminLessons.find(x=>x.id===editingLessonId);
-    if(l){ Object.assign(l,{title,course,unit,url,vtype,status});
-      if(fbReady) fbSet('lessons',l.id,l).catch(()=>{});
+  const saveBtn = document.getElementById('lm-btn-save');
+  if(saveBtn){ saveBtn.disabled=true; saveBtn.textContent='⏳ جاري الحفظ...'; }
+
+  try{
+    // ── تحديد بيانات الفيديو الفعلية (رابط / رفع مباشر / زووم) ──
+    const videoData = getVideoSrcData();
+    let finalUrl = videoData.url, finalVsrc = videoData.vsrc, finalVtype = videoData.vtype, finalVideoFileName = '';
+
+    if(videoData.vsrc==='upload'){
+      if(uploadedVideoFile){
+        const progTxt = document.getElementById('videoProgressTxt');
+        const progFill = document.getElementById('videoProgressFill');
+        const progWrap = document.getElementById('videoUploadProgress');
+        if(progWrap) progWrap.style.display='block';
+        const path = 'lessons_videos/'+Date.now()+'_'+uploadedVideoFile.name;
+        const realUrl = await uploadToStorage(uploadedVideoFile, path, pct=>{
+          if(progFill) progFill.style.width=pct+'%';
+          if(progTxt) progTxt.textContent='جاري رفع الفيديو... '+pct+'%';
+        });
+        if(realUrl){
+          finalUrl = realUrl; finalVsrc='upload'; finalVtype='upload'; finalVideoFileName = uploadedVideoFile.name;
+          if(progTxt){ progTxt.textContent='✅ تم رفع الفيديو'; progTxt.style.color='#2E7D32'; }
+        } else {
+          // لا يوجد اتصال فعلي بـ Firebase (وضع تجريبي) — نستخدم رابطاً محلياً مؤقتاً مع تحذير واضح
+          finalUrl = uploadedVideoBlob || ''; finalVsrc='upload'; finalVtype='upload'; finalVideoFileName = uploadedVideoFile.name;
+          showToast('⚠️ لا يوجد اتصال بقاعدة البيانات — الفيديو محفوظ مؤقتاً على هذا المتصفح فقط ولن يظهر على أجهزة أخرى');
+        }
+      } else if(existingLesson && existingLesson.vsrc==='upload'){
+        // تعديل بدون اختيار ملف جديد → نحافظ على الفيديو القديم كما هو
+        finalUrl = existingLesson.url; finalVsrc='upload'; finalVtype = existingLesson.vtype||'upload'; finalVideoFileName = existingLesson.videoFileName||'';
+      } else {
+        finalUrl=''; finalVsrc='upload'; finalVtype='upload';
+      }
     }
-    showToast('✅ تم تحديث الدرس');
-  } else {
-    const newLesson={id:Date.now(),title,course,unit,url,vtype,status};
-    adminLessons.push(newLesson);
-    if(fbReady) fbSet('lessons',newLesson.id,newLesson).catch(()=>{});
-    showToast('✅ تم نشر الدرس: '+title);
-    addNotification('📚 درس جديد أُضيف: '+title, 'lesson');
+
+    // ── رفع مرفقات PDF/الصور الجديدة (إن وُجدت) ──
+    let attachments = (existingLesson && existingLesson.attachments) ? existingLesson.attachments.slice() : [];
+    if(lessonUploadedFiles.length){
+      for(const f of lessonUploadedFiles){
+        const path = 'lessons_attachments/'+Date.now()+'_'+f.name;
+        const fUrl = await uploadToStorage(f, path);
+        if(fUrl) attachments.push({name:f.name, url:fUrl});
+        else showToast('⚠️ تعذر رفع الملف: '+f.name+' (لا يوجد اتصال بقاعدة البيانات)');
+      }
+    }
+
+    if(editingLessonId){
+      const l=adminLessons.find(x=>x.id===editingLessonId);
+      if(l){
+        Object.assign(l,{title,course,unit,url:finalUrl,vsrc:finalVsrc,vtype:finalVtype,videoFileName:finalVideoFileName||l.videoFileName||'',status,access,unlockPassword:accessPassword,attachments});
+        if(fbReady) fbSet('lessons',l.id,l).catch(()=>{});
+      }
+      showToast('✅ تم تحديث الدرس');
+    } else {
+      const newLesson={id:Date.now(),title,course,unit,url:finalUrl,vsrc:finalVsrc,vtype:finalVtype,videoFileName:finalVideoFileName,status,access,unlockPassword:accessPassword,attachments};
+      adminLessons.push(newLesson);
+      if(fbReady) fbSet('lessons',newLesson.id,newLesson).catch(()=>{});
+      showToast('✅ تم نشر الدرس: '+title);
+      addNotification('📚 درس جديد أُضيف: '+title, 'lesson');
+    }
+    closeLessonModal();
+    renderLessonsTable(); updateAllStats();
+    renderCourseCards();
+    renderDashboardCourses();
+    if(currentCourseId){ const c=adminCourses.find(x=>x.id===currentCourseId); if(c) renderCourseSidebar(c); }
+  } catch(e){
+    console.warn('saveLesson error', e);
+    showToast('❌ حدث خطأ أثناء حفظ الدرس: '+(e.message||''));
+  } finally {
+    if(saveBtn){ saveBtn.disabled=false; saveBtn.textContent='نشر الدرس'; }
   }
-  closeLessonModal();
-  renderLessonsTable(); updateAllStats();
-  renderCourseCards();
-  renderDashboardCourses();
-  if(currentCourseId){ const c=adminCourses.find(x=>x.id===currentCourseId); if(c) renderCourseSidebar(c); }
 }
+function toggleLessonAccessPassword(){
+  const sel = document.getElementById('lm-access');
+  const wrap = document.getElementById('lm-access-pass-wrap');
+  if(!sel||!wrap) return;
+  wrap.style.display = sel.value==='paid' ? 'block' : 'none';
+}
+function toggleHWAccessPassword(){
+  const sel = document.getElementById('hw-access');
+  const wrap = document.getElementById('hw-access-pass-wrap');
+  if(!sel||!wrap) return;
+  wrap.style.display = sel.value==='paid' ? 'block' : 'none';
+}
+// ══════════════════════════════════════════════
+// قفل المحتوى المدفوع بكلمة مرور (دروس وفيديوهات وواجبات)
+// ══════════════════════════════════════════════
+function isContentUnlocked(type, id){
+  try{ return localStorage.getItem('unlocked_'+type+'_'+id+'_'+currentUser)==='1'; }
+  catch(e){ return false; }
+}
+let pendingUnlock=null;
+function requestUnlock(type, id, correctPass, onSuccess){
+  pendingUnlock = {type, id, correctPass: correctPass||'', onSuccess};
+  const inp=document.getElementById('unlock-pass-input'); if(inp) inp.value='';
+  const err=document.getElementById('unlock-error-msg'); if(err) err.style.display='none';
+  document.getElementById('unlockModal').classList.add('open');
+  setTimeout(()=>document.getElementById('unlock-pass-input')?.focus(), 150);
+}
+function closeUnlockModal(){
+  document.getElementById('unlockModal').classList.remove('open');
+  pendingUnlock=null;
+}
+function submitUnlock(){
+  if(!pendingUnlock) return;
+  const entered=(document.getElementById('unlock-pass-input').value||'').trim();
+  if(entered && entered===pendingUnlock.correctPass){
+    try{ localStorage.setItem('unlocked_'+pendingUnlock.type+'_'+pendingUnlock.id+'_'+currentUser,'1'); }catch(e){}
+    const cb=pendingUnlock.onSuccess;
+    closeUnlockModal();
+    if(cb) cb();
+  } else {
+    const err=document.getElementById('unlock-error-msg'); if(err) err.style.display='block';
+  }
+}
+function openLessonGated(id, title, url, vsrc){
+  const lesson = adminLessons.find(l=>l.id===id);
+  if(lesson && lesson.access==='paid' && !isContentUnlocked('lesson', id)){
+    requestUnlock('lesson', id, lesson.unlockPassword, ()=>clickLesson(id,title,url,vsrc));
+    return;
+  }
+  clickLesson(id, title, url, vsrc);
+}
+let lessonUploadedFiles=[];
 function handleFileSelect(input){
-  const names=Array.from(input.files).map(f=>f.name).join(', ');
-  document.getElementById('uploadedFiles').textContent='الملفات: '+names;
+  lessonUploadedFiles = Array.from(input.files||[]);
+  const names = lessonUploadedFiles.map(f=>f.name).join(', ');
+  document.getElementById('uploadedFiles').textContent = names ? 'ملفات جديدة: '+names : '';
 }
 
 function renderHWTable(){
@@ -2665,43 +2838,64 @@ function renderHWTable(){
   const el=document.getElementById('stat-hw');if(el)el.textContent=adminHW.length;
   const el2=document.getElementById('s-hw');if(el2)el2.textContent=adminHW.length;
 }
-function saveHW(){
+async function saveHW(){
   const title=document.getElementById('hw-title').value.trim();
   const course=document.getElementById('hw-course').value;
   const due=document.getElementById('hw-due').value;
   const type=document.getElementById('hw-type').value;
+  const access=document.getElementById('hw-access')?.value||'all';
+  const accessPassword=(document.getElementById('hw-access-pass')?.value||'').trim();
   if(!title){showToast('يرجى إدخال عنوان الواجب');return;}
-  if(!hwUploadedFileData){showToast('⚠️ يرجى رفع ملف PDF أولاً');return;}
-  const newHWId=Date.now();
-  const newHW={id:newHWId,title,course,due,type,fileUrl:hwUploadedFileData.url,fileName:hwUploadedFileData.name,fileType:hwUploadedFileData.type};
-  adminHW.push(newHW);
-  // حفظ في localStorage كـ backup (بدون الـ base64 الكبير في Firebase)
-  try{ const stored=JSON.parse(localStorage.getItem('adminHW_files')||'{}'); stored[newHWId]=hwUploadedFileData.url; localStorage.setItem('adminHW_files',JSON.stringify(stored)); }catch(e){}
-  // Firebase في الخلفية — نحفظ بدون الـ base64 لتجنب حجم الـ document
-  if(fbReady){
-    const hwMeta={id:newHWId,title,course,due,type,fileName:hwUploadedFileData.name,fileType:hwUploadedFileData.type,fileUrl:'local'};
-    fbSet('assignments',newHWId,hwMeta).catch(()=>{});
+  if(!hwUploadedFile){showToast('⚠️ يرجى رفع ملف PDF أولاً');return;}
+  if(access==='paid' && !accessPassword){ showToast('⚠️ يرجى تحديد كلمة مرور لفتح الواجب المدفوع'); return; }
+
+  const saveBtn=document.getElementById('adm-btn-save-hw');
+  if(saveBtn){ saveBtn.disabled=true; saveBtn.textContent='⏳ جاري رفع الملف...'; }
+
+  try{
+    const path = 'assignments_files/'+Date.now()+'_'+hwUploadedFile.name;
+    const realUrl = await uploadToStorage(hwUploadedFile, path);
+    const newHWId=Date.now();
+    let fileUrl = realUrl;
+    if(!fileUrl){
+      // لا يوجد اتصال فعلي بـ Firebase — نخزّن نسخة محلية مؤقتة على هذا المتصفح فقط كحل بديل
+      fileUrl = hwUploadedFileData ? hwUploadedFileData.url : null;
+      try{ const stored=JSON.parse(localStorage.getItem('adminHW_files')||'{}'); stored[newHWId]=fileUrl; localStorage.setItem('adminHW_files',JSON.stringify(stored)); }catch(e){}
+      showToast('⚠️ لا يوجد اتصال بقاعدة البيانات — الملف محفوظ مؤقتاً على هذا المتصفح فقط ولن يظهر على أجهزة أخرى');
+      fileUrl = fileUrl || 'local';
+    }
+    const newHW={id:newHWId,title,course,due,type,fileUrl,fileName:hwUploadedFile.name,fileType:hwUploadedFile.type,access,unlockPassword:accessPassword};
+    adminHW.push(newHW);
+    if(fbReady) fbSet('assignments',newHWId,newHW).catch(()=>{});
+    document.getElementById('hw-title').value='';
+    document.getElementById('hw-due').value='';
+    document.getElementById('hwFileName').textContent='';
+    const hwUploadInput=document.getElementById('hwUpload'); if(hwUploadInput) hwUploadInput.value='';
+    document.getElementById('hw-access').value='all';
+    document.getElementById('hw-access-pass').value='';
+    toggleHWAccessPassword();
+    hwUploadedFile=null; hwUploadedFileData=null;
+    renderHWTable(); renderStudentHW(); updateAllStats();
+    showToast('✅ تم نشر الواجب: '+title);
+    addNotification('📝 واجب جديد: '+title, 'hw');
+  } catch(e){
+    console.warn('saveHW error', e);
+    showToast('❌ حدث خطأ أثناء رفع الواجب: '+(e.message||''));
+  } finally {
+    if(saveBtn){ saveBtn.disabled=false; saveBtn.textContent='نشر الواجب'; }
   }
-  document.getElementById('hw-title').value='';
-  document.getElementById('hw-due').value='';
-  document.getElementById('hwFileName').textContent='';
-  hwUploadedFileData=null;
-  renderHWTable(); renderStudentHW(); updateAllStats();
-  showToast('✅ تم نشر الواجب: '+title);
-  addNotification('📝 واجب جديد: '+title, 'hw');
 }
 let hwUploadedFileData = null;
+let hwUploadedFile = null;
 function handleHWUpload(input){
   const file = input.files[0];
   if(!file) return;
   if(file.size > 20*1024*1024){ showToast('❌ حجم الملف كبير — الحد 20MB'); return; }
-  document.getElementById('hwFileName').textContent = '⏳ جاري تحميل الملف...';
+  hwUploadedFile = file;
+  document.getElementById('hwFileName').textContent = '✅ جاهز: ' + file.name + ' (' + (file.size/1024).toFixed(0) + ' KB) — سيتم رفعه عند نشر الواجب';
+  // نسخة محلية احتياطية فقط في حال تعذّر الاتصال بـ Firebase وقت الحفظ
   const reader = new FileReader();
-  reader.onload = function(e){
-    hwUploadedFileData = { name: file.name, url: e.target.result, type: file.type };
-    document.getElementById('hwFileName').textContent = '✅ جاهز: ' + file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
-  };
-  reader.onerror = function(){ showToast('❌ فشل قراءة الملف'); };
+  reader.onload = function(e){ hwUploadedFileData = { name: file.name, url: e.target.result, type: file.type }; };
   reader.readAsDataURL(file);
 }
 
@@ -3221,15 +3415,18 @@ function renderCourseSidebar(course){
       </div>`;
     lessons.forEach(l=>{
       globalIdx++;
-      const watched = watchedLessons[l.id] ? '✓' : globalIdx;
-      const watchedStyle = watchedLessons[l.id] ? 'background:var(--blue);color:white;' : '';
+      const isLocked = l.access==='paid' && !isContentUnlocked('lesson', l.id);
+      const watched = isLocked ? '🔒' : (watchedLessons[l.id] ? '✓' : globalIdx);
+      const watchedStyle = (!isLocked && watchedLessons[l.id]) ? 'background:var(--blue);color:white;' : '';
       const draftBadge = l.status==='draft' ? '<span style="font-size:0.7rem;background:#FFF3E0;color:#E65100;padding:1px 6px;border-radius:8px;margin-right:4px;">مسودة</span>' : '';
+      const paidBadge = (l.access==='paid' && l.status!=='draft') ? `<span style="font-size:0.7rem;background:${isLocked?'#FFF3E0':'#E8F5E9'};color:${isLocked?'#E65100':'#2E7D32'};padding:1px 6px;border-radius:8px;margin-right:4px;">${isLocked?'🔒 مدفوع':'🔓 مفتوح'}</span>` : '';
+      const srcIcon = l.url ? (l.vsrc==='upload'?'📹':(l.vsrc==='zoom'?'🎥':'🔗')) : '';
       html += `<div class="lesson-item ${l.status==='draft'?'':'hover-lesson'}" 
-        onclick="${l.status!=='draft'?`clickLesson(${l.id},'${l.title.replace(/'/g,"\'")}','${(l.url||'').replace(/'/g,"\'")}','${l.vsrc||'url'}')`:''}"
+        onclick="${l.status!=='draft'?`openLessonGated(${l.id},'${l.title.replace(/'/g,"\'")}','${(l.url||'').replace(/'/g,"\'")}','${l.vsrc||'url'}')`:''}"
         style="${l.status==='draft'?'opacity:0.5;cursor:not-allowed!important;':''}">
-        <div class="lesson-num" style="min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;${watchedStyle}background:${watchedLessons[l.id]?'var(--blue)':'#E3F2FD'};color:${watchedLessons[l.id]?'white':'var(--blue)'};">${watched}</div>
-        <span style="flex:1;">${l.title}${draftBadge}</span>
-        ${l.url?'<span style="font-size:0.7rem;color:var(--muted);">${l.vsrc==="upload"?"📹":"🔗"}</span>':''}
+        <div class="lesson-num" style="min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;${watchedStyle}background:${watchedLessons[l.id]&&!isLocked?'var(--blue)':'#E3F2FD'};color:${watchedLessons[l.id]&&!isLocked?'white':'var(--blue)'};">${watched}</div>
+        <span style="flex:1;">${l.title}${draftBadge}${paidBadge}</span>
+        ${srcIcon?`<span style="font-size:0.7rem;color:var(--muted);">${srcIcon}</span>`:''}
       </div>`;
     });
     html += '</div>';
@@ -3243,10 +3440,11 @@ function renderCourseSidebar(course){
         <span style="font-size:0.75rem;background:rgba(76,175,80,0.15);color:#2E7D32;padding:2px 8px;border-radius:10px;">${courseHW.length}</span>
       </div>`;
     courseHW.forEach(hw=>{
+      const hwLocked = hw.access==='paid' && !isContentUnlocked('hw', hw.id);
       html += `<div class="lesson-item" onclick="downloadHW(${hw.id})">
-        <div class="lesson-num" style="min-width:22px;height:22px;border-radius:50%;background:#E8F5E9;color:#2E7D32;display:flex;align-items:center;justify-content:center;font-size:0.75rem;">📥</div>
+        <div class="lesson-num" style="min-width:22px;height:22px;border-radius:50%;background:${hwLocked?'#FFF3E0':'#E8F5E9'};color:${hwLocked?'#E65100':'#2E7D32'};display:flex;align-items:center;justify-content:center;font-size:0.75rem;">${hwLocked?'🔒':'📥'}</div>
         <span style="flex:1;">${hw.title}</span>
-        <span style="font-size:0.7rem;color:#2E7D32;">⬇</span>
+        <span style="font-size:0.7rem;color:${hwLocked?'#E65100':'#2E7D32'};">${hwLocked?'مدفوع':'⬇'}</span>
       </div>`;
     });
     html += '</div>';
@@ -3471,6 +3669,19 @@ function clickLesson(id, title, url, vsrc){
   const metaEl  = document.getElementById('lv-meta');
   if(titleEl) titleEl.textContent = lesson.title;
   if(metaEl)  metaEl.textContent  = lesson.unit + ' | ' + lesson.course;
+
+  // عرض مرفقات الدرس (إن وُجدت)
+  const attEl = document.getElementById('lv-attachments');
+  if(attEl){
+    if(lesson.attachments && lesson.attachments.length){
+      attEl.innerHTML = '<div style="background:#F5F7FA;border-radius:10px;padding:0.75rem 1rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;">'
+        + '<strong style="font-size:0.85rem;">📎 مرفقات الدرس:</strong>'
+        + lesson.attachments.map(a=>`<a href="${a.url}" target="_blank" rel="noopener" style="font-size:0.85rem;background:white;border:1px solid #ddd;border-radius:8px;padding:4px 10px;text-decoration:none;color:var(--blue);">📄 ${a.name}</a>`).join('')
+        + '</div>';
+    } else {
+      attEl.innerHTML = '';
+    }
+  }
 
   // Load video based on source type
   if(videoSrc==='upload'){
