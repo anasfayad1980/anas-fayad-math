@@ -507,6 +507,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
   .stat strong{font-size:1.3rem;}
 }
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -1085,6 +1086,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
             </div>
             <p id="videoProgressTxt" style="font-size:0.8rem;color:var(--muted);margin-top:4px;">جاري المعالجة...</p>
           </div>
+          <button type="button" class="admin-btn" style="margin-top:0.6rem;background:linear-gradient(135deg,#1A73E8,#4285F4);" onclick="handleDriveVideoUpload()">☁️ رفع هذا الفيديو إلى Google Drive الآن</button>
         </div>
         <!-- Zoom mode -->
         <div id="vsrc-zoom-area" style="display:none;">
@@ -1102,6 +1104,11 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
         <div style="font-size:0.75rem;color:#90CAF9;margin-top:6px;" id="lm-pdf-mobile">📱 يعمل من الموبايل والكمبيوتر</div>
       </div>
       <div id="uploadedFiles" style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;"></div>
+      <button type="button" class="admin-btn" style="margin-top:0.5rem;background:linear-gradient(135deg,#1A73E8,#4285F4);" onclick="handleDriveAttachmentsUpload()">☁️ رفع الملفات المحددة إلى Google Drive الآن</button>
+      <div style="margin-top:0.6rem;">
+        <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:4px;">أو الصق روابط Google Drive (رابط واحد في كل سطر — بدل الرفع المباشر)</label>
+        <textarea id="lm-drive-links" rows="2" placeholder="https://drive.google.com/file/d/XXXXX/view" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:'Cairo',sans-serif;resize:vertical;"></textarea>
+      </div>
     </div>
     <div class="form-row">
       <div>
@@ -1294,6 +1301,11 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
             <div style="font-size:0.78rem;color:#90CAF9;margin-top:6px;" id="adm-hw-mobile-hint">📱 يعمل من الموبايل والكمبيوتر</div>
           </div>
           <div id="hwFileName" style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;"></div>
+          <button type="button" class="admin-btn" style="margin-top:0.5rem;background:linear-gradient(135deg,#1A73E8,#4285F4);" onclick="handleDriveHWUpload()">☁️ رفع الملف إلى Google Drive الآن</button>
+          <div style="margin-top:0.6rem;">
+            <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:4px;">أو الصق رابط Google Drive (بدل الرفع المباشر)</label>
+            <input type="text" id="hw-drive-link" placeholder="https://drive.google.com/file/d/XXXXX/view" style="width:100%;">
+          </div>
         </div>
         <div class="form-row">
           <div>
@@ -1525,6 +1537,12 @@ const firebaseConfig = {
   measurementId:     "G-NT4MBTD9CF"
 };
 
+// ╔══════════════════════════════════════════════╗
+// ║   GOOGLE DRIVE — رفع مباشر من التطبيق        ║
+// ║   ضع هنا Client ID من Google Cloud Console   ║
+// ╚══════════════════════════════════════════════╝
+const GOOGLE_DRIVE_CLIENT_ID = '540057426943-94vlgikskq99m1t34edkhif03mp7rifi.apps.googleusercontent.com';
+
 // Firebase instances (set after SDK loads)
 let firebaseApp, db, auth, storage, fbReady = false;
 
@@ -1659,27 +1677,192 @@ async function loadStudentsFromDB(){
 // ══════════════════════════════════════════════
 // STORAGE — Upload file to Firebase Storage
 // ══════════════════════════════════════════════
-async function uploadToStorage(file, path, onProgress){
+async function uploadToStorage(file, path, onProgress, timeoutMs=25000){
   if(!fbReady) return null;
-  return new Promise((resolve, reject)=>{
-    const ref  = storage.ref(path);
-    const task = ref.put(file);
+  let settled = false;
+  const uploadPromise = new Promise((resolve, reject)=>{
+    let ref, task;
+    try{
+      ref  = storage.ref(path);
+      task = ref.put(file);
+    }catch(initErr){ reject(initErr); return; }
     task.on('state_changed',
-      snap=>{ const pct=Math.round(snap.bytesTransferred/snap.totalBytes*100); if(onProgress)onProgress(pct); },
-      err=>reject(err),
-      async ()=>{ const url=await task.snapshot.ref.getDownloadURL(); resolve(url); }
+      snap=>{ try{ const pct=Math.round(snap.bytesTransferred/snap.totalBytes*100); if(onProgress)onProgress(pct); }catch(e){} },
+      err=>{ settled=true; reject(err); },
+      ()=>{
+        task.snapshot.ref.getDownloadURL().then(url=>{ settled=true; resolve(url); }).catch(urlErr=>{ settled=true; reject(urlErr); });
+      }
     );
   });
+  const timeoutPromise = new Promise((_, reject)=>{
+    setTimeout(()=>{
+      if(!settled) reject({code:'storage/timeout', message:'انتهت المهلة (Timeout) — تحقّق من اتصال الإنترنت أو إعدادات CORS الخاصة بـ Storage bucket'});
+    }, timeoutMs);
+  });
+  return Promise.race([uploadPromise, timeoutPromise]);
 }
 function diagnoseUploadError(err){
   const code = err && err.code || '';
   if(code==='storage/unauthorized' || code==='storage/unauthenticated'){
     return 'صلاحيات Firebase Storage (Rules) ترفض الرفع — راجع المدرس/المطوّر لتعديل القواعد';
   }
+  if(code==='storage/timeout'){
+    return 'استغرق الرفع وقتاً طويلاً جداً بدون استجابة — على الأغلب مشكلة CORS في إعدادات Storage bucket، أو الصفحة مفتوحة من الجهاز مباشرة (file://) بدل دومين حقيقي';
+  }
   if(code==='storage/canceled'){ return 'تم إلغاء الرفع'; }
   if(code==='storage/quota-exceeded'){ return 'تم تجاوز سعة التخزين المسموحة'; }
   if(code==='storage/retry-limit-exceeded'){ return 'انتهت محاولات الإعادة — تحقق من سرعة الإنترنت'; }
   return (err && (err.message||code)) || 'خطأ غير معروف';
+}
+
+// ╔══════════════════════════════════════════════╗
+// ║   GOOGLE DRIVE — رفع مباشر من التطبيق        ║
+// ╚══════════════════════════════════════════════╝
+let gDriveAccessToken = null;
+let gTokenClient = null;
+let _afterDriveAuthCb = null;
+
+function isDriveConfigured(){
+  return GOOGLE_DRIVE_CLIENT_ID && !GOOGLE_DRIVE_CLIENT_ID.includes('PASTE_YOUR_CLIENT_ID_HERE');
+}
+
+function initGoogleDriveAuth(){
+  if(!isDriveConfigured()){
+    showToast('⚠️ لم يتم ضبط Google Drive بعد — راجع المطوّر لإكمال الإعداد (Client ID)');
+    return false;
+  }
+  if(typeof google==='undefined' || !google.accounts || !google.accounts.oauth2){
+    showToast('⚠️ تعذر تحميل خدمة Google — تحقق من اتصال الإنترنت وأعد المحاولة');
+    return false;
+  }
+  if(!gTokenClient){
+    gTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_DRIVE_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/drive.file',
+      callback: (resp)=>{
+        if(resp && resp.access_token){
+          gDriveAccessToken = resp.access_token;
+          const cb = _afterDriveAuthCb; _afterDriveAuthCb = null;
+          if(cb) cb();
+        } else {
+          showToast('⚠️ لم يتم تسجيل الدخول إلى Google');
+        }
+      }
+    });
+  }
+  return true;
+}
+
+function ensureDriveAuth(onReady){
+  if(!initGoogleDriveAuth()) return;
+  if(gDriveAccessToken){ onReady(); return; }
+  _afterDriveAuthCb = onReady;
+  gTokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function uploadToGoogleDrive(file, onProgress){
+  return new Promise((resolve, reject)=>{
+    ensureDriveAuth(()=>{
+      try{
+        const metadata = { name: file.name };
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], {type:'application/json'}));
+        form.append('file', file);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', true);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + gDriveAccessToken);
+        if(xhr.upload) xhr.upload.onprogress = (e)=>{ if(onProgress && e.lengthComputable) onProgress(Math.round(e.loaded/e.total*100)); };
+        xhr.onload = function(){
+          if(xhr.status>=200 && xhr.status<300){
+            let data; try{ data = JSON.parse(xhr.responseText); }catch(e){ reject(new Error('رد غير متوقع من Google Drive')); return; }
+            const fileId = data.id;
+            // فتح صلاحية المشاهدة لأي شخص معه الرابط
+            fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+              method:'POST',
+              headers:{ 'Authorization':'Bearer '+gDriveAccessToken, 'Content-Type':'application/json' },
+              body: JSON.stringify({ role:'reader', type:'anyone' })
+            }).catch(()=>{}).finally(()=>{
+              resolve(`https://drive.google.com/file/d/${fileId}/view?usp=sharing`);
+            });
+          } else if(xhr.status===401){
+            gDriveAccessToken = null;
+            reject(new Error('انتهت صلاحية الجلسة مع Google — حاول الرفع مرة أخرى'));
+          } else {
+            reject(new Error('فشل الرفع إلى Google Drive (كود '+xhr.status+')'));
+          }
+        };
+        xhr.onerror = function(){ reject(new Error('فشل الاتصال بـ Google Drive')); };
+        xhr.send(form);
+      }catch(e){ reject(e); }
+    });
+  });
+}
+
+async function handleDriveVideoUpload(){
+  if(!uploadedVideoFile){ showToast('⚠️ اختر ملف فيديو أولاً'); return; }
+  const info = document.getElementById('videoUploadInfo');
+  const progWrap = document.getElementById('videoUploadProgress');
+  const progFill = document.getElementById('videoProgressFill');
+  const progTxt = document.getElementById('videoProgressTxt');
+  if(progWrap) progWrap.style.display='block';
+  if(progTxt) progTxt.textContent='جاري تسجيل الدخول إلى Google...';
+  try{
+    const link = await uploadToGoogleDrive(uploadedVideoFile, pct=>{
+      if(progFill) progFill.style.width=pct+'%';
+      if(progTxt) progTxt.textContent='جاري الرفع إلى Google Drive... '+pct+'%';
+    });
+    // تعبئة الرابط تلقائياً والتبديل لتبويب "رابط"
+    switchVideoSrc('url');
+    document.getElementById('lm-url').value = link;
+    const vtypeSel=document.getElementById('lm-vtype'); if(vtypeSel) vtypeSel.value='direct';
+    uploadedVideoFile=null; uploadedVideoBlob=null; uploadedVideoName='';
+    if(info) info.textContent='';
+    showToast('✅ تم رفع الفيديو إلى Google Drive وتعبئة الرابط تلقائياً');
+  }catch(e){
+    showToast('❌ فشل الرفع إلى Google Drive: '+(e.message||''));
+  } finally {
+    if(progWrap) progWrap.style.display='none';
+  }
+}
+
+async function handleDriveAttachmentsUpload(){
+  if(!lessonUploadedFiles.length){ showToast('⚠️ اختر ملف PDF/صورة واحد على الأقل أولاً'); return; }
+  const filesInfo = document.getElementById('uploadedFiles');
+  const total = lessonUploadedFiles.length;
+  let done = 0, failed = 0;
+  const linksField = document.getElementById('lm-drive-links');
+  for(const f of lessonUploadedFiles.slice()){
+    if(filesInfo) filesInfo.textContent = `⏳ جاري رفع ${f.name} إلى Google Drive (${done+1}/${total})...`;
+    try{
+      const link = await uploadToGoogleDrive(f);
+      if(linksField) linksField.value = (linksField.value ? linksField.value+'\n' : '') + link;
+      done++;
+    }catch(e){
+      failed++;
+      showToast('❌ فشل رفع '+f.name+': '+(e.message||''));
+    }
+  }
+  lessonUploadedFiles = [];
+  const pdfInput=document.getElementById('pdfUpload'); if(pdfInput) pdfInput.value='';
+  if(filesInfo) filesInfo.textContent = done ? `✅ تم رفع ${done} ملف إلى Google Drive` + (failed?` (فشل ${failed})`:'') : '';
+}
+
+async function handleDriveHWUpload(){
+  if(!hwUploadedFile){ showToast('⚠️ اختر ملف PDF أولاً'); return; }
+  const fileNameEl = document.getElementById('hwFileName');
+  try{
+    if(fileNameEl) fileNameEl.textContent='⏳ جاري الرفع إلى Google Drive...';
+    const link = await uploadToGoogleDrive(hwUploadedFile);
+    document.getElementById('hw-drive-link').value = link;
+    hwUploadedFile = null; hwUploadedFileData = null;
+    const hwUploadInput=document.getElementById('hwUpload'); if(hwUploadInput) hwUploadInput.value='';
+    if(fileNameEl) fileNameEl.textContent='✅ تم الرفع إلى Google Drive وتعبئة الرابط تلقائياً';
+    showToast('✅ تم رفع الملف إلى Google Drive');
+  }catch(e){
+    if(fileNameEl) fileNameEl.textContent='';
+    showToast('❌ فشل الرفع إلى Google Drive: '+(e.message||''));
+  }
 }
 // ══════════════════════════════════════════════
 
@@ -2264,6 +2447,27 @@ function loadZoomVideo(url, title=''){
   if(ttl && title) ttl.textContent = title;
   switchVideoType('zoom');
 }
+function extractDriveFileId(url){
+  if(!url || !/drive\.google\.com/.test(url)) return null;
+  let m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if(m) return m[1];
+  m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if(m) return m[1];
+  return null;
+}
+function loadDriveVideo(fileId, title){
+  const iframe = document.getElementById('youtube-iframe');
+  const noUrl  = document.getElementById('youtube-no-url');
+  if(iframe){
+    iframe.src = `https://drive.google.com/file/d/${fileId}/preview`;
+    iframe.style.display = 'block';
+    if(noUrl) noUrl.style.display = 'none';
+    const wm = document.getElementById('vid-wm');
+    const found = adminStudents.find(s=>s.user===currentUser);
+    if(wm && found) wm.textContent = 'ID: ' + found.name;
+    switchVideoType('youtube');
+  }
+}
 
 function clickLesson(id, title, url, type){
   document.querySelectorAll('.lesson-item').forEach(el=>el.classList.remove('active'));
@@ -2607,7 +2811,7 @@ function filterLessons(v){renderLessonsTable(v);}
 function openLessonModal(){
   editingLessonId=null;
   document.getElementById('lessonModalTitle').textContent='رفع درس جديد';
-  ['lm-title','lm-unit','lm-url','lm-zoom-url','lm-access-pass'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['lm-title','lm-unit','lm-url','lm-zoom-url','lm-access-pass','lm-drive-links'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('uploadedFiles').textContent='';
   document.getElementById('lm-status').value='active';
   const accessSel=document.getElementById('lm-access'); if(accessSel) accessSel.value='all';
@@ -2675,6 +2879,7 @@ function editLesson(id){
   // مرفقات PDF — لا نحذف القديمة، فقط نعرضها ونسمح بإضافة جديدة
   lessonUploadedFiles=[];
   const pdfInput=document.getElementById('pdfUpload'); if(pdfInput) pdfInput.value='';
+  const driveLinksField=document.getElementById('lm-drive-links'); if(driveLinksField) driveLinksField.value='';
   const filesInfo=document.getElementById('uploadedFiles');
   if(filesInfo) filesInfo.textContent = (l.attachments&&l.attachments.length) ? ('مرفقات حالية: '+l.attachments.map(a=>a.name).join('، ')+' — اختر ملفات جديدة لإضافتها إن أردت') : '';
   document.getElementById('lessonModal').classList.add('open');
@@ -2758,6 +2963,12 @@ async function saveLesson(){
         if(fUrl) attachments.push({name:f.name, url:fUrl});
         else showToast('⚠️ تعذر رفع الملف: '+f.name+' ('+(attErr?diagnoseUploadError(attErr):'لا يوجد اتصال بقاعدة البيانات')+')');
       }
+    }
+    // ── روابط Google Drive المُلصقة يدوياً (بديل كامل عن الرفع — لا تحتاج Firebase Storage) ──
+    const driveLinksRaw = (document.getElementById('lm-drive-links')?.value||'').trim();
+    if(driveLinksRaw){
+      const links = driveLinksRaw.split('\n').map(s=>s.trim()).filter(Boolean);
+      links.forEach((link, idx)=>{ attachments.push({name:'مرفق Google Drive '+(idx+1), url:link}); });
     }
 
     if(editingLessonId){
@@ -2861,35 +3072,46 @@ async function saveHW(){
   const type=document.getElementById('hw-type').value;
   const access=document.getElementById('hw-access')?.value||'all';
   const accessPassword=(document.getElementById('hw-access-pass')?.value||'').trim();
+  const driveLink=(document.getElementById('hw-drive-link')?.value||'').trim();
   if(!title){showToast('يرجى إدخال عنوان الواجب');return;}
-  if(!hwUploadedFile){showToast('⚠️ يرجى رفع ملف PDF أولاً');return;}
+  if(!hwUploadedFile && !driveLink){showToast('⚠️ يرجى رفع ملف PDF أو لصق رابط Google Drive');return;}
   if(access==='paid' && !accessPassword){ showToast('⚠️ يرجى تحديد كلمة مرور لفتح الواجب المدفوع'); return; }
 
   const saveBtn=document.getElementById('adm-btn-save-hw');
-  if(saveBtn){ saveBtn.disabled=true; saveBtn.textContent='⏳ جاري رفع الملف...'; }
+  if(saveBtn){ saveBtn.disabled=true; saveBtn.textContent='⏳ جاري الحفظ...'; }
 
   try{
-    const path = 'assignments_files/'+Date.now()+'_'+hwUploadedFile.name;
-    let realUrl = null, uploadErr = null;
-    try{ realUrl = await uploadToStorage(hwUploadedFile, path); }catch(err){ uploadErr = err; }
     const newHWId=Date.now();
-    let fileUrl = realUrl;
-    if(!fileUrl){
-      // فشل الرفع الفعلي (لا اتصال، أو صلاحيات Storage Rules ترفض الكتابة...) — نخزّن نسخة محلية مؤقتة على هذا المتصفح فقط كحل بديل
-      fileUrl = hwUploadedFileData ? hwUploadedFileData.url : null;
-      try{ const stored=JSON.parse(localStorage.getItem('adminHW_files')||'{}'); stored[newHWId]=fileUrl; localStorage.setItem('adminHW_files',JSON.stringify(stored)); }catch(e){}
-      const reason = uploadErr ? diagnoseUploadError(uploadErr) : 'لا يوجد اتصال بقاعدة البيانات';
-      showToast('⚠️ فشل رفع الملف إلى التخزين السحابي ('+reason+') — تم حفظه مؤقتاً على هذا المتصفح فقط ولن يظهر على أجهزة أخرى');
-      console.warn('HW upload failed:', uploadErr);
-      fileUrl = fileUrl || 'local';
+    let fileUrl, fileName, fileType;
+
+    if(driveLink){
+      // مسار رابط Google Drive — لا حاجة لأي رفع لـ Firebase Storage
+      fileUrl = driveLink; fileName = 'رابط Google Drive'; fileType = 'link';
+    } else {
+      if(saveBtn) saveBtn.textContent='⏳ جاري رفع الملف...';
+      const path = 'assignments_files/'+Date.now()+'_'+hwUploadedFile.name;
+      let realUrl = null, uploadErr = null;
+      try{ realUrl = await uploadToStorage(hwUploadedFile, path); }catch(err){ uploadErr = err; }
+      fileUrl = realUrl; fileName = hwUploadedFile.name; fileType = hwUploadedFile.type;
+      if(!fileUrl){
+        // فشل الرفع الفعلي (لا اتصال، أو صلاحيات Storage Rules ترفض الكتابة...) — نخزّن نسخة محلية مؤقتة على هذا المتصفح فقط كحل بديل
+        fileUrl = hwUploadedFileData ? hwUploadedFileData.url : null;
+        try{ const stored=JSON.parse(localStorage.getItem('adminHW_files')||'{}'); stored[newHWId]=fileUrl; localStorage.setItem('adminHW_files',JSON.stringify(stored)); }catch(e){}
+        const reason = uploadErr ? diagnoseUploadError(uploadErr) : 'لا يوجد اتصال بقاعدة البيانات';
+        showToast('⚠️ فشل رفع الملف إلى التخزين السحابي ('+reason+') — تم حفظه مؤقتاً على هذا المتصفح فقط ولن يظهر على أجهزة أخرى. جرّب لصق رابط Google Drive بدلاً من الرفع المباشر');
+        console.warn('HW upload failed:', uploadErr);
+        fileUrl = fileUrl || 'local';
+      }
     }
-    const newHW={id:newHWId,title,course,due,type,fileUrl,fileName:hwUploadedFile.name,fileType:hwUploadedFile.type,access,unlockPassword:accessPassword};
+
+    const newHW={id:newHWId,title,course,due,type,fileUrl,fileName,fileType,access,unlockPassword:accessPassword};
     adminHW.push(newHW);
     if(fbReady) fbSet('assignments',newHWId,newHW).catch(()=>{});
     document.getElementById('hw-title').value='';
     document.getElementById('hw-due').value='';
     document.getElementById('hwFileName').textContent='';
     const hwUploadInput=document.getElementById('hwUpload'); if(hwUploadInput) hwUploadInput.value='';
+    const driveLinkInput=document.getElementById('hw-drive-link'); if(driveLinkInput) driveLinkInput.value='';
     document.getElementById('hw-access').value='all';
     document.getElementById('hw-access-pass').value='';
     toggleHWAccessPassword();
@@ -3703,10 +3925,17 @@ function clickLesson(id, title, url, vsrc){
   }
 
   // Load video based on source type
+  const driveFileId = extractDriveFileId(videoUrl);
   if(videoSrc==='upload'){
     loadUploadedVideo(videoUrl, lesson.title);
   } else if(videoSrc==='zoom' || videoType==='zoom'){
     loadZoomVideo(videoUrl, lesson.title);
+  } else if(driveFileId){
+    // رابط Google Drive (تم لصقه يدوياً) → عرض عبر iframe مثل يوتيوب
+    loadDriveVideo(driveFileId, lesson.title);
+  } else if(videoType==='direct'){
+    // رابط فيديو مباشر (mp4 وغيره، غير يوتيوب) → تشغيل عبر عنصر <video>
+    loadUploadedVideo(videoUrl, lesson.title);
   } else {
     loadYouTubeVideo(videoUrl);
   }
