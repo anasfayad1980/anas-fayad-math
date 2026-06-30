@@ -2459,6 +2459,8 @@ function loadYouTubeVideo(url){
   for(const p of patterns){ const m=url.match(p); if(m){id=m[1];break;} }
   const iframe = document.getElementById('youtube-iframe');
   const noUrl  = document.getElementById('youtube-no-url');
+  const vid    = document.getElementById('html5-video');
+  if(vid){ vid.pause(); vid.removeAttribute('src'); vid.load(); vid.style.display='none'; }
   if(id && iframe){
     iframe.src = `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&fs=1`;
     iframe.style.display = 'block';
@@ -2477,6 +2479,10 @@ function loadZoomVideo(url, title=''){
   const ttl = document.getElementById('zoom-title');
   if(btn) btn.href = url;
   if(ttl && title) ttl.textContent = title;
+  const iframe = document.getElementById('youtube-iframe');
+  const vid    = document.getElementById('html5-video');
+  if(iframe) iframe.style.display = 'none';
+  if(vid){ vid.pause(); vid.removeAttribute('src'); vid.load(); vid.style.display='none'; }
   switchVideoType('zoom');
 }
 function extractDriveFileId(url){
@@ -2490,6 +2496,8 @@ function extractDriveFileId(url){
 function loadDriveVideo(fileId, title){
   const iframe = document.getElementById('youtube-iframe');
   const noUrl  = document.getElementById('youtube-no-url');
+  const vid    = document.getElementById('html5-video');
+  if(vid){ vid.pause(); vid.removeAttribute('src'); vid.load(); vid.style.display='none'; }
   if(iframe){
     iframe.src = `https://drive.google.com/file/d/${fileId}/preview`;
     iframe.style.display = 'block';
@@ -3991,7 +3999,13 @@ function clickLesson(id, title, url, vsrc, evt){
   // Load video based on source type
   const driveFileId = extractDriveFileId(videoUrl);
   if(videoSrc==='upload'){
-    loadUploadedVideo(videoUrl, lesson.title);
+    // ⚠️ روابط blob: محلية فقط لمتصفح من رفعها أصلاً — لا تعمل لأي طالب/جهاز آخر
+    if(videoUrl && videoUrl.startsWith('blob:')){
+      loadUploadedVideo(null, lesson.title); // يعرض "لا يوجد فيديو" بدل عرض محتوى غير صحيح
+      showToast('⚠️ هذا الفيديو رُفع بطريقة محلية قديمة غير صالحة لجميع الطلاب — يرجى من المعلم إعادة رفعه عبر "☁️ رفع إلى Google Drive"');
+    } else {
+      loadUploadedVideo(videoUrl, lesson.title);
+    }
   } else if(videoSrc==='zoom' || videoType==='zoom'){
     loadZoomVideo(videoUrl, lesson.title);
   } else if(driveFileId){
@@ -4025,10 +4039,18 @@ function loadUploadedVideo(blobUrl, title){
     vid.controlsList = 'nodownload';
     vid.oncontextmenu = ()=>false;
   }
+  if(!blobUrl){
+    // لا يوجد فيديو فعلي لهذا الدرس (مثلاً رابط blob محلي من متصفح/جلسة معلم أخرى لا يعمل هنا)
+    vid.pause(); vid.removeAttribute('src'); vid.load(); vid.style.display='none';
+    if(iframe) iframe.style.display='none';
+    if(noUrl) noUrl.style.display='block';
+    return;
+  }
   vid.src = blobUrl;
-  if(iframe) iframe.style.display='none';
+  if(iframe){ iframe.src=''; iframe.style.display='none'; }
   if(noUrl)  noUrl.style.display='none';
   if(wrap && !document.getElementById('html5-video')) wrap.appendChild(vid);
+  if(wrap && !vid.isConnected) wrap.appendChild(vid);
   vid.style.display='block';
   
   // Watermark
