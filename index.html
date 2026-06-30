@@ -2320,12 +2320,9 @@ let OWNER_ACCOUNTS = (()=>{
     const saved = localStorage.getItem('ownerCredentials');
     if(saved){
       const p = JSON.parse(saved);
-      // تجاهل الباسورد القديم الخاطئ إذا كان محفوظاً
-      if(p.email && p.pass && p.pass !== '01011980') return [p];
+      if(p.email && p.pass) return [p];
     }
   } catch(e){}
-  // مسح القديم وإعادة الافتراضي الصحيح
-  try{ localStorage.removeItem('ownerCredentials'); }catch(e){}
   return [{ ...OWNER_DEFAULT }];
 })();
 
