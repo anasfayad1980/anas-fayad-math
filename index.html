@@ -1815,7 +1815,9 @@ async function handleDriveVideoUpload(){
     // تعبئة الرابط تلقائياً والتبديل لتبويب "رابط"
     switchVideoSrc('url');
     document.getElementById('lm-url').value = link;
-    const vtypeSel=document.getElementById('lm-vtype'); if(vtypeSel) vtypeSel.value='direct';
+    // ملاحظة: روابط Google Drive لا تعمل كفيديو مباشر (<video src>) — تحتاج تشغيل عبر iframe (/preview)
+    // detectVideoType/extractDriveFileId سيكتشفها تلقائياً كرابط Drive عند العرض، لذلك لا نضع vtype='direct'
+    const vtypeSel=document.getElementById('lm-vtype'); if(vtypeSel) vtypeSel.value='youtube';
     uploadedVideoFile=null; uploadedVideoBlob=null; uploadedVideoName='';
     if(info) info.textContent='';
     showToast('✅ تم رفع الفيديو إلى Google Drive وتعبئة الرابط تلقائياً');
@@ -1863,6 +1865,39 @@ async function handleDriveHWUpload(){
     if(fileNameEl) fileNameEl.textContent='';
     showToast('❌ فشل الرفع إلى Google Drive: '+(e.message||''));
   }
+}
+
+// ── حذف ملف واحد من Google Drive عبر معرّفه ──
+function deleteFromGoogleDrive(fileId){
+  return new Promise((resolve)=>{
+    ensureDriveAuth(()=>{
+      const xhr = new XMLHttpRequest();
+      xhr.open('DELETE', `https://www.googleapis.com/drive/v3/files/${fileId}`, true);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + gDriveAccessToken);
+      xhr.onload = function(){
+        // 200/204 نجاح، 404 يعني محذوف مسبقاً (نعتبره نجاح أيضاً)
+        resolve(xhr.status>=200 && xhr.status<300 || xhr.status===404);
+      };
+      xhr.onerror = function(){ resolve(false); };
+      xhr.send();
+    });
+  });
+}
+
+// ── يجمع كل روابط Drive الموجودة داخل كائن درس/واجب (فيديو + مرفقات) ويحذفها كلها ──
+async function deleteAllDriveFilesIn(obj){
+  if(!obj) return {total:0, success:0};
+  const urls = [];
+  if(obj.url) urls.push(obj.url);
+  if(Array.isArray(obj.attachments)) obj.attachments.forEach(a=>{ if(a && a.url) urls.push(a.url); });
+  const ids = urls.map(extractDriveFileId).filter(Boolean);
+  if(!ids.length) return {total:0, success:0};
+  let success = 0;
+  for(const id of ids){
+    const ok = await deleteFromGoogleDrive(id);
+    if(ok) success++;
+  }
+  return {total: ids.length, success};
 }
 // ══════════════════════════════════════════════
 
@@ -3146,13 +3181,37 @@ function confirmDelete(action,id,name){
   document.getElementById('confirmModal').classList.add('open');
 }
 function closeConfirm(){document.getElementById('confirmModal').classList.remove('open');deleteAction=null;}
-function execDelete(){
+async function execDelete(){
   if(!deleteAction)return;
   const{action,id}=deleteAction;
   if(action==='deleteStudent'){fbDel('students',id);adminStudents=adminStudents.filter(x=>x.id!==id);renderStudentsTable();updateAllStats();showToast('✅ تم حذف الطالب');}
-  if(action==='deleteLesson'){fbDel('lessons',id);adminLessons=adminLessons.filter(x=>x.id!==id);renderLessonsTable();updateAllStats();renderCourseCards();showToast('✅ تم حذف الدرس');}
+  if(action==='deleteLesson'){
+    const lesson = adminLessons.find(x=>x.id===id);
+    fbDel('lessons',id);adminLessons=adminLessons.filter(x=>x.id!==id);renderLessonsTable();updateAllStats();renderCourseCards();
+    closeConfirm();
+    showToast('✅ تم حذف الدرس');
+    const driveCount = lesson ? [lesson.url, ...(Array.isArray(lesson.attachments)?lesson.attachments.map(a=>a.url):[])].filter(u=>u && extractDriveFileId(u)).length : 0;
+    if(driveCount){
+      showToast('⏳ جاري حذف '+driveCount+' ملف من Google Drive...');
+      const r = await deleteAllDriveFilesIn(lesson);
+      showToast(r.success===r.total ? '✅ تم حذف الملفات من Google Drive' : '⚠️ تم حذف '+r.success+' من '+r.total+' ملف من Drive (قد تحتاج تسجيل الدخول مجدداً)');
+    }
+    return;
+  }
   if(action==='deleteCourse'){fbDel('courses',id);adminCourses=adminCourses.filter(x=>x.id!==id);renderAdminCourses();renderCourseCards();showToast('✅ تم حذف الكورس');}
-  if(action==='deleteHW'){fbDel('assignments',id);adminHW=adminHW.filter(x=>x.id!==id);renderHWTable();renderStudentHW();updateAllStats();showToast('✅ تم حذف الواجب');}
+  if(action==='deleteHW'){
+    const hw = adminHW.find(x=>x.id===id);
+    fbDel('assignments',id);adminHW=adminHW.filter(x=>x.id!==id);renderHWTable();renderStudentHW();updateAllStats();
+    closeConfirm();
+    showToast('✅ تم حذف الواجب');
+    const driveCount = hw ? [hw.fileUrl||hw.url].filter(u=>u && extractDriveFileId(u)).length : 0;
+    if(driveCount){
+      showToast('⏳ جاري حذف الملف من Google Drive...');
+      const r = await deleteAllDriveFilesIn({url: hw.fileUrl||hw.url});
+      showToast(r.success===r.total ? '✅ تم حذف الملف من Google Drive' : '⚠️ تعذّر حذف الملف من Drive (قد تحتاج تسجيل الدخول مجدداً)');
+    }
+    return;
+  }
   closeConfirm();
 }
 function saveSupabaseConfig(){
@@ -3663,6 +3722,7 @@ function renderCourseSidebar(course){
       const paidBadge = (l.access==='paid' && l.status!=='draft') ? `<span style="font-size:0.7rem;background:${isLocked?'#FFF3E0':'#E8F5E9'};color:${isLocked?'#E65100':'#2E7D32'};padding:1px 6px;border-radius:8px;margin-right:4px;">${isLocked?'🔒 مدفوع':'🔓 مفتوح'}</span>` : '';
       const srcIcon = l.url ? (l.vsrc==='upload'?'📹':(l.vsrc==='zoom'?'🎥':'🔗')) : '';
       html += `<div class="lesson-item ${l.status==='draft'?'':'hover-lesson'}" 
+        data-lesson-id="${l.id}"
         onclick="${l.status!=='draft'?`openLessonGated(${l.id},'${l.title.replace(/'/g,"\'")}','${(l.url||'').replace(/'/g,"\'")}','${l.vsrc||'url'}')`:''}"
         style="${l.status==='draft'?'opacity:0.5;cursor:not-allowed!important;':''}">
         <div class="lesson-num" style="min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;${watchedStyle}background:${watchedLessons[l.id]&&!isLocked?'var(--blue)':'#E3F2FD'};color:${watchedLessons[l.id]&&!isLocked?'white':'var(--blue)'};">${watched}</div>
@@ -3894,9 +3954,16 @@ function getVideoSrcData(){
 // ════════════════════════════════════════════════════
 // UPDATE clickLesson to handle upload videos too
 // ════════════════════════════════════════════════════
-function clickLesson(id, title, url, vsrc){
+function clickLesson(id, title, url, vsrc, evt){
   document.querySelectorAll('#dynamic-sidebar .lesson-item').forEach(el=>el.classList.remove('active'));
-  if(event && event.currentTarget) event.currentTarget.classList.add('active');
+  const triggerEvent = evt || (typeof event!=='undefined' ? event : null);
+  if(triggerEvent && triggerEvent.currentTarget && triggerEvent.currentTarget.classList && triggerEvent.currentTarget.classList.contains('lesson-item')){
+    triggerEvent.currentTarget.classList.add('active');
+  } else {
+    // عند الاستدعاء بعد فتح القفل (وليس من ضغطة مباشرة على عنصر الدرس)، نحدد العنصر الصحيح يدوياً عبر معرف الدرس
+    const matchEl = document.querySelector(`#dynamic-sidebar .lesson-item[data-lesson-id="${id}"]`);
+    if(matchEl) matchEl.classList.add('active');
+  }
   
   const lesson = adminLessons.find(l=>l.id===id);
   if(!lesson) return;
