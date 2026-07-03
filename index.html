@@ -2378,9 +2378,18 @@ async function doLogin(){
     resetBtn(); loginSuccess(studentLocal); return;
   }
 
-  // إذا Firebase متاح جرّب تحميل الطلاب من الخادم
+  // إذا Firebase متاح جرّب تحميل الطلاب من الخادم (مع مهلة زمنية حتى لا يعلّق الزر للأبد)
   if(fbReady){
-    await loadStudentsFromDB();
+    try{
+      await Promise.race([
+        loadStudentsFromDB(),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), 8000))
+      ]);
+    }catch(e){
+      resetBtn();
+      showErr(currentLang==='ar' ? '⚠️ تعذر الاتصال بالخادم — تحقق من الإنترنت وحاول مجدداً' : '⚠️ Connection failed — check your internet and try again');
+      return;
+    }
     const found = adminStudents.find(s=>s.user===u);
     if(!found){ resetBtn(); showErr(); return; }
     if(found.pass !== p){ resetBtn(); showErr(); return; }
