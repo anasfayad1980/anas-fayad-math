@@ -2378,18 +2378,9 @@ async function doLogin(){
     resetBtn(); loginSuccess(studentLocal); return;
   }
 
-  // إذا Firebase متاح جرّب تحميل الطلاب من الخادم (مع مهلة زمنية حتى لا يعلّق الزر للأبد)
+  // إذا Firebase متاح جرّب تحميل الطلاب من الخادم
   if(fbReady){
-    try{
-      await Promise.race([
-        loadStudentsFromDB(),
-        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), 8000))
-      ]);
-    }catch(e){
-      resetBtn();
-      showErr(currentLang==='ar' ? '⚠️ تعذر الاتصال بالخادم — تحقق من الإنترنت وحاول مجدداً' : '⚠️ Connection failed — check your internet and try again');
-      return;
-    }
+    await loadStudentsFromDB();
     const found = adminStudents.find(s=>s.user===u);
     if(!found){ resetBtn(); showErr(); return; }
     if(found.pass !== p){ resetBtn(); showErr(); return; }
@@ -4310,7 +4301,12 @@ function startRealtimeListeners(){
 
   // ④ Students realtime — كان مفقوداً: سبب فشل فلتر المرحلة للطالب عند الدخول
   db.collection('students').onSnapshot(snap=>{
-    adminStudents = snap.docs.map(d=>({...d.data(), id:d.id}));
+    adminStudents = snap.docs.map(d=>{
+      const raw = d.data();
+      const rid = raw.id!==undefined ? raw.id : d.id; // نفس منطق fbGet: نأخذ id المخصص إن وجد، وإلا معرّف المستند
+      return {...raw, id: isNaN(rid)?rid:Number(rid), active: raw.active !== false};
+    });
+    adminStudents.forEach(s=>{ USERS[s.user]=s.pass; }); // إعادة بناء خريطة الدخول المحلي مثل loadStudentsFromDB
     renderStudentsTable();
     if(loggedIn && currentRole==='student'){
       renderCourseCards(); renderStudentHW(); renderDashboardCourses();
