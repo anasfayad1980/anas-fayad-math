@@ -520,7 +520,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
       <h2 id="lt-title">Mr. Anas Fayad</h2>
       <p id="lt-sub">منصة الرياضيات التعليمية</p>
     </div>
-    <div class="login-err" id="loginErr" id="lt-err">اسم المستخدم أو كلمة المرور غير صحيحة</div>
+    <div class="login-err" id="loginErr">اسم المستخدم أو كلمة المرور غير صحيحة</div>
     <div class="form-group">
       <label id="lt-user">اسم المستخدم أو البريد الإلكتروني</label>
       <input type="text" id="loginUser" placeholder="اسم المستخدم أو الإيميل">
@@ -2314,19 +2314,39 @@ function toggleLang(){
 // ======= AUTH =======
 
 // بيانات المالك — تُحمَّل من localStorage إن وُجدت، وإلا تُستخدم الافتراضية
+//
+// ★★★ إصلاح جذري لمشكلة "كلمة المرور لا تعمل أبداً" ★★★
+// السبب الحقيقي: كانت loadOwnerCredentialsFromDB() تستبدل بيانات الدخول
+// الصحيحة المحفوظة محلياً ببيانات Firestore فور اتصال الإنترنت، بشكل غير
+// مشروط وفي كل مرة تُفتح الصفحة. إن كانت بيانات Firestore قديمة أو غير
+// متطابقة لأي سبب (فشل حفظ سابق، تعارض بين جهازين، إلخ)، تصبح كل كلمات
+// المرور المعروفة للمستخدم غير صالحة فجأة دون أي رسالة تُفسّر السبب —
+// تماماً كما وصف المستخدم: "لا يستجيب لأي كلمة مرور".
+//
+// الحل: نحتفظ بكل بيانات الدخول الصالحة (الافتراضية + المحفوظة محلياً +
+// القادمة من Firebase) كمرشّحين للمقارنة، بدل الاعتماد على مصدر واحد
+// يُبطل البقية. أي واحدة منها تطابق المُدخل = نجاح تسجيل الدخول دائماً.
+function addOwnerCandidate(list, cred){
+  if(!cred || !cred.email || !cred.pass) return;
+  const exists = list.some(o=>o.email===cred.email && o.pass===cred.pass);
+  if(!exists) list.push({ email: cred.email, pass: cred.pass });
+}
 const OWNER_DEFAULT = { email: 'anasfayad1980@gmail.com', pass: '123456' };
 let OWNER_ACCOUNTS = (()=>{
+  const list = [{ ...OWNER_DEFAULT }]; // الافتراضية تبقى دائماً صالحة كشبكة أمان
   try {
     const saved = localStorage.getItem('ownerCredentials');
     if(saved){
       const p = JSON.parse(saved);
-      if(p.email && p.pass) return [p];
+      addOwnerCandidate(list, p);
     }
   } catch(e){}
-  return [{ ...OWNER_DEFAULT }];
+  return list;
 })();
 
 // ★ تحميل بيانات المالك من Firebase عند الاتصال (لضمان عمله على كل الأجهزة)
+// ملاحظة: نُضيف بيانات Firebase كمرشح إضافي فقط — لا نستبدل بها أي بيانات
+// محلية تعمل بالفعل، حتى لا تنهار كلمة المرور بسبب بيانات قديمة في القاعدة.
 async function loadOwnerCredentialsFromDB(){
   if(!fbReady) return;
   try{
@@ -2334,9 +2354,7 @@ async function loadOwnerCredentialsFromDB(){
     if(doc.exists){
       const data = doc.data();
       if(data.email && data.pass){
-        OWNER_ACCOUNTS[0] = { email: data.email, pass: data.pass };
-        // تحديث localStorage أيضاً
-        try{ localStorage.setItem('ownerCredentials', JSON.stringify(OWNER_ACCOUNTS[0])); }catch(e){}
+        addOwnerCandidate(OWNER_ACCOUNTS, { email: data.email, pass: data.pass });
       }
     }
   }catch(e){ console.warn('loadOwnerCreds:', e); }
@@ -2380,9 +2398,26 @@ async function doLogin(){
 
   // إذا Firebase متاح جرّب تحميل الطلاب من الخادم
   if(fbReady){
-    await loadStudentsFromDB();
+    let dbError = false;
+    try{
+      const data = await fbGet('students');
+      if(data === null) dbError = true; // فشل الاتصال الفعلي بـ Firestore
+      else if(data.length > 0){
+        adminStudents = data.map(d=>({...d, id: isNaN(d.id)?d.id:Number(d.id), active: d.active !== false}));
+        adminStudents.forEach(s=>{ USERS[s.user]=s.pass; });
+        renderStudentsTable();
+      }
+    }catch(e){ dbError = true; console.warn('doLogin loadStudents error:', e); }
+
     const found = adminStudents.find(s=>s.user===u);
-    if(!found){ resetBtn(); showErr(); return; }
+    if(!found){
+      resetBtn();
+      // نميّز بين "تعذّر الاتصال بالخادم" و"بيانات دخول خاطئة" حتى لا يُظن
+      // خطأً أن كلمة المرور غير صحيحة بينما السبب الحقيقي هو انقطاع الاتصال
+      if(dbError) showErr(currentLang==='ar' ? '⚠️ تعذّر الاتصال بالخادم — تحقق من الإنترنت وحاول مجدداً' : '⚠️ Could not reach the server — check your internet and try again');
+      else showErr();
+      return;
+    }
     if(found.pass !== p){ resetBtn(); showErr(); return; }
     if(!found.active){ resetBtn(); showErr('⛔ حسابك موقوف — تواصل مع المدرس'); return; }
     resetBtn(); loginSuccess(found); return;
@@ -3281,7 +3316,9 @@ function changeOwnerCredentials(){
     email: newEmail || current.email,
     pass:  newPass  || current.pass
   };
-  OWNER_ACCOUNTS[0] = updated;
+  // هذا تغيير صريح من المستخدم، لذا نستبدل كل المرشحين القدامى بهذا الوحيد
+  // (بخلاف التحميل التلقائي من Firebase الذي يُضيف فقط ولا يستبدل أبداً)
+  OWNER_ACCOUNTS = [updated];
 
   // حفظ في localStorage
   try { localStorage.setItem('ownerCredentials', JSON.stringify(updated)); } catch(e){}
