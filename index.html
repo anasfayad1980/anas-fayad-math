@@ -531,7 +531,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     </div>
     <div class="remember-row">
       <label><input type="checkbox"> <span id="lt-rem">تذكرني</span></label>
-      <a href="#" style="color:var(--blue);text-decoration:none;font-size:0.85rem;" id="lt-forgot">نسيت كلمة المرور؟</a>
+      <a href="#" style="color:var(--blue);text-decoration:none;font-size:0.85rem;" id="lt-forgot" onclick="event.preventDefault();openForgotPassModal();">نسيت كلمة المرور؟</a>
     </div>
     <button class="btn-primary" style="width:100%;padding:12px;" onclick="doLogin()" id="lt-btn">دخول</button>
 
@@ -962,6 +962,74 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     <div class="modal-footer">
       <button class="icon-btn" onclick="document.getElementById('teacherLoginModal').classList.remove('open')" id="tl-btn-cancel">إلغاء</button>
       <button class="admin-btn" onclick="doTeacherLogin()" id="teacher-login-btn">دخول ←</button>
+    </div>
+  </div>
+</div>
+
+<!-- FORGOT PASSWORD MODAL -->
+<div class="modal-overlay" id="forgotPassModal">
+  <div class="modal-box" style="max-width:420px;">
+    <h3>🔑 استعادة كلمة المرور</h3>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.25rem;">أدخل اسم المستخدم الخاص بك، وسيصل طلبك مباشرة للأستاذ لتعيين كلمة مرور جديدة لك.</p>
+    <div class="form-group">
+      <label>اسم المستخدم</label>
+      <input type="text" id="forgotPassUser" placeholder="اسم المستخدم" onkeydown="if(event.key==='Enter'){event.preventDefault();submitForgotPassRequest();}">
+    </div>
+    <div id="forgotPassMsg" style="display:none;padding:8px 12px;border-radius:8px;font-size:0.85rem;margin-bottom:0.75rem;"></div>
+    <div class="modal-footer">
+      <button class="icon-btn" onclick="document.getElementById('forgotPassModal').classList.remove('open')">إلغاء</button>
+      <button class="admin-btn" onclick="submitForgotPassRequest()" id="forgotPassSubmitBtn">إرسال الطلب ✉️</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK ANSWER MODAL (from bell) -->
+<div class="modal-overlay" id="quickAnswerModal">
+  <div class="modal-box" style="max-width:480px;">
+    <h3>💬 الرد على سؤال طالب</h3>
+    <div style="background:var(--bg);border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.85rem;">
+      <div style="font-weight:700;margin-bottom:4px;" id="qa-quick-student"></div>
+      <div style="color:var(--muted);margin-bottom:6px;" id="qa-quick-lesson"></div>
+      <div id="qa-quick-question"></div>
+    </div>
+    <div class="form-group">
+      <label>ردك</label>
+      <textarea id="qa-quick-answer-txt" rows="3" placeholder="اكتب ردك هنا..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="icon-btn" onclick="document.getElementById('quickAnswerModal').classList.remove('open')">إلغاء</button>
+      <button class="admin-btn green" onclick="submitQuickAnswer()">نشر الرد ✅</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW ANSWER MODAL (student, from bell) -->
+<div class="modal-overlay" id="viewAnswerModal">
+  <div class="modal-box" style="max-width:480px;">
+    <h3>✅ رد الأستاذ Anas</h3>
+    <div style="background:var(--bg);border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.85rem;">
+      <div style="color:var(--muted);margin-bottom:6px;" id="qa-view-lesson"></div>
+      <div style="font-weight:600;margin-bottom:8px;" id="qa-view-question"></div>
+      <div class="qa-answer-box" style="margin:0;"><div class="qa-answer-label">✅ الرد:</div><div class="qa-answer-text" id="qa-view-answer"></div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="admin-btn" onclick="document.getElementById('viewAnswerModal').classList.remove('open')">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESET PASSWORD REQUEST MODAL (teacher, from bell) -->
+<div class="modal-overlay" id="resetRequestModal">
+  <div class="modal-box" style="max-width:420px;">
+    <h3>🔑 طلب استعادة كلمة مرور</h3>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">الطالب <b id="reset-req-user"></b> يطلب تعيين كلمة مرور جديدة.</p>
+    <div class="form-group">
+      <label>كلمة المرور الجديدة</label>
+      <input type="text" id="reset-req-newpass" placeholder="كلمة مرور جديدة">
+    </div>
+    <div class="modal-footer">
+      <button class="icon-btn" onclick="document.getElementById('resetRequestModal').classList.remove('open')">إلغاء</button>
+      <button class="admin-btn green" onclick="submitResetRequest()">تعيين وحفظ ✅</button>
     </div>
   </div>
 </div>
@@ -2383,7 +2451,7 @@ async function doLogin(){
     document.getElementById('loginOverlay').style.display='none';
     resetBtn();
     showPage('admin');
-    if(fbReady){ renderLessonsTable(); renderStudentsTable(); renderHWTable(); renderAdminCourses(); checkSupabaseConfig(); updateAllStats(); }
+    if(fbReady){ renderLessonsTable(); renderStudentsTable(); renderHWTable(); renderAdminCourses(); checkSupabaseConfig(); updateAllStats(); startOwnerQaNotifications(); startOwnerPasswordResetNotifications(); }
     document.getElementById('navUser').textContent='🔧 المدرس ▾';
     showToast('🎉 مرحباً يا أستاذ Anas!');
     return;
@@ -2446,6 +2514,7 @@ function loginSuccess(found){
   // ★ إعادة render فوري ثم مرة أخرى بعد 1.5 ثانية لضمان اكتمال تحميل Firebase
   renderCourseCards(); renderStudentHW(); renderDashboardCourses();
   setTimeout(()=>{ renderCourseCards(); renderStudentHW(); renderDashboardCourses(); }, 1500);
+  if(fbReady) startStudentQaNotifications();
 }
 document.getElementById('loginPass').addEventListener('keypress',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('loginUser').addEventListener('keypress',e=>{if(e.key==='Enter')doLogin();});
@@ -2590,8 +2659,8 @@ function sendContact(){
 // ======= TOAST =======
 // ======= NOTIFICATIONS =======
 let notifList = [];
-function addNotification(msg, type){
-  notifList.unshift({ msg: msg, type: type||'info', time: new Date().toLocaleTimeString('ar') });
+function addNotification(msg, type, payload){
+  notifList.unshift({ msg: msg, type: type||'info', payload: payload||null, time: new Date().toLocaleTimeString('ar') });
   if(notifList.length > 20) notifList.pop();
   const badge = document.getElementById('notif-badge');
   const panel = document.getElementById('notif-panel');
@@ -2600,6 +2669,22 @@ function addNotification(msg, type){
     badge.style.display = 'flex';
   }
   if(panel && panel.style.display === 'block') renderNotifPanel();
+}
+
+// عند الضغط على إشعار في الجرس: يفتح الإجراء المناسب مباشرة دون التنقل لصفحة أخرى
+function handleNotifClick(idx){
+  const n = notifList[idx];
+  if(!n) return;
+  if(n.type === 'qa_question' && n.payload){
+    openQuickAnswerModal(n.payload);
+    toggleNotifPanel();
+  } else if(n.type === 'qa_answer' && n.payload){
+    openViewAnswerModal(n.payload);
+    toggleNotifPanel();
+  } else if(n.type === 'password_reset' && n.payload){
+    openResetRequestModal(n.payload);
+    toggleNotifPanel();
+  }
 }
 function toggleNotifPanel(){
   const panel = document.getElementById('notif-panel');
@@ -2629,10 +2714,10 @@ function renderNotifPanel(){
     '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.75rem 0.6rem;border-bottom:1px solid #eee;">' +
     '<span style="font-size:0.78rem;font-weight:700;color:var(--blue);">'+(currentLang==='ar'?'الإشعارات':'Notifications')+' ('+notifList.length+')</span>' +
     '<button onclick="clearAllNotifications()" style="background:#FFEBEE;border:none;color:#C62828;font-size:0.72rem;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:Cairo,sans-serif;font-weight:700;">'+(currentLang==='ar'?'مسح الكل ✕':'Clear All ✕')+'</button></div>' +
-    notifList.map(n =>
-      '<div style="padding:0.55rem 0.75rem;border-bottom:1px solid #f0f0f0;font-size:0.82rem;">' +
+    notifList.map((n,idx) =>
+      '<div onclick="handleNotifClick('+idx+')" style="padding:0.55rem 0.75rem;border-bottom:1px solid #f0f0f0;font-size:0.82rem;'+(n.payload?'cursor:pointer;':'')+'">' +
       '<div style="font-weight:600;margin-bottom:2px;">' + n.msg + '</div>' +
-      '<div style="color:var(--muted);font-size:0.75rem;">' + n.time + '</div></div>'
+      '<div style="color:var(--muted);font-size:0.75rem;">' + n.time + (n.payload?' • اضغط للفتح':'') + '</div></div>'
     ).join('');
 }
 // إغلاق لوحة الإشعارات عند النقر خارجها
@@ -2689,7 +2774,7 @@ async function doTeacherLogin(){
     document.getElementById('teacherPass').value='';
     if(btn){ btn.textContent='دخول ←'; btn.disabled=false; }
     showPage('admin');
-    if(fbReady){ renderLessonsTable();renderStudentsTable();renderHWTable();renderAdminCourses(); checkSupabaseConfig(); updateAllStats(); }
+    if(fbReady){ renderLessonsTable();renderStudentsTable();renderHWTable();renderAdminCourses(); checkSupabaseConfig(); updateAllStats(); startOwnerQaNotifications(); startOwnerPasswordResetNotifications(); }
     document.getElementById('navUser').textContent='🔧 المدرس ▾';
     showToast('🎉 مرحباً يا أستاذ Anas!');
     return;
@@ -2700,7 +2785,18 @@ async function doTeacherLogin(){
   err.style.display='block';
   setTimeout(()=>err.style.display='none',3500);
 }
-function adminLogout(){showPage('home');showToast('تم الخروج من لوحة التحكم');}
+function adminLogout(){
+  // ★★★ إصلاح ثغرة أمنية: كانت هذه الدالة تنتقل للصفحة الرئيسية فقط
+  // دون تصفير currentRole/currentUser، فيبقى المستخدم "مالكاً" فعلياً في
+  // نظر التطبيق. لو استخدم طالب نفس الجهاز بعدها (جهاز مشترك)، كان يرى
+  // كل صلاحيات المالك — مثل زر "تعديل الرد" على أسئلة الطلاب.
+  // الآن تُصفّر الجلسة بالكامل تماماً مثل الخروج الكامل من التطبيق.
+  currentRole=null; currentUser=''; loggedIn=false;
+  document.getElementById('loginOverlay').style.display='flex';
+  showPage('home');
+  document.getElementById('navUser').textContent='👤 الطالب ▾';
+  showToast('تم الخروج من لوحة التحكم');
+}
 function doLogout(){
   if(confirm('هل تريد الخروج من التطبيق؟')){
     currentRole=null; currentUser=''; loggedIn=false;
@@ -3461,17 +3557,25 @@ function loadQAForLesson(lessonId){
   if(!fbReady) return;
   const list=document.getElementById('qa-questions-list');
   if(list) list.innerHTML='<div style="text-align:center;padding:1rem;color:var(--muted);">⏳ جاري التحميل...</div>';
+  // ★★★ إصلاح ثغرة خصوصية: كانت كل أسئلة كل الطلاب لدرس معيّن تُعرض لأي
+  // طالب يفتح ذلك الدرس، فيرى أسئلة زملائه وردود الأستاذ عليها. الآن:
+  // الطالب لا يرى إلا أسئلته هو وردّ الأستاذ عليها. المالك (الأستاذ) وحده
+  // يستمر برؤية كل الأسئلة (من نفس الاستعلام، دون فلترة إضافية).
+  const filterForCurrentViewer = (questions)=>{
+    if(currentRole==='owner') return questions;
+    return questions.filter(q=>q.studentUser===currentUser);
+  };
   qaUnsubscribe = db.collection('qa')
     .where('lessonId','==',String(lessonId))
     .orderBy('createdAt','desc')
     .onSnapshot(snap=>{
       const questions=snap.docs.map(d=>({id:d.id,...d.data()}));
-      renderQAList(questions);
+      renderQAList(filterForCurrentViewer(questions));
     }, err=>{
       // Fallback: بدون orderBy لو لم يتم إنشاء الـ index
       db.collection('qa').where('lessonId','==',String(lessonId)).get().then(snap=>{
         const questions=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-        renderQAList(questions);
+        renderQAList(filterForCurrentViewer(questions));
       });
     });
 }
@@ -3655,6 +3759,177 @@ function refreshQABadge(){
     const badge=document.getElementById('qa-notif-badge');
     if(badge){badge.textContent=n||'';badge.style.display=n?'inline-flex':'none';}
   }).catch(()=>{});
+}
+
+// ════════════════════════════════════════════════════
+// 🔔 إشعارات الجرس: سؤال جديد ← الأستاذ / رد جديد ← الطالب
+// ════════════════════════════════════════════════════
+let ownerQaNotifStarted = false;
+let ownerQaFirstLoadDone = false;
+let ownerQaKnownIds = new Set();
+function startOwnerQaNotifications(){
+  if(!fbReady || ownerQaNotifStarted) return;
+  ownerQaNotifStarted = true;
+  db.collection('qa').orderBy('createdAt','desc').onSnapshot(snap=>{
+    snap.docChanges().forEach(change=>{
+      const q = {id:change.doc.id, ...change.doc.data()};
+      if(change.type==='added'){
+        if(!ownerQaKnownIds.has(q.id)){
+          ownerQaKnownIds.add(q.id);
+          if(ownerQaFirstLoadDone && !q.answer){
+            addNotification('❓ سؤال جديد من '+(q.studentName||'طالب')+': '+(q.question||'').slice(0,40), 'qa_question', {qId:q.id, question:q.question, studentName:q.studentName, lessonTitle:q.lessonTitle});
+          }
+        }
+      }
+    });
+    ownerQaFirstLoadDone = true;
+  }, err=>console.warn('ownerQaNotif error:', err));
+}
+
+let studentQaNotifStarted = false;
+let studentQaFirstLoadDone = false;
+let studentQaLastAnswerState = {}; // qId -> هل كان له رد آخر مرة رأيناه
+function startStudentQaNotifications(){
+  if(!fbReady || studentQaNotifStarted || !currentUser) return;
+  studentQaNotifStarted = true;
+  db.collection('qa').where('studentUser','==',currentUser).onSnapshot(snap=>{
+    snap.docs.forEach(d=>{
+      const q = {id:d.id, ...d.data()};
+      const hadAnswerBefore = studentQaLastAnswerState[q.id];
+      const hasAnswerNow = !!q.answer;
+      if(studentQaFirstLoadDone && hasAnswerNow && !hadAnswerBefore){
+        addNotification('✅ '+(currentLang==='ar'?'وصل رد الأستاذ على سؤالك':'Your question was answered'), 'qa_answer', {qId:q.id, question:q.question, answer:q.answer, lessonTitle:q.lessonTitle});
+      }
+      studentQaLastAnswerState[q.id] = hasAnswerNow;
+    });
+    studentQaFirstLoadDone = true;
+  }, err=>console.warn('studentQaNotif error:', err));
+}
+
+let quickAnswerCurrentQ = null;
+function openQuickAnswerModal(payload){
+  quickAnswerCurrentQ = payload;
+  document.getElementById('qa-quick-student').textContent = '👤 '+(payload.studentName||'طالب');
+  document.getElementById('qa-quick-lesson').textContent = '📚 '+(payload.lessonTitle||'');
+  document.getElementById('qa-quick-question').textContent = payload.question||'';
+  document.getElementById('qa-quick-answer-txt').value = '';
+  document.getElementById('quickAnswerModal').classList.add('open');
+}
+function submitQuickAnswer(){
+  if(!quickAnswerCurrentQ) return;
+  const txt = document.getElementById('qa-quick-answer-txt').value.trim();
+  if(!txt){ showToast('اكتب ردك أولاً'); return; }
+  if(!fbReady) return;
+  db.collection('qa').doc(quickAnswerCurrentQ.qId).update({answer:txt, answeredAt:Date.now()}).then(()=>{
+    showToast('✅ تم نشر ردك');
+    document.getElementById('quickAnswerModal').classList.remove('open');
+    quickAnswerCurrentQ = null;
+  }).catch(e=>showToast('❌ '+e.message));
+}
+
+function openViewAnswerModal(payload){
+  document.getElementById('qa-view-lesson').textContent = '📚 '+(payload.lessonTitle||'');
+  document.getElementById('qa-view-question').textContent = payload.question||'';
+  document.getElementById('qa-view-answer').textContent = payload.answer||'';
+  document.getElementById('viewAnswerModal').classList.add('open');
+}
+
+// ════════════════════════════════════════════════════
+// 🔑 نسيت كلمة المرور: الطالب يطلب، والأستاذ يعيّن كلمة جديدة
+// ════════════════════════════════════════════════════
+function openForgotPassModal(){
+  document.getElementById('forgotPassUser').value='';
+  const msg=document.getElementById('forgotPassMsg'); if(msg){msg.style.display='none';}
+  document.getElementById('forgotPassModal').classList.add('open');
+}
+async function submitForgotPassRequest(){
+  const u = document.getElementById('forgotPassUser').value.trim();
+  const msg = document.getElementById('forgotPassMsg');
+  const showMsg = (text, ok)=>{
+    if(!msg) return;
+    msg.textContent = text;
+    msg.style.background = ok? '#E8F5E9':'#FFEBEE';
+    msg.style.color = ok? '#2E7D32':'#C62828';
+    msg.style.display='block';
+  };
+  if(!u){ showMsg('يرجى إدخال اسم المستخدم', false); return; }
+  if(!fbReady){ showMsg('⚠️ تعذّر الاتصال بالخادم — تحقق من الإنترنت', false); return; }
+  const btn = document.getElementById('forgotPassSubmitBtn');
+  if(btn){ btn.textContent='⏳...'; btn.disabled=true; }
+  try{
+    let student = adminStudents.find(s=>s.user===u);
+    if(!student){
+      const data = await fbGet('students');
+      if(data){
+        adminStudents = data.map(d=>({...d, id: isNaN(d.id)?d.id:Number(d.id), active: d.active !== false}));
+        student = adminStudents.find(s=>s.user===u);
+      }
+    }
+    if(!student){
+      showMsg('❌ لا يوجد حساب بهذا الاسم', false);
+      return;
+    }
+    await db.collection('passwordResets').add({
+      user: u, name: student.name||u, status:'pending', requestedAt: Date.now()
+    });
+    showMsg('✅ تم إرسال طلبك — سيتواصل معك الأستاذ قريباً بكلمة مرور جديدة', true);
+  }catch(e){
+    showMsg('❌ حدث خطأ: '+e.message, false);
+  }finally{
+    if(btn){ btn.textContent='إرسال الطلب ✉️'; btn.disabled=false; }
+  }
+}
+
+let ownerResetNotifStarted = false;
+let ownerResetFirstLoadDone = false;
+let ownerResetKnownIds = new Set();
+function startOwnerPasswordResetNotifications(){
+  if(!fbReady || ownerResetNotifStarted) return;
+  ownerResetNotifStarted = true;
+  db.collection('passwordResets').orderBy('requestedAt','desc').onSnapshot(snap=>{
+    snap.docChanges().forEach(change=>{
+      const r = {id:change.doc.id, ...change.doc.data()};
+      if(change.type==='added' && !ownerResetKnownIds.has(r.id)){
+        ownerResetKnownIds.add(r.id);
+        if(ownerResetFirstLoadDone && r.status==='pending'){
+          addNotification('🔑 '+(r.name||r.user)+' يطلب استعادة كلمة المرور', 'password_reset', {requestId:r.id, user:r.user, name:r.name});
+        }
+      }
+    });
+    ownerResetFirstLoadDone = true;
+  }, err=>console.warn('ownerResetNotif error:', err));
+}
+
+let resetRequestCurrent = null;
+function openResetRequestModal(payload){
+  resetRequestCurrent = payload;
+  document.getElementById('reset-req-user').textContent = (payload.name||payload.user);
+  document.getElementById('reset-req-newpass').value='';
+  document.getElementById('resetRequestModal').classList.add('open');
+}
+async function submitResetRequest(){
+  if(!resetRequestCurrent) return;
+  const newPass = document.getElementById('reset-req-newpass').value.trim();
+  if(!newPass){ showToast('اكتب كلمة مرور جديدة'); return; }
+  if(!fbReady) return;
+  try{
+    let student = adminStudents.find(s=>s.user===resetRequestCurrent.user);
+    if(!student){
+      const data = await fbGet('students');
+      if(data){
+        adminStudents = data.map(d=>({...d, id: isNaN(d.id)?d.id:Number(d.id), active: d.active !== false}));
+        student = adminStudents.find(s=>s.user===resetRequestCurrent.user);
+      }
+    }
+    if(!student){ showToast('❌ لم يتم العثور على الطالب'); return; }
+    await db.collection('students').doc(String(student.id)).update({pass:newPass});
+    await db.collection('passwordResets').doc(resetRequestCurrent.requestId).update({status:'done', resolvedAt:Date.now()});
+    student.pass = newPass;
+    showToast('✅ تم تعيين كلمة المرور الجديدة للطالب');
+    document.getElementById('resetRequestModal').classList.remove('open');
+    resetRequestCurrent = null;
+    renderStudentsTable();
+  }catch(e){ showToast('❌ '+e.message); }
 }
 
 // ════════════════════════════════════════════════════
@@ -4108,14 +4383,16 @@ function getVisibleCourses(){
     // ★ البيانات لم تكتمل بعد من Firebase — نعرض loading بدل فراغ كامل
     // وnعيد المحاولة بعد ثانية
     if(fbReady && loggedIn) setTimeout(()=>{ renderCourseCards(); renderStudentHW(); }, 1000);
-    // Fallback: إذا لا يوجد مرحلة محددة → أظهر كل الكورسات التي بدون مرحلة
-    return adminCourses.filter(c=>!(c.grade||'').trim());
+    // في انتظار تحميل بيانات الطالب، لا نعرض شيئاً بدل تسريب كل الكورسات
+    return [];
   }
   const studentGrade = (student.grade||'').trim();
-  return adminCourses.filter(c=>{
-    const cGrade = (c.grade||'').trim();
-    return !cGrade || cGrade===studentGrade;
-  });
+  // ★★★ إصلاح ثغرة أمنية: كانت المطابقة السابقة `!cGrade || cGrade===studentGrade`
+  // تعني أن أي كورس بلا "مرحلة" محددة (حقل فارغ، مثلاً لو نسي الأستاذ اختيار
+  // الصف عند الإضافة) يظهر تلقائياً لكل الطلاب من كل الصفوف — وهذا ما جعل
+  // كورسات الصف السابع مثلاً تظهر لطالب في الصف الثاني عشر. الآن: لا يظهر
+  // أي كورس للطالب إلا إذا كانت مرحلته مطابقة تماماً لمرحلته المسجّلة.
+  return adminCourses.filter(c=>(c.grade||'').trim()===studentGrade);
 }
 
 // الدروس المسموح للمستخدم الحالي رؤيتها فقط (حسب كورسات صفه) — تُستخدم في كل مكان نحتاج فيه دروساً بدل الاعتماد على adminLessons كاملة
@@ -4196,15 +4473,19 @@ function renderAdminCourses(){
     });
     return;
   }
-  el.innerHTML = adminCourses.map(c=>`
+  el.innerHTML = adminCourses.map(c=>{
+    const noGrade = !(c.grade||'').trim();
+    const warnBadge = noGrade ? '<span style="background:#FFEBEE;color:#C62828;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700;margin-right:6px;">⚠️ بلا مرحلة — لن يظهر لأي طالب</span>' : '';
+    return `
     <div style="display:flex;align-items:center;justify-content:space-between;background:#F5F7FA;border-radius:8px;padding:0.75rem 1rem;margin-bottom:0.5rem;">
       <div>
         <strong style="font-size:0.9rem;">${c.name}</strong>
-        <span style="font-size:0.8rem;color:var(--muted);margin-right:8px;">${c.grade} — ${c.sem}</span>
+        <span style="font-size:0.8rem;color:var(--muted);margin-right:8px;">${c.grade||'—'} — ${c.sem}</span>
+        ${warnBadge}
       </div>
       <button class="icon-btn del" onclick="confirmDelete('deleteCourse','${c.id}','${c.name}')">🗑️</button>
     </div>
-  `).join('');
+  `;}).join('');
   // Update lesson/hw course selects
   const opts = adminCourses.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
   ['lm-course','hw-course'].forEach(id=>{
