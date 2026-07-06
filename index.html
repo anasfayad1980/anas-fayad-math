@@ -4129,7 +4129,19 @@ function loadForumForLesson(lesson){
         forumOldestDoc = null;
       }
       renderLessonForum();
-    }, err=>console.warn('forum listener error:', err));
+    }, err=>{
+      console.warn('forum listener error:', err);
+      // على الأغلب Firestore يحتاج فهرساً مركّباً (lessonId + createdAt) لم يُنشأ بعد.
+      // كحل مؤقت فوري: نجلب كل رسائل هذا الدرس بدون ترتيب من الخادم ونرتّبها هنا.
+      db.collection('forumPosts').where('lessonId','==',String(lesson.id)).get().then(snap=>{
+        forumMessages = snap.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+        forumHasMore = false;
+        renderLessonForum();
+      }).catch(e2=>{
+        const list=document.getElementById('forum-messages-list');
+        if(list) list.innerHTML='<div style="text-align:center;padding:1.5rem;color:#c62828;font-size:0.85rem;">⚠️ تعذّر تحميل النقاش — يحتاج المشروع فهرساً في Firestore (راجع الـ Console)</div>';
+      });
+    });
 }
 
 function loadOlderForumMessages(){
@@ -4274,7 +4286,17 @@ function loadAdminForumForLesson(lesson){
         adminForumOldestDoc=null;
       }
       renderAdminForum();
-    }, err=>console.warn('admin forum listener error:', err));
+    }, err=>{
+      console.warn('admin forum listener error:', err);
+      db.collection('forumPosts').where('lessonId','==',String(lesson.id)).get().then(snap=>{
+        adminForumMessages = snap.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+        adminForumHasMore = false;
+        renderAdminForum();
+      }).catch(e2=>{
+        const list=document.getElementById('admin-forum-messages-list');
+        if(list) list.innerHTML='<div style="text-align:center;padding:1.5rem;color:#c62828;font-size:0.85rem;">⚠️ تعذّر تحميل النقاش — يحتاج المشروع فهرساً في Firestore (راجع الـ Console)</div>';
+      });
+    });
 }
 
 function loadOlderAdminForumMessages(){
