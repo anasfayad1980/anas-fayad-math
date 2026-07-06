@@ -750,7 +750,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
           <h3 id="cd-forum">منتدى النقاش</h3>
           <p style="color:var(--muted);font-size:0.9rem;" id="cd-qa">أسئلة وأجوبة</p>
         </div>
-        <button class="course-btn primary cd-forum-btn-big" onclick="showPage('contact')" id="cd-forum-btn">انضم للنقاش</button>
+        <button class="course-btn primary cd-forum-btn-big" onclick="joinCourseDiscussion()" id="cd-forum-btn">انضم للنقاش</button>
       </div>
 
       <!-- About course card -->
@@ -845,10 +845,35 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
       </div>
     </div>
 
+    <!-- FORUM SECTION (نقاش جماعي عام — يراه كل الطلاب) -->
+    <div id="lesson-forum-section" style="background:white;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,0.08);padding:1.5rem;margin-top:1.25rem;">
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:0.35rem;display:flex;align-items:center;gap:8px;">
+        🗣️ <span>نقاش عام</span>
+        <span id="forum-count-badge" style="background:rgba(21,101,192,0.1);color:var(--blue);border-radius:20px;padding:2px 10px;font-size:0.75rem;font-weight:700;"></span>
+      </h3>
+      <p style="color:var(--muted);font-size:0.82rem;margin-bottom:1rem;">نقاش مفتوح يراه ويشارك فيه كل طلاب هذا الدرس — لأسئلتك الخاصة مع الأستاذ فقط استخدم قسم "اسأل الأستاذ" بالأسفل</p>
+
+      <div style="text-align:center;margin-bottom:0.75rem;">
+        <button class="icon-btn" id="forum-load-older-btn" onclick="loadOlderForumMessages()" style="display:none;">⬆️ تحميل رسائل أقدم</button>
+      </div>
+
+      <div id="forum-messages-list" style="max-height:420px;overflow-y:auto;margin-bottom:1rem;">
+        <div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:0.9rem;">⏳ جاري التحميل...</div>
+      </div>
+
+      <div style="background:#F5F7FA;border-radius:12px;padding:1rem;">
+        <textarea id="forum-new-msg" placeholder="شارك في النقاش..." rows="2"
+          style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.9rem;resize:none;outline:none;box-sizing:border-box;"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:0.75rem;">
+          <button class="admin-btn" onclick="submitForumMessage()" style="padding:9px 22px;font-size:0.88rem;" id="forum-submit-btn">إرسال 📨</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Q&A SECTION -->
     <div id="lesson-qa-section" style="background:white;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,0.08);padding:1.5rem;margin-top:1.25rem;">
       <h3 style="font-size:1rem;font-weight:800;margin-bottom:1rem;display:flex;align-items:center;gap:8px;">
-        💬 <span id="qa-section-title">أسئلة ونقاش</span>
+        🔒 <span id="qa-section-title">اسأل الأستاذ (خاص)</span>
         <span id="qa-count-badge" style="background:rgba(21,101,192,0.1);color:var(--blue);border-radius:20px;padding:2px 10px;font-size:0.75rem;font-weight:700;"></span>
       </h3>
 
@@ -1586,6 +1611,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     <div style="display:flex;gap:0.6rem;margin-bottom:1.25rem;">
       <button class="admin-tab active" onclick="annQaSubTab('ann',this)" id="annqa-subnav-ann" style="border-radius:20px;">📢 الإعلانات</button>
       <button class="admin-tab" onclick="annQaSubTab('qa',this)" id="annqa-subnav-qa" style="border-radius:20px;">💬 الأسئلة والأجوبة</button>
+      <button class="admin-tab" onclick="annQaSubTab('forum',this)" id="annqa-subnav-forum" style="border-radius:20px;">🗣️ نقاش الدروس</button>
     </div>
 
     <!-- ═══ إدارة الإعلانات ═══ -->
@@ -1641,6 +1667,29 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
         </div>
       </div>
       <div id="admin-qa-list"></div>
+    </div>
+
+    <!-- ═══ نقاش الدروس (عام) ═══ -->
+    <div id="annqa-sub-forum" style="display:none;">
+      <div class="admin-card">
+        <h3 style="margin-bottom:0.75rem;">🗣️ نقاش الدروس العام</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">اختر درساً لعرض النقاش الجماعي المفتوح بين الطلاب فيه، مع إمكانية الحذف والمشاركة</p>
+        <select id="admin-forum-lesson-select" onchange="adminForumLessonChanged()" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.9rem;outline:none;margin-bottom:1rem;">
+          <option value="">-- اختر درساً --</option>
+        </select>
+        <div style="text-align:center;margin-bottom:0.5rem;">
+          <button class="icon-btn" id="admin-forum-load-older-btn" onclick="loadOlderAdminForumMessages()" style="display:none;">⬆️ تحميل رسائل أقدم</button>
+        </div>
+        <div id="admin-forum-messages-list" style="max-height:420px;overflow-y:auto;margin-bottom:1rem;">
+          <div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:0.9rem;">اختر درساً أولاً لعرض النقاش</div>
+        </div>
+        <div id="admin-forum-post-box" style="background:#F5F7FA;border-radius:12px;padding:1rem;display:none;">
+          <textarea id="admin-forum-new-msg" placeholder="اكتب كأستاذ في النقاش..." rows="2" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.9rem;resize:none;outline:none;box-sizing:border-box;"></textarea>
+          <div style="display:flex;justify-content:flex-end;margin-top:0.75rem;">
+            <button class="admin-btn gold" onclick="submitAdminForumMessage()" style="padding:9px 22px;font-size:0.88rem;" id="admin-forum-submit-btn">إرسال كأستاذ 📨</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -3052,12 +3101,17 @@ function adminTab(name,btn){
 function annQaSubTab(name){
   const annBox=document.getElementById('annqa-sub-ann');
   const qaBox=document.getElementById('annqa-sub-qa');
+  const forumBox=document.getElementById('annqa-sub-forum');
   if(annBox) annBox.style.display = (name==='ann') ? '' : 'none';
   if(qaBox) qaBox.style.display = (name==='qa') ? '' : 'none';
+  if(forumBox) forumBox.style.display = (name==='forum') ? '' : 'none';
   const annBtn=document.getElementById('annqa-subnav-ann');
   const qaBtn=document.getElementById('annqa-subnav-qa');
+  const forumBtn=document.getElementById('annqa-subnav-forum');
   if(annBtn) annBtn.classList.toggle('active', name==='ann');
   if(qaBtn) qaBtn.classList.toggle('active', name==='qa');
+  if(forumBtn) forumBtn.classList.toggle('active', name==='forum');
+  if(name==='forum') populateAdminForumLessonSelect();
 }
 function toggleUnit(el){el.closest('.unit-expand').classList.toggle('open');}
 
@@ -3947,6 +4001,7 @@ function openLessonQA(lessonId){
   currentLessonForQA = lesson ? {id:lesson.id, title:lesson.title, course:lesson.course||''} : null;
   if(fbReady && currentLessonForQA){
     loadQAForLesson(lessonId);
+    loadForumForLesson(currentLessonForQA);
   }
 }
 
@@ -4015,6 +4070,293 @@ function renderQAList(questions){
       <div style="display:flex;gap:0.4rem;margin-top:0.5rem;">${replyBtn}${delBtn}</div>
     </div>`;
   }).join('');
+}
+
+// ════════════════════════════════════════════════════
+// FORUM — نقاش جماعي عام لكل درس (يتحمل مئات/آلاف الطلاب)
+// يُحمَّل كصفحات (آخر 30 رسالة فقط حيّة) بدل جلب كل الرسائل دفعة واحدة
+// ════════════════════════════════════════════════════
+function joinCourseDiscussion(){
+  const course = adminCourses.find(c=>c.id===currentCourseId);
+  if(!course){ showToast('❌ تعذر تحديد الكورس'); return; }
+  const lessons = adminLessons.filter(l=>l.course===course.name && l.status!=='draft').sort((a,b)=>(a.order||0)-(b.order||0));
+  if(lessons.length===0){ showToast('📭 لا توجد دروس بعد في هذا الكورس لبدء نقاش'); return; }
+  const l=lessons[0];
+  openLessonGated(l.id, l.title, l.url||'', l.vsrc||'url');
+}
+
+function escapeHtml(str){
+  return String(str||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+const FORUM_PAGE_SIZE = 30;
+let forumUnsubscribe = null;
+let forumCurrentLesson = null;   // {id, title, course}
+let forumMessages = [];          // الرسائل المُحمّلة حالياً، مُرتّبة تصاعدياً (الأقدم أولاً)
+let forumOldestDoc = null;       // آخر مستند تم جلبه (للترقيم/تحميل الأقدم)
+let forumHasMore = false;
+
+function loadForumForLesson(lesson){
+  if(forumUnsubscribe){ try{forumUnsubscribe();}catch(e){} }
+  forumCurrentLesson = lesson;
+  forumMessages = [];
+  forumOldestDoc = null;
+  forumHasMore = false;
+  const list=document.getElementById('forum-messages-list');
+  if(list) list.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:0.9rem;">⏳ جاري التحميل...</div>';
+  const olderBtn=document.getElementById('forum-load-older-btn');
+  if(olderBtn) olderBtn.style.display='none';
+  if(!fbReady || !lesson) return;
+
+  // نستمع فقط لآخر FORUM_PAGE_SIZE رسالة حيّة — لا نجلب كل تاريخ النقاش دفعة واحدة
+  forumUnsubscribe = db.collection('forumPosts')
+    .where('lessonId','==',String(lesson.id))
+    .orderBy('createdAt','desc')
+    .limit(FORUM_PAGE_SIZE)
+    .onSnapshot(snap=>{
+      const docs=snap.docs;
+      forumHasMore = docs.length===FORUM_PAGE_SIZE;
+      if(docs.length){
+        forumOldestDoc = docs[docs.length-1];
+        const tail = docs.map(d=>({id:d.id, ...d.data()})).reverse(); // الأقدم أولاً ضمن النافذة الحيّة
+        const cutoff = tail[0].createdAt||0;
+        const tailIds = new Set(tail.map(t=>t.id));
+        // نحتفظ بأي رسائل أقدم كانت محمَّلة مسبقاً عبر "تحميل رسائل أقدم"
+        const olderPart = forumMessages.filter(m=>(m.createdAt||0) < cutoff && !tailIds.has(m.id));
+        forumMessages = olderPart.concat(tail);
+      } else {
+        forumMessages = [];
+        forumOldestDoc = null;
+      }
+      renderLessonForum();
+    }, err=>console.warn('forum listener error:', err));
+}
+
+function loadOlderForumMessages(){
+  if(!fbReady || !forumCurrentLesson || !forumOldestDoc) return;
+  const btn=document.getElementById('forum-load-older-btn');
+  if(btn){ btn.textContent='⏳ جاري التحميل...'; btn.disabled=true; }
+  db.collection('forumPosts')
+    .where('lessonId','==',String(forumCurrentLesson.id))
+    .orderBy('createdAt','desc')
+    .startAfter(forumOldestDoc)
+    .limit(FORUM_PAGE_SIZE)
+    .get().then(snap=>{
+      const docs=snap.docs;
+      forumHasMore = docs.length===FORUM_PAGE_SIZE;
+      if(docs.length){
+        forumOldestDoc = docs[docs.length-1];
+        const older = docs.map(d=>({id:d.id, ...d.data()})).reverse(); // الأقدم أولاً
+        forumMessages = older.concat(forumMessages);
+      }
+      renderLessonForum(true); // true = حافظ على موضع التمرير قدر الإمكان
+    }).catch(e=>console.warn('loadOlderForumMessages error:', e))
+    .finally(()=>{ if(btn){ btn.textContent='⬆️ تحميل رسائل أقدم'; btn.disabled=false; } });
+}
+
+function renderLessonForum(){
+  const list=document.getElementById('forum-messages-list');
+  const badge=document.getElementById('forum-count-badge');
+  const olderBtn=document.getElementById('forum-load-older-btn');
+  if(olderBtn) olderBtn.style.display = forumHasMore ? '' : 'none';
+  if(!list) return;
+  if(badge) badge.textContent = forumMessages.length ? (forumMessages.length+(forumHasMore?'+':'')+' رسالة') : '';
+  if(forumMessages.length===0){
+    list.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:0.9rem;"><div style="font-size:2rem;margin-bottom:0.5rem;">🗣️</div><p>لا توجد رسائل بعد — ابدأ النقاش!</p></div>';
+    return;
+  }
+  list.innerHTML = forumMessages.map(m=>{
+    const timeStr = m.createdAt ? new Date(m.createdAt).toLocaleString('ar-EG',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+    const isTeacher = m.authorRole==='owner';
+    const isMine = currentRole==='student' && m.authorUser===currentUser;
+    return `<div style="padding:0.6rem 0;border-bottom:1px solid #f0f0f0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+        <span style="font-weight:700;font-size:0.85rem;${isTeacher?'color:var(--gold);':''}">${isTeacher?'🔧 الأستاذ '+escapeHtml(m.authorName||''):'👤 '+escapeHtml(m.authorName||m.authorUser||'طالب')+(isMine?' (أنت)':'')}</span>
+        <span style="font-size:0.72rem;color:var(--muted);">${timeStr}</span>
+      </div>
+      <div style="font-size:0.88rem;line-height:1.6;">${escapeHtml(m.text||'')}</div>
+    </div>`;
+  }).join('');
+  list.scrollTop = list.scrollHeight;
+}
+
+function submitForumMessage(){
+  const txt=document.getElementById('forum-new-msg')?.value.trim();
+  if(!txt){showToast('اكتب رسالتك أولاً');return;}
+  if(!fbReady){showToast('❌ غير متصل بالإنترنت');return;}
+  if(!currentUser && currentRole!=='owner'){showToast('❌ يجب تسجيل الدخول');return;}
+  if(!forumCurrentLesson){showToast('❌ تعذر تحديد الدرس');return;}
+  const isOwner = currentRole==='owner';
+  const student = isOwner ? null : adminStudents.find(s=>s.user===currentUser);
+  const msg={
+    lessonId: String(forumCurrentLesson.id),
+    lessonTitle: forumCurrentLesson.title||'',
+    course: forumCurrentLesson.course||'',
+    authorUser: isOwner ? 'owner' : currentUser,
+    authorName: isOwner ? 'Anas Fayad' : (student?student.name:currentUser),
+    authorRole: isOwner ? 'owner' : 'student',
+    text: txt,
+    createdAt: Date.now()
+  };
+  const btn=document.getElementById('forum-submit-btn');
+  if(btn){btn.textContent='⏳...';btn.disabled=true;}
+  db.collection('forumPosts').add(msg).then(()=>{
+    document.getElementById('forum-new-msg').value='';
+  }).catch(e=>{
+    showToast('❌ فشل الإرسال: '+e.message);
+  }).finally(()=>{
+    if(btn){btn.textContent='إرسال 📨';btn.disabled=false;}
+  });
+}
+
+// ════════════════════════════════════════════════════
+// FORUM (لوحة الأستاذ) — عرض/إدارة نقاش أي درس + حذف/مشاركة
+// ════════════════════════════════════════════════════
+let adminForumUnsubscribe = null;
+let adminForumCurrentLesson = null;
+let adminForumMessages = [];
+let adminForumOldestDoc = null;
+let adminForumHasMore = false;
+
+function populateAdminForumLessonSelect(){
+  const sel=document.getElementById('admin-forum-lesson-select');
+  if(!sel) return;
+  const prev=sel.value;
+  sel.innerHTML='<option value="">-- اختر درساً --</option>' +
+    adminLessons.map(l=>`<option value="${l.id}">${l.title||''} ${l.course?'— '+l.course:''}</option>`).join('');
+  if(prev && Array.from(sel.options).find(o=>o.value===prev)) sel.value=prev;
+}
+
+function adminForumLessonChanged(){
+  const sel=document.getElementById('admin-forum-lesson-select');
+  const lessonId=sel?sel.value:'';
+  const postBox=document.getElementById('admin-forum-post-box');
+  if(!lessonId){
+    if(adminForumUnsubscribe){ try{adminForumUnsubscribe();}catch(e){} }
+    adminForumCurrentLesson=null;
+    document.getElementById('admin-forum-messages-list').innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:0.9rem;">اختر درساً أولاً لعرض النقاش</div>';
+    if(postBox) postBox.style.display='none';
+    return;
+  }
+  const lesson=adminLessons.find(l=>String(l.id)===String(lessonId));
+  if(postBox) postBox.style.display = lesson ? '' : 'none';
+  loadAdminForumForLesson(lesson ? {id:lesson.id, title:lesson.title, course:lesson.course||''} : null);
+}
+
+function loadAdminForumForLesson(lesson){
+  if(adminForumUnsubscribe){ try{adminForumUnsubscribe();}catch(e){} }
+  adminForumCurrentLesson=lesson;
+  adminForumMessages=[];
+  adminForumOldestDoc=null;
+  adminForumHasMore=false;
+  const list=document.getElementById('admin-forum-messages-list');
+  if(list) list.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:0.9rem;">⏳ جاري التحميل...</div>';
+  const olderBtn=document.getElementById('admin-forum-load-older-btn');
+  if(olderBtn) olderBtn.style.display='none';
+  if(!fbReady || !lesson) return;
+
+  adminForumUnsubscribe = db.collection('forumPosts')
+    .where('lessonId','==',String(lesson.id))
+    .orderBy('createdAt','desc')
+    .limit(FORUM_PAGE_SIZE)
+    .onSnapshot(snap=>{
+      const docs=snap.docs;
+      adminForumHasMore = docs.length===FORUM_PAGE_SIZE;
+      if(docs.length){
+        adminForumOldestDoc = docs[docs.length-1];
+        const tail = docs.map(d=>({id:d.id, ...d.data()})).reverse();
+        const cutoff = tail[0].createdAt||0;
+        const tailIds = new Set(tail.map(t=>t.id));
+        const olderPart = adminForumMessages.filter(m=>(m.createdAt||0) < cutoff && !tailIds.has(m.id));
+        adminForumMessages = olderPart.concat(tail);
+      } else {
+        adminForumMessages=[];
+        adminForumOldestDoc=null;
+      }
+      renderAdminForum();
+    }, err=>console.warn('admin forum listener error:', err));
+}
+
+function loadOlderAdminForumMessages(){
+  if(!fbReady || !adminForumCurrentLesson || !adminForumOldestDoc) return;
+  const btn=document.getElementById('admin-forum-load-older-btn');
+  if(btn){ btn.textContent='⏳ جاري التحميل...'; btn.disabled=true; }
+  db.collection('forumPosts')
+    .where('lessonId','==',String(adminForumCurrentLesson.id))
+    .orderBy('createdAt','desc')
+    .startAfter(adminForumOldestDoc)
+    .limit(FORUM_PAGE_SIZE)
+    .get().then(snap=>{
+      const docs=snap.docs;
+      adminForumHasMore = docs.length===FORUM_PAGE_SIZE;
+      if(docs.length){
+        adminForumOldestDoc = docs[docs.length-1];
+        const older = docs.map(d=>({id:d.id, ...d.data()})).reverse();
+        adminForumMessages = older.concat(adminForumMessages);
+      }
+      renderAdminForum();
+    }).catch(e=>console.warn('loadOlderAdminForumMessages error:', e))
+    .finally(()=>{ if(btn){ btn.textContent='⬆️ تحميل رسائل أقدم'; btn.disabled=false; } });
+}
+
+function renderAdminForum(){
+  const list=document.getElementById('admin-forum-messages-list');
+  const olderBtn=document.getElementById('admin-forum-load-older-btn');
+  if(olderBtn) olderBtn.style.display = adminForumHasMore ? '' : 'none';
+  if(!list) return;
+  if(adminForumMessages.length===0){
+    list.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:0.9rem;">لا توجد رسائل في نقاش هذا الدرس بعد</div>';
+    return;
+  }
+  list.innerHTML = adminForumMessages.map(m=>{
+    const timeStr = m.createdAt ? new Date(m.createdAt).toLocaleString('ar-EG',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+    const isTeacher = m.authorRole==='owner';
+    return `<div style="padding:0.6rem 0;border-bottom:1px solid #f0f0f0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;gap:8px;">
+        <span style="font-weight:700;font-size:0.85rem;${isTeacher?'color:var(--gold);':''}">${isTeacher?'🔧 الأستاذ':'👤 '+escapeHtml(m.authorName||m.authorUser||'طالب')}</span>
+        <span style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:0.72rem;color:var(--muted);">${timeStr}</span>
+          <button class="icon-btn del" style="padding:2px 8px;font-size:0.72rem;" onclick="deleteForumMessage('${m.id}')">🗑️</button>
+        </span>
+      </div>
+      <div style="font-size:0.88rem;line-height:1.6;">${escapeHtml(m.text||'')}</div>
+    </div>`;
+  }).join('');
+}
+
+function deleteForumMessage(msgId){
+  if(!confirm('هل تريد حذف هذه الرسالة من النقاش؟')) return;
+  db.collection('forumPosts').doc(msgId).delete().then(()=>{
+    // إزالة فورية من العرض المحلي حتى لو كانت الرسالة ضمن الصفحات الأقدم المحمَّلة يدوياً
+    adminForumMessages = adminForumMessages.filter(m=>m.id!==msgId);
+    renderAdminForum();
+    showToast('🗑️ تم حذف الرسالة');
+  }).catch(e=>showToast('❌ '+e.message));
+}
+
+function submitAdminForumMessage(){
+  const txt=document.getElementById('admin-forum-new-msg')?.value.trim();
+  if(!txt){showToast('اكتب رسالتك أولاً');return;}
+  if(!fbReady || !adminForumCurrentLesson){showToast('❌ اختر درساً أولاً');return;}
+  const msg={
+    lessonId: String(adminForumCurrentLesson.id),
+    lessonTitle: adminForumCurrentLesson.title||'',
+    course: adminForumCurrentLesson.course||'',
+    authorUser: 'owner',
+    authorName: 'Anas Fayad',
+    authorRole: 'owner',
+    text: txt,
+    createdAt: Date.now()
+  };
+  const btn=document.getElementById('admin-forum-submit-btn');
+  if(btn){btn.textContent='⏳...';btn.disabled=true;}
+  db.collection('forumPosts').add(msg).then(()=>{
+    document.getElementById('admin-forum-new-msg').value='';
+  }).catch(e=>{
+    showToast('❌ فشل الإرسال: '+e.message);
+  }).finally(()=>{
+    if(btn){btn.textContent='إرسال كأستاذ 📨';btn.disabled=false;}
+  });
 }
 
 function submitQuestion(){
