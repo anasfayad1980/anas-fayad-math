@@ -1018,6 +1018,34 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
   </div>
 </div>
 
+<!-- ANNOUNCEMENT VIEW MODAL (student, from bell) -->
+<div class="modal-overlay" id="announcementViewModal">
+  <div class="modal-box" style="max-width:480px;">
+    <h3>📢 <span id="ann-view-title"></span></h3>
+    <div style="background:var(--bg);border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.9rem;line-height:1.8;" id="ann-view-text"></div>
+    <div class="form-group">
+      <label>أضف تعليقاً (اختياري)</label>
+      <textarea id="ann-view-comment" rows="2" placeholder="اكتب تعليقك هنا..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="icon-btn" onclick="document.getElementById('announcementViewModal').classList.remove('open')">إغلاق</button>
+      <button class="admin-btn" onclick="markAnnouncementSeen()">✅ تم الاطلاع</button>
+      <button class="admin-btn green" onclick="submitAnnouncementComment()">💬 إرسال تعليق</button>
+    </div>
+  </div>
+</div>
+
+<!-- ANNOUNCEMENT RESPONSES MODAL (teacher) -->
+<div class="modal-overlay" id="announcementResponsesModal">
+  <div class="modal-box" style="max-width:480px;">
+    <h3>📋 ردود الطلاب: <span id="ann-resp-title"></span></h3>
+    <div id="ann-resp-list" style="max-height:340px;overflow-y:auto;"></div>
+    <div class="modal-footer">
+      <button class="icon-btn" onclick="document.getElementById('announcementResponsesModal').classList.remove('open')">إغلاق</button>
+    </div>
+  </div>
+</div>
+
 <!-- RESET PASSWORD REQUEST MODAL (teacher, from bell) -->
 <div class="modal-overlay" id="resetRequestModal">
   <div class="modal-box" style="max-width:420px;">
@@ -1514,7 +1542,29 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
         <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-ann-title">عنوان الإعلان</label><input type="text" id="ann-title" placeholder="عنوان..."></div>
         <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-ann-text">النص</label><input type="text" id="ann-text" placeholder="تفاصيل الإعلان..."></div>
       </div>
+      <div class="form-row">
+        <div>
+          <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-ann-target">الفئة المستهدفة</label>
+          <select id="ann-target-type" onchange="toggleAnnTargetFields()">
+            <option value="all" id="ann-target-opt-all">🌍 كل الطلاب</option>
+            <option value="grade" id="ann-target-opt-grade">🎓 مرحلة دراسية معينة</option>
+            <option value="students" id="ann-target-opt-students">👤 طلاب محددون</option>
+          </select>
+        </div>
+        <div id="ann-target-grade-wrap" style="display:none;">
+          <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-ann-grade">المرحلة</label>
+          <select id="ann-target-grade"><option value="">-- اختر المرحلة --</option></select>
+        </div>
+      </div>
+      <div id="ann-target-students-wrap" style="display:none;margin-bottom:1rem;">
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;" id="adm-lbl-ann-students">اختر الطلاب</label>
+        <div id="ann-target-students-list" style="max-height:180px;overflow-y:auto;border:1px solid #eee;border-radius:8px;padding:0.5rem 0.75rem;background:#FAFAFA;"></div>
+      </div>
       <button class="admin-btn gold" onclick="saveAnnouncement()" id="adm-btn-ann">نشر الإعلان</button>
+    </div>
+    <div class="admin-card">
+      <h3 id="adm-ann-list-h">📢 الإعلانات المنشورة</h3>
+      <div id="admin-ann-list" style="margin-top:0.5rem;"></div>
     </div>
     <div class="admin-card">
       <h3 id="adm-gen-stats-h">إحصائيات عامة</h3>
@@ -2451,7 +2501,7 @@ async function doLogin(){
     document.getElementById('loginOverlay').style.display='none';
     resetBtn();
     showPage('admin');
-    if(fbReady){ renderLessonsTable(); renderStudentsTable(); renderHWTable(); renderAdminCourses(); checkSupabaseConfig(); updateAllStats(); startOwnerQaNotifications(); startOwnerPasswordResetNotifications(); }
+    if(fbReady){ renderLessonsTable(); renderStudentsTable(); renderHWTable(); renderAdminCourses(); checkSupabaseConfig(); updateAllStats(); startOwnerQaNotifications(); startOwnerPasswordResetNotifications(); populateAnnTargetGradeDropdown(); renderAdminAnnouncements(); }
     document.getElementById('navUser').textContent='🔧 المدرس ▾';
     showToast('🎉 مرحباً يا أستاذ Anas!');
     return;
@@ -2514,7 +2564,7 @@ function loginSuccess(found){
   // ★ إعادة render فوري ثم مرة أخرى بعد 1.5 ثانية لضمان اكتمال تحميل Firebase
   renderCourseCards(); renderStudentHW(); renderDashboardCourses();
   setTimeout(()=>{ renderCourseCards(); renderStudentHW(); renderDashboardCourses(); }, 1500);
-  if(fbReady) startStudentQaNotifications();
+  if(fbReady){ startStudentQaNotifications(); startStudentAnnouncementNotifications(); }
 }
 document.getElementById('loginPass').addEventListener('keypress',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('loginUser').addEventListener('keypress',e=>{if(e.key==='Enter')doLogin();});
@@ -2684,6 +2734,9 @@ function handleNotifClick(idx){
   } else if(n.type === 'password_reset' && n.payload){
     openResetRequestModal(n.payload);
     toggleNotifPanel();
+  } else if(n.type === 'announcement' && n.payload){
+    openAnnouncementViewModal(n.payload);
+    toggleNotifPanel();
   }
 }
 function toggleNotifPanel(){
@@ -2774,7 +2827,7 @@ async function doTeacherLogin(){
     document.getElementById('teacherPass').value='';
     if(btn){ btn.textContent='دخول ←'; btn.disabled=false; }
     showPage('admin');
-    if(fbReady){ renderLessonsTable();renderStudentsTable();renderHWTable();renderAdminCourses(); checkSupabaseConfig(); updateAllStats(); startOwnerQaNotifications(); startOwnerPasswordResetNotifications(); }
+    if(fbReady){ renderLessonsTable();renderStudentsTable();renderHWTable();renderAdminCourses(); checkSupabaseConfig(); updateAllStats(); startOwnerQaNotifications(); startOwnerPasswordResetNotifications(); populateAnnTargetGradeDropdown(); renderAdminAnnouncements(); }
     document.getElementById('navUser').textContent='🔧 المدرس ▾';
     showToast('🎉 مرحباً يا أستاذ Anas!');
     return;
@@ -3435,12 +3488,203 @@ function changeOwnerCredentials(){
   setRes('✅ تم حفظ بيانات الدخول بنجاح — ستعمل على كل الأجهزة', true);
   showToast('✅ تم تحديث بيانات المالك وحفظها في Firebase');
 }
+// ════════════════════════════════════════════════════
+// ANNOUNCEMENTS — إعلانات موجّهة لفئة محددة من الطلاب
+// ════════════════════════════════════════════════════
+function toggleAnnTargetFields(){
+  const type=document.getElementById('ann-target-type')?.value||'all';
+  const gradeWrap=document.getElementById('ann-target-grade-wrap');
+  const studentsWrap=document.getElementById('ann-target-students-wrap');
+  if(gradeWrap) gradeWrap.style.display = (type==='grade') ? '' : 'none';
+  if(studentsWrap) studentsWrap.style.display = (type==='students') ? '' : 'none';
+  if(type==='students') renderAnnStudentsChecklist();
+}
+
+function populateAnnTargetGradeDropdown(){
+  const sel=document.getElementById('ann-target-grade');
+  if(!sel) return;
+  const prev=sel.value;
+  const opts=(typeof adminGrades!=='undefined'?adminGrades:[]).map(g=>`<option value="${g}">${g}</option>`).join('');
+  sel.innerHTML='<option value="">-- اختر المرحلة --</option>'+opts;
+  if(prev && Array.from(sel.options).find(o=>o.value===prev)) sel.value=prev;
+}
+
+function renderAnnStudentsChecklist(){
+  const el=document.getElementById('ann-target-students-list');
+  if(!el) return;
+  if(!adminStudents || adminStudents.length===0){
+    el.innerHTML='<div style="color:var(--muted);font-size:0.85rem;">لا يوجد طلاب بعد</div>';
+    return;
+  }
+  el.innerHTML=adminStudents.map(s=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:0.88rem;cursor:pointer;">
+      <input type="checkbox" class="ann-student-check" value="${s.user}">
+      <span>${s.name||s.user} <span style="color:var(--muted);font-size:0.78rem;">(${s.grade||'—'})</span></span>
+    </label>
+  `).join('');
+}
+
 function saveAnnouncement(){
   const t=document.getElementById('ann-title').value.trim();
+  const txt=document.getElementById('ann-text').value.trim();
   if(!t){showToast('يرجى إدخال عنوان الإعلان');return;}
-  document.getElementById('ann-title').value='';
-  document.getElementById('ann-text').value='';
-  showToast('تم نشر الإعلان: '+t);
+  if(!fbReady){showToast('❌ لا يوجد اتصال بقاعدة البيانات');return;}
+
+  const targetType=document.getElementById('ann-target-type')?.value||'all';
+  let targetGrade='', targetStudents=[];
+  if(targetType==='grade'){
+    targetGrade=document.getElementById('ann-target-grade').value;
+    if(!targetGrade){showToast('يرجى اختيار المرحلة الدراسية');return;}
+  } else if(targetType==='students'){
+    targetStudents=Array.from(document.querySelectorAll('.ann-student-check:checked')).map(el=>el.value);
+    if(targetStudents.length===0){showToast('يرجى اختيار طالب واحد على الأقل');return;}
+  }
+
+  const ann={ title:t, text:txt, targetType, targetGrade, targetStudents, createdAt:Date.now() };
+  db.collection('announcements').add(ann).then(()=>{
+    document.getElementById('ann-title').value='';
+    document.getElementById('ann-text').value='';
+    document.getElementById('ann-target-type').value='all';
+    toggleAnnTargetFields();
+    showToast('✅ تم نشر الإعلان: '+t);
+    renderAdminAnnouncements();
+  }).catch(e=>showToast('❌ '+e.message));
+}
+
+function renderAdminAnnouncements(){
+  const el=document.getElementById('admin-ann-list');
+  if(!el || !fbReady) return;
+  db.collection('announcements').orderBy('createdAt','desc').get().then(snap=>{
+    if(snap.empty){
+      el.innerHTML='<div style="text-align:center;color:var(--muted);padding:1.5rem;">لا توجد إعلانات منشورة بعد</div>';
+      return;
+    }
+    el.innerHTML=snap.docs.map(d=>{
+      const a={id:d.id, ...d.data()};
+      const timeStr=a.createdAt?new Date(a.createdAt).toLocaleString('ar-EG',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+      let targetLbl='🌍 كل الطلاب';
+      if(a.targetType==='grade') targetLbl='🎓 '+(a.targetGrade||'');
+      else if(a.targetType==='students') targetLbl='👤 '+((a.targetStudents||[]).length)+' طالب محدد';
+      return `<div class="admin-card" style="margin-bottom:0.75rem;background:#FAFAFA;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;flex-wrap:wrap;">
+          <div>
+            <div style="font-weight:700;">${a.title||''}</div>
+            <div style="color:var(--muted);font-size:0.82rem;margin:2px 0;">${a.text||''}</div>
+            <div style="font-size:0.75rem;color:var(--muted);">${targetLbl} • ${timeStr}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            <button class="icon-btn" onclick="openAnnResponsesModal('${a.id}','${(a.title||'').replace(/'/g,"\\'")}')">📋 الردود</button>
+            <button class="icon-btn del" onclick="deleteAnnouncement('${a.id}')">🗑️ حذف</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }).catch(e=>console.warn('renderAdminAnnouncements error:', e));
+}
+
+function deleteAnnouncement(annId){
+  if(!confirm('هل أنت متأكد من حذف هذا الإعلان؟')) return;
+  db.collection('announcements').doc(annId).delete().then(()=>{
+    showToast('🗑️ تم حذف الإعلان');
+    renderAdminAnnouncements();
+  }).catch(e=>showToast('❌ '+e.message));
+}
+
+function openAnnResponsesModal(annId, title){
+  document.getElementById('ann-resp-title').textContent=title||'';
+  const el=document.getElementById('ann-resp-list');
+  el.innerHTML='<div style="text-align:center;color:var(--muted);padding:1rem;">⏳ جاري التحميل...</div>';
+  document.getElementById('announcementResponsesModal').classList.add('open');
+  db.collection('announcements').doc(annId).collection('responses').orderBy('createdAt','desc').get().then(snap=>{
+    if(snap.empty){
+      el.innerHTML='<div style="text-align:center;color:var(--muted);padding:1.5rem;">لا توجد ردود بعد</div>';
+      return;
+    }
+    el.innerHTML=snap.docs.map(d=>{
+      const r=d.data();
+      const timeStr=r.createdAt?new Date(r.createdAt).toLocaleString('ar-EG'):'';
+      const badge = r.type==='ack'
+        ? '<span style="background:#E8F5E9;color:#2E7D32;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;">✅ اطّلع</span>'
+        : '<span style="background:#E3F2FD;color:#1565C0;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;">💬 تعليق</span>';
+      return `<div style="padding:0.6rem 0;border-bottom:1px solid #f0f0f0;font-size:0.85rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-weight:700;">👤 ${r.studentName||r.studentUser||'طالب'}</span>
+          ${badge}
+        </div>
+        ${r.text?`<div style="margin-bottom:4px;">${r.text}</div>`:''}
+        <div style="color:var(--muted);font-size:0.75rem;">${timeStr}</div>
+      </div>`;
+    }).join('');
+  }).catch(e=>{ el.innerHTML='<div style="text-align:center;color:var(--muted);padding:1.5rem;">تعذّر تحميل الردود</div>'; console.warn(e); });
+}
+
+// هل يستهدف هذا الإعلان طالباً معيناً؟
+function announcementTargetsStudent(a, student){
+  if(!a) return false;
+  if(a.targetType==='grade') return (a.targetGrade||'').trim() === ((student&&student.grade)||'').trim();
+  if(a.targetType==='students') return (a.targetStudents||[]).includes(student&&student.user);
+  return true; // 'all' أو إعلانات قديمة بدون targetType
+}
+
+let currentViewedAnnId=null;
+function openAnnouncementViewModal(payload){
+  currentViewedAnnId = payload.annId;
+  document.getElementById('ann-view-title').textContent = payload.title||'';
+  document.getElementById('ann-view-text').textContent = payload.text||'';
+  document.getElementById('ann-view-comment').value='';
+  document.getElementById('announcementViewModal').classList.add('open');
+}
+
+function submitAnnouncementComment(){
+  const txt=document.getElementById('ann-view-comment').value.trim();
+  if(!txt){ showToast('اكتب تعليقك أولاً'); return; }
+  if(!fbReady || !currentViewedAnnId) return;
+  const student=adminStudents.find(s=>s.user===currentUser);
+  db.collection('announcements').doc(currentViewedAnnId).collection('responses').add({
+    studentUser: currentUser,
+    studentName: (student&&student.name)||currentUser,
+    type: 'comment',
+    text: txt,
+    createdAt: Date.now()
+  }).then(()=>{
+    showToast('✅ تم إرسال تعليقك');
+    document.getElementById('announcementViewModal').classList.remove('open');
+  }).catch(e=>showToast('❌ '+e.message));
+}
+
+function markAnnouncementSeen(){
+  if(!fbReady || !currentViewedAnnId) return;
+  const student=adminStudents.find(s=>s.user===currentUser);
+  db.collection('announcements').doc(currentViewedAnnId).collection('responses').add({
+    studentUser: currentUser,
+    studentName: (student&&student.name)||currentUser,
+    type: 'ack',
+    text: '',
+    createdAt: Date.now()
+  }).then(()=>{
+    showToast('✅ تم التعليم بالاطلاع');
+    document.getElementById('announcementViewModal').classList.remove('open');
+  }).catch(e=>showToast('❌ '+e.message));
+}
+
+// 🔔 إشعار الجرس: إعلان جديد يخص هذا الطالب فقط
+let studentAnnNotifStarted=false;
+function startStudentAnnouncementNotifications(){
+  if(!fbReady || studentAnnNotifStarted || !currentUser) return;
+  studentAnnNotifStarted=true;
+  const key='studentAnnNotifiedIds_'+currentUser;
+  const knownIds=loadNotifiedSet(key);
+  db.collection('announcements').orderBy('createdAt','desc').onSnapshot(snap=>{
+    const student=adminStudents.find(s=>s.user===currentUser);
+    snap.docChanges().forEach(change=>{
+      const a={id:change.doc.id, ...change.doc.data()};
+      if((change.type==='added'||change.type==='modified') && !knownIds.has(a.id) && announcementTargetsStudent(a, student)){
+        knownIds.add(a.id);
+        saveNotifiedSet(key, knownIds);
+        addNotification('📢 إعلان جديد: '+(a.title||'').slice(0,40), 'announcement', {annId:a.id, title:a.title, text:a.text});
+      }
+    });
+  }, err=>console.warn('studentAnnNotif error:', err));
 }
 
 // ════════════════════════════════════════════════════
@@ -3762,47 +4006,56 @@ function refreshQABadge(){
 }
 
 // ════════════════════════════════════════════════════
+// 🔔 أدوات مساعدة: تذكّر أي العناصر تم الإشعار عنها مسبقاً
+// (محفوظة في localStorage حتى لا تُفقد بين الجلسات؛
+//  هذا يحل مشكلة عدم ظهور إشعار لسؤال/إعلان حدث قبل
+//  بدء الاستماع — مثل تسجيل الخروج والدخول من جديع)
+// ════════════════════════════════════════════════════
+function loadNotifiedSet(key){
+  try{ return new Set(JSON.parse(localStorage.getItem(key)||'[]')); }
+  catch(e){ return new Set(); }
+}
+function saveNotifiedSet(key, set){
+  try{ localStorage.setItem(key, JSON.stringify(Array.from(set))); }
+  catch(e){}
+}
+
+// ════════════════════════════════════════════════════
 // 🔔 إشعارات الجرس: سؤال جديد ← الأستاذ / رد جديد ← الطالب
 // ════════════════════════════════════════════════════
 let ownerQaNotifStarted = false;
-let ownerQaFirstLoadDone = false;
-let ownerQaKnownIds = new Set();
 function startOwnerQaNotifications(){
   if(!fbReady || ownerQaNotifStarted) return;
   ownerQaNotifStarted = true;
+  const key='ownerQaNotifiedIds';
+  const knownIds=loadNotifiedSet(key);
   db.collection('qa').orderBy('createdAt','desc').onSnapshot(snap=>{
     snap.docChanges().forEach(change=>{
       const q = {id:change.doc.id, ...change.doc.data()};
-      if(change.type==='added'){
-        if(!ownerQaKnownIds.has(q.id)){
-          ownerQaKnownIds.add(q.id);
-          if(ownerQaFirstLoadDone && !q.answer){
-            addNotification('❓ سؤال جديد من '+(q.studentName||'طالب')+': '+(q.question||'').slice(0,40), 'qa_question', {qId:q.id, question:q.question, studentName:q.studentName, lessonTitle:q.lessonTitle});
-          }
-        }
+      if((change.type==='added'||change.type==='modified') && !q.answer && !knownIds.has(q.id)){
+        knownIds.add(q.id);
+        saveNotifiedSet(key, knownIds);
+        addNotification('❓ سؤال جديد من '+(q.studentName||'طالب')+': '+(q.question||'').slice(0,40), 'qa_question', {qId:q.id, question:q.question, studentName:q.studentName, lessonTitle:q.lessonTitle});
       }
     });
-    ownerQaFirstLoadDone = true;
   }, err=>console.warn('ownerQaNotif error:', err));
 }
 
 let studentQaNotifStarted = false;
-let studentQaFirstLoadDone = false;
-let studentQaLastAnswerState = {}; // qId -> هل كان له رد آخر مرة رأيناه
 function startStudentQaNotifications(){
   if(!fbReady || studentQaNotifStarted || !currentUser) return;
   studentQaNotifStarted = true;
+  const key='studentQaAnsweredNotified_'+currentUser;
+  const notifiedIds=loadNotifiedSet(key);
   db.collection('qa').where('studentUser','==',currentUser).onSnapshot(snap=>{
     snap.docs.forEach(d=>{
       const q = {id:d.id, ...d.data()};
-      const hadAnswerBefore = studentQaLastAnswerState[q.id];
-      const hasAnswerNow = !!q.answer;
-      if(studentQaFirstLoadDone && hasAnswerNow && !hadAnswerBefore){
+      if(q.answer && !notifiedIds.has(q.id)){
+        notifiedIds.add(q.id);
+        saveNotifiedSet(key, notifiedIds);
         addNotification('✅ '+(currentLang==='ar'?'وصل رد الأستاذ على سؤالك':'Your question was answered'), 'qa_answer', {qId:q.id, question:q.question, answer:q.answer, lessonTitle:q.lessonTitle});
       }
-      studentQaLastAnswerState[q.id] = hasAnswerNow;
     });
-    studentQaFirstLoadDone = true;
   }, err=>console.warn('studentQaNotif error:', err));
 }
 
@@ -3881,22 +4134,20 @@ async function submitForgotPassRequest(){
 }
 
 let ownerResetNotifStarted = false;
-let ownerResetFirstLoadDone = false;
-let ownerResetKnownIds = new Set();
 function startOwnerPasswordResetNotifications(){
   if(!fbReady || ownerResetNotifStarted) return;
   ownerResetNotifStarted = true;
+  const key='ownerResetNotifiedIds';
+  const knownIds=loadNotifiedSet(key);
   db.collection('passwordResets').orderBy('requestedAt','desc').onSnapshot(snap=>{
     snap.docChanges().forEach(change=>{
       const r = {id:change.doc.id, ...change.doc.data()};
-      if(change.type==='added' && !ownerResetKnownIds.has(r.id)){
-        ownerResetKnownIds.add(r.id);
-        if(ownerResetFirstLoadDone && r.status==='pending'){
-          addNotification('🔑 '+(r.name||r.user)+' يطلب استعادة كلمة المرور', 'password_reset', {requestId:r.id, user:r.user, name:r.name});
-        }
+      if((change.type==='added'||change.type==='modified') && r.status==='pending' && !knownIds.has(r.id)){
+        knownIds.add(r.id);
+        saveNotifiedSet(key, knownIds);
+        addNotification('🔑 '+(r.name||r.user)+' يطلب استعادة كلمة المرور', 'password_reset', {requestId:r.id, user:r.user, name:r.name});
       }
     });
-    ownerResetFirstLoadDone = true;
   }, err=>console.warn('ownerResetNotif error:', err));
 }
 
@@ -4247,6 +4498,8 @@ function refreshAllGradeDropdowns(){
     courseGrade.innerHTML = gradeWithEmpty;
     if(prev && Array.from(courseGrade.options).find(o=>o.value===prev)) courseGrade.value=prev;
   }
+  // قائمة المرحلة المستهدفة في الإعلانات
+  populateAnnTargetGradeDropdown();
 }
 
 // GRADES MANAGER — إدارة المراحل الدراسية
