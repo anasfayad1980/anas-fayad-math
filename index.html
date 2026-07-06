@@ -550,6 +550,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     <li><a onclick="showPage('about');closeMobMenu()" id="nav-about">من نحن</a></li>
     <li><a onclick="showPage('contact');closeMobMenu()" id="nav-contact">اتصل بنا</a></li>
     <li><a onclick="showPage('dashboard');closeMobMenu()" id="nav-dash">لوحتي</a></li>
+    <li><a onclick="showPage('annqa');closeMobMenu()" id="nav-annqa">📢 الإعلانات والنقاش</a></li>
   </ul>
   <div class="nav-right">
     <button class="lang-btn" onclick="toggleLang()">🌐 English</button>
@@ -569,6 +570,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
   <a onclick="showPage('home');closeMobMenu()" style="display:block;padding:0.85rem 1.5rem;color:rgba(255,255,255,0.9);font-family:Cairo,sans-serif;font-size:1rem;border-bottom:1px solid rgba(255,255,255,0.08);cursor:pointer;">🏠 الرئيسية</a>
   <a onclick="showPage('courses');closeMobMenu()" style="display:block;padding:0.85rem 1.5rem;color:rgba(255,255,255,0.9);font-family:Cairo,sans-serif;font-size:1rem;border-bottom:1px solid rgba(255,255,255,0.08);cursor:pointer;">📚 الدروس</a>
   <a onclick="showPage('dashboard');closeMobMenu()" style="display:block;padding:0.85rem 1.5rem;color:rgba(255,255,255,0.9);font-family:Cairo,sans-serif;font-size:1rem;border-bottom:1px solid rgba(255,255,255,0.08);cursor:pointer;">📊 لوحتي</a>
+  <a onclick="showPage('annqa');closeMobMenu()" style="display:block;padding:0.85rem 1.5rem;color:rgba(255,255,255,0.9);font-family:Cairo,sans-serif;font-size:1rem;border-bottom:1px solid rgba(255,255,255,0.08);cursor:pointer;">📢 الإعلانات والنقاش</a>
   <a onclick="showPage('about');closeMobMenu()" style="display:block;padding:0.85rem 1.5rem;color:rgba(255,255,255,0.9);font-family:Cairo,sans-serif;font-size:1rem;border-bottom:1px solid rgba(255,255,255,0.08);cursor:pointer;">ℹ️ من نحن</a>
   <a onclick="showPage('contact');closeMobMenu()" style="display:block;padding:0.85rem 1.5rem;color:rgba(255,255,255,0.9);font-family:Cairo,sans-serif;font-size:1rem;border-bottom:1px solid rgba(255,255,255,0.08);cursor:pointer;">📞 اتصل بنا</a>
   <a onclick="doLogout();closeMobMenu()" style="display:block;padding:0.85rem 1.5rem;color:#FF8A80;font-family:Cairo,sans-serif;font-size:1rem;cursor:pointer;">🚪 خروج</a>
@@ -896,6 +898,40 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     <h3 style="font-size:1.1rem;font-weight:700;margin:1.5rem 0 1rem;" id="dash-my">كورساتي</h3>
     <div class="courses-grid" id="dashboard-courses-grid">
       <!-- يتم ملؤها ديناميكياً عبر renderDashboardCourses() حسب صف الطالب -->
+    </div>
+  </div>
+</div>
+
+<!-- ANNOUNCEMENTS & Q&A PAGE (student) -->
+<div class="page" id="page-annqa">
+  <div class="section">
+    <button class="back-btn" onclick="showPage('home')" style="margin-bottom:1rem;">← الرئيسية</button>
+    <h2 class="section-title">📢 الإعلانات والنقاش</h2>
+    <p class="section-sub">إعلانات الأستاذ وأسئلتك ونقاشاتك في مكان واحد</p>
+
+    <!-- Announcements -->
+    <h3 style="font-size:1.1rem;font-weight:700;margin:1.5rem 0 1rem;">📢 الإعلانات</h3>
+    <div id="student-ann-list">
+      <div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:0.9rem;">⏳ جاري التحميل...</div>
+    </div>
+
+    <!-- Q&A -->
+    <div style="background:white;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,0.08);padding:1.5rem;margin-top:1.5rem;">
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:1rem;">💬 اطرح سؤالاً</h3>
+      <div style="background:#F5F7FA;border-radius:12px;padding:1rem;margin-bottom:1.25rem;">
+        <select id="annqa-lesson-select" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.88rem;margin-bottom:0.75rem;outline:none;box-sizing:border-box;">
+          <option value="">سؤال عام (غير مرتبط بدرس معين)</option>
+        </select>
+        <textarea id="annqa-new-question" placeholder="اكتب سؤالك هنا..." rows="3"
+          style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.9rem;resize:none;outline:none;box-sizing:border-box;"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:0.75rem;">
+          <button class="admin-btn" onclick="submitGeneralQuestion()" style="padding:9px 22px;font-size:0.88rem;" id="annqa-submit-btn">إرسال السؤال ✉️</button>
+        </div>
+      </div>
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:1rem;">📋 أسئلتي السابقة</h3>
+      <div id="student-qa-history">
+        <div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:0.9rem;">⏳ جاري التحميل...</div>
+      </div>
     </div>
   </div>
 </div>
@@ -1241,7 +1277,7 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
     <button class="admin-tab" onclick="adminTab('lessons',this)" id="adm-nav-lessons">🎬 الدروس</button>
     <button class="admin-tab" onclick="adminTab('assignments',this)" id="adm-nav-assignments">📝 الواجبات</button>
     <button class="admin-tab" onclick="adminTab('students',this)" id="adm-nav-students">👥 الطلاب</button>
-    <button class="admin-tab" onclick="adminTab('qa',this)" id="adm-nav-qa">💬 النقاش <span id="qa-notif-badge" style="display:none;background:#F44336;color:white;border-radius:50%;width:16px;height:16px;font-size:0.65rem;display:inline-flex;align-items:center;justify-content:center;margin-right:4px;font-weight:700;vertical-align:middle;"></span></button>
+    <button class="admin-tab" onclick="adminTab('annqa',this)" id="adm-nav-annqa">📢 الإعلانات والنقاش <span id="qa-notif-badge" style="display:none;background:#F44336;color:white;border-radius:50%;width:16px;height:16px;font-size:0.65rem;display:inline-flex;align-items:center;justify-content:center;margin-right:4px;font-weight:700;vertical-align:middle;"></span></button>
     <button class="admin-tab" onclick="adminTab('settings',this)" id="adm-nav-settings">⚙️ الإعدادات</button>
     <h2 id="adm-panel-title">لوحة تحكم المدرس — Mr. Anas Fayad</h2>
     <span id="supabase-status" style="font-size:0.75rem;padding:4px 12px;border-radius:20px;background:rgba(244,67,54,0.2);color:#C62828;margin-left:auto;">🔴 وضع تجريبي</span>
@@ -1537,36 +1573,6 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
       </div>
     </div>
     <div class="admin-card">
-      <h3 id="adm-ann-h">إضافة إعلان</h3>
-      <div class="form-row">
-        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-ann-title">عنوان الإعلان</label><input type="text" id="ann-title" placeholder="عنوان..."></div>
-        <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-ann-text">النص</label><input type="text" id="ann-text" placeholder="تفاصيل الإعلان..."></div>
-      </div>
-      <div class="form-row">
-        <div>
-          <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-ann-target">الفئة المستهدفة</label>
-          <select id="ann-target-type" onchange="toggleAnnTargetFields()">
-            <option value="all" id="ann-target-opt-all">🌍 كل الطلاب</option>
-            <option value="grade" id="ann-target-opt-grade">🎓 مرحلة دراسية معينة</option>
-            <option value="students" id="ann-target-opt-students">👤 طلاب محددون</option>
-          </select>
-        </div>
-        <div id="ann-target-grade-wrap" style="display:none;">
-          <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-ann-grade">المرحلة</label>
-          <select id="ann-target-grade"><option value="">-- اختر المرحلة --</option></select>
-        </div>
-      </div>
-      <div id="ann-target-students-wrap" style="display:none;margin-bottom:1rem;">
-        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;" id="adm-lbl-ann-students">اختر الطلاب</label>
-        <div id="ann-target-students-list" style="max-height:180px;overflow-y:auto;border:1px solid #eee;border-radius:8px;padding:0.5rem 0.75rem;background:#FAFAFA;"></div>
-      </div>
-      <button class="admin-btn gold" onclick="saveAnnouncement()" id="adm-btn-ann">نشر الإعلان</button>
-    </div>
-    <div class="admin-card">
-      <h3 id="adm-ann-list-h">📢 الإعلانات المنشورة</h3>
-      <div id="admin-ann-list" style="margin-top:0.5rem;"></div>
-    </div>
-    <div class="admin-card">
       <h3 id="adm-gen-stats-h">إحصائيات عامة</h3>
       <div class="admin-stats">
         <div class="admin-stat"><div class="num" id="s-total">12</div><div class="lbl" id="adm-lbl-s-total">إجمالي الطلاب</div></div>
@@ -1575,25 +1581,67 @@ input[type=checkbox],input[type=radio],select{cursor:pointer!important;}
       </div>
     </div>
   </div>
-  <!-- Q&A ADMIN SECTION -->
-  <div class="admin-section" id="adm-qa">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
-      <div>
-        <h2 style="font-size:1.3rem;font-weight:900;">💬 أسئلة الطلاب</h2>
-        <p style="color:var(--muted);font-size:0.9rem;">اقرأ أسئلة الطلاب وارد عليها مباشرة</p>
+  <!-- ANNOUNCEMENTS & Q&A ADMIN SECTION (موحّد) -->
+  <div class="admin-section" id="adm-annqa">
+    <div style="display:flex;gap:0.6rem;margin-bottom:1.25rem;">
+      <button class="admin-tab active" onclick="annQaSubTab('ann',this)" id="annqa-subnav-ann" style="border-radius:20px;">📢 الإعلانات</button>
+      <button class="admin-tab" onclick="annQaSubTab('qa',this)" id="annqa-subnav-qa" style="border-radius:20px;">💬 الأسئلة والأجوبة</button>
+    </div>
+
+    <!-- ═══ إدارة الإعلانات ═══ -->
+    <div id="annqa-sub-ann">
+      <div class="admin-card">
+        <h3 id="adm-ann-h">إضافة إعلان</h3>
+        <div class="form-row">
+          <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-ann-title">عنوان الإعلان</label><input type="text" id="ann-title" placeholder="عنوان..."></div>
+          <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-ann-text">النص</label><input type="text" id="ann-text" placeholder="تفاصيل الإعلان..."></div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-ann-target">الفئة المستهدفة</label>
+            <select id="ann-target-type" onchange="toggleAnnTargetFields()">
+              <option value="all" id="ann-target-opt-all">🌍 كل الطلاب</option>
+              <option value="grade" id="ann-target-opt-grade">🎓 مرحلة دراسية معينة</option>
+              <option value="students" id="ann-target-opt-students">👤 طلاب محددون</option>
+            </select>
+          </div>
+          <div id="ann-target-grade-wrap" style="display:none;">
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;" id="adm-lbl-ann-grade">المرحلة</label>
+            <select id="ann-target-grade"><option value="">-- اختر المرحلة --</option></select>
+          </div>
+        </div>
+        <div id="ann-target-students-wrap" style="display:none;margin-bottom:1rem;">
+          <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;" id="adm-lbl-ann-students">اختر الطلاب</label>
+          <div id="ann-target-students-list" style="max-height:180px;overflow-y:auto;border:1px solid #eee;border-radius:8px;padding:0.5rem 0.75rem;background:#FAFAFA;"></div>
+        </div>
+        <button class="admin-btn gold" onclick="saveAnnouncement()" id="adm-btn-ann">نشر الإعلان</button>
       </div>
-      <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
-        <select id="qa-filter-course" onchange="renderAdminQA()" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.88rem;cursor:pointer;">
-          <option value="">كل الكورسات</option>
-        </select>
-        <select id="qa-filter-status" onchange="renderAdminQA()" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.88rem;cursor:pointer;">
-          <option value="">كل الأسئلة</option>
-          <option value="unanswered">⏳ بدون رد</option>
-          <option value="answered">✅ مُجاب</option>
-        </select>
+      <div class="admin-card">
+        <h3 id="adm-ann-list-h">📢 الإعلانات المنشورة</h3>
+        <div id="admin-ann-list" style="margin-top:0.5rem;"></div>
       </div>
     </div>
-    <div id="admin-qa-list"></div>
+
+    <!-- ═══ أسئلة الطلاب ═══ -->
+    <div id="annqa-sub-qa" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
+        <div>
+          <h2 style="font-size:1.3rem;font-weight:900;">💬 أسئلة الطلاب</h2>
+          <p style="color:var(--muted);font-size:0.9rem;">اقرأ أسئلة الطلاب وارد عليها مباشرة</p>
+        </div>
+        <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+          <select id="qa-filter-course" onchange="renderAdminQA()" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.88rem;cursor:pointer;">
+            <option value="">كل الكورسات</option>
+          </select>
+          <select id="qa-filter-status" onchange="renderAdminQA()" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.88rem;cursor:pointer;">
+            <option value="">كل الأسئلة</option>
+            <option value="unanswered">⏳ بدون رد</option>
+            <option value="answered">✅ مُجاب</option>
+          </select>
+        </div>
+      </div>
+      <div id="admin-qa-list"></div>
+    </div>
   </div>
 
 </div>
@@ -2582,6 +2630,99 @@ function showPage(name){
   if(name==='dashboard'){ renderStudentHW(); updateProgressDisplay(); renderDashboardCourses(); }
   if(name==='courses'){ renderCourseCards(); }
   if(name==='contact'){ renderContactPage(); }
+  if(name==='annqa'){ renderStudentAnnQaPage(); }
+}
+
+// ════════════════════════════════════════════════════
+// صفحة "الإعلانات والنقاش" الموحّدة للطالب
+// ════════════════════════════════════════════════════
+function renderStudentAnnQaPage(){
+  if(!fbReady || currentRole!=='student' || !currentUser) return;
+  populateAnnQaLessonDropdown();
+  renderStudentAnnouncementsList();
+  renderStudentQAHistory();
+}
+
+function populateAnnQaLessonDropdown(){
+  const sel=document.getElementById('annqa-lesson-select');
+  if(!sel) return;
+  const lessons=getVisibleLessons();
+  sel.innerHTML='<option value="">سؤال عام (غير مرتبط بدرس معين)</option>' +
+    lessons.map(l=>`<option value="${l.id}" data-title="${(l.title||'').replace(/"/g,'&quot;')}" data-course="${(l.course||'').replace(/"/g,'&quot;')}">${l.title||''}</option>`).join('');
+}
+
+function renderStudentAnnouncementsList(){
+  const el=document.getElementById('student-ann-list');
+  if(!el) return;
+  db.collection('announcements').orderBy('createdAt','desc').get().then(snap=>{
+    const student=adminStudents.find(s=>s.user===currentUser);
+    const mine=snap.docs.map(d=>({id:d.id, ...d.data()})).filter(a=>announcementTargetsStudent(a, student));
+    if(mine.length===0){
+      el.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:0.9rem;">لا توجد إعلانات لك حالياً</div>';
+      return;
+    }
+    el.innerHTML=mine.map(a=>{
+      const timeStr=a.createdAt?new Date(a.createdAt).toLocaleString('ar-EG',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+      return `<div class="admin-card" style="margin-bottom:0.75rem;cursor:pointer;" onclick='openAnnouncementViewModal(${JSON.stringify({annId:a.id, title:a.title||'', text:a.text||''})})'>
+        <div style="font-weight:700;margin-bottom:4px;">📢 ${a.title||''}</div>
+        <div style="color:var(--muted);font-size:0.85rem;margin-bottom:6px;">${a.text||''}</div>
+        <div style="font-size:0.75rem;color:var(--muted);">${timeStr} • اضغط للتعليق أو التعليم بالاطلاع</div>
+      </div>`;
+    }).join('');
+  }).catch(e=>{ el.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--muted);">تعذّر تحميل الإعلانات</div>'; console.warn(e); });
+}
+
+function renderStudentQAHistory(){
+  const el=document.getElementById('student-qa-history');
+  if(!el) return;
+  db.collection('qa').where('studentUser','==',currentUser).get().then(snap=>{
+    const mine=snap.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    if(mine.length===0){
+      el.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:0.9rem;">لم تطرح أي سؤال بعد</div>';
+      return;
+    }
+    el.innerHTML=mine.map(q=>{
+      const timeStr=q.createdAt?new Date(q.createdAt).toLocaleString('ar-EG'):'';
+      const statusBadge=!q.answer
+        ? '<span style="background:#FFF3E0;color:#E65100;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;">⏳ بانتظار الرد</span>'
+        : '<span style="background:#E8F5E9;color:#2E7D32;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;">✅ مُجاب</span>';
+      return `<div style="padding:0.75rem 0;border-bottom:1px solid #f0f0f0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:4px;">
+          <span style="font-size:0.78rem;color:var(--muted);">${q.lessonTitle||'سؤال عام'}</span>
+          ${statusBadge}
+        </div>
+        <div style="font-size:0.88rem;margin-bottom:4px;">${q.question||''}</div>
+        ${q.answer?`<div style="background:#F5F7FA;border-radius:8px;padding:0.6rem 0.8rem;font-size:0.85rem;color:#333;">💬 ${q.answer}</div>`:''}
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;">${timeStr}</div>
+      </div>`;
+    }).join('');
+  }).catch(e=>{ el.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--muted);">تعذّر تحميل الأسئلة</div>'; console.warn(e); });
+}
+
+function submitGeneralQuestion(){
+  const txt=document.getElementById('annqa-new-question')?.value.trim();
+  if(!txt){showToast('اكتب سؤالك أولاً');return;}
+  if(!fbReady){showToast('❌ غير متصل بالإنترنت');return;}
+  if(!currentUser){showToast('❌ يجب تسجيل الدخول');return;}
+  const sel=document.getElementById('annqa-lesson-select');
+  const opt=sel && sel.selectedIndex>=0 ? sel.options[sel.selectedIndex] : null;
+  const lessonId = sel && sel.value ? sel.value : '';
+  const lessonTitle = lessonId && opt ? (opt.getAttribute('data-title')||'') : 'سؤال عام';
+  const course = lessonId && opt ? (opt.getAttribute('data-course')||'') : '';
+  const student=adminStudents.find(s=>s.user===currentUser);
+  const studentName=student?student.name:currentUser;
+  const qData={ lessonId:String(lessonId||''), lessonTitle, course, studentUser:currentUser, studentName, question:txt, answer:null, createdAt:Date.now() };
+  const btn=document.getElementById('annqa-submit-btn');
+  if(btn){btn.textContent='⏳ جاري الإرسال...';btn.disabled=true;}
+  db.collection('qa').add(qData).then(()=>{
+    document.getElementById('annqa-new-question').value='';
+    showToast('✅ تم إرسال سؤالك — سيرد الأستاذ قريباً');
+    renderStudentQAHistory();
+  }).catch(e=>{
+    showToast('❌ فشل الإرسال: '+e.message);
+  }).finally(()=>{
+    if(btn){btn.textContent='إرسال السؤال ✉️';btn.disabled=false;}
+  });
 }
 
 function showCourseDetail(){showPage('course-detail');}
@@ -2898,12 +3039,25 @@ function adminTab(name,btn){
     renderGradesManager();
     if(fbReady){ loadGradesFromDB(); } // إعادة تحميل من Firebase عند كل فتح للإعدادات
   }
-  if(name==='qa'){
-    // تحديث قائمة الكورسات في فلتر Q&A
+  if(name==='annqa'){
+    // تحديث قائمة الكورسات في فلتر الأسئلة
     const sel=document.getElementById('qa-filter-course');
     if(sel){ const opts=adminCourses.map(c=>`<option value="${c.name}">${c.name}</option>`).join(''); sel.innerHTML='<option value="">كل الكورسات</option>'+opts; }
+    populateAnnTargetGradeDropdown();
+    renderAdminAnnouncements();
     renderAdminQA();
+    annQaSubTab('ann');
   }
+}
+function annQaSubTab(name){
+  const annBox=document.getElementById('annqa-sub-ann');
+  const qaBox=document.getElementById('annqa-sub-qa');
+  if(annBox) annBox.style.display = (name==='ann') ? '' : 'none';
+  if(qaBox) qaBox.style.display = (name==='qa') ? '' : 'none';
+  const annBtn=document.getElementById('annqa-subnav-ann');
+  const qaBtn=document.getElementById('annqa-subnav-qa');
+  if(annBtn) annBtn.classList.toggle('active', name==='ann');
+  if(qaBtn) qaBtn.classList.toggle('active', name==='qa');
 }
 function toggleUnit(el){el.closest('.unit-expand').classList.toggle('open');}
 
